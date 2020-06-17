@@ -183,13 +183,11 @@ subroutine NoahMP401_f2t(n)
         if (LIS_Forc_Snowf%selectOpt.eq.1) then
             if (snowf(tid) .ne. LIS_rc%udef) then
                NOAHMP401_struc(n)%noahmp401(t)%prcp = &
-                    (NOAHMP401_struc(n)%noahmp401(t)%prcp + snowf(tid))*&
-                    NoahMP401_struc(n)%noahmp401(t)%prcp_scalef
+                    (NOAHMP401_struc(n)%noahmp401(t)%prcp + snowf(tid))
             endif
          else
             NOAHMP401_struc(n)%noahmp401(t)%prcp = &
-                 NOAHMP401_struc(n)%noahmp401(t)%prcp* &
-                 NoahMP401_struc(n)%noahmp401(t)%prcp_scalef
+                 NOAHMP401_struc(n)%noahmp401(t)%prcp
          endif
     enddo
  

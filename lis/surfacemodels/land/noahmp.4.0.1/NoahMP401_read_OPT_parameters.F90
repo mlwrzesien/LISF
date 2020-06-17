@@ -307,13 +307,13 @@ subroutine NoahMP401_read_OPT_parameters()
         enddo
      endif
 
-     call NOAHMP401_read_OPT_param(n, "PRCP_SCALEF", placeholder, var_found)
+     call NOAHMP401_read_OPT_param(n, "SNOWF_SCALEF", placeholder, var_found)
      if(var_found) then 
         do t = 1, LIS_rc%npatch(n, mtype)
            col = LIS_surface(n, mtype)%tile(t)%col
            row = LIS_surface(n, mtype)%tile(t)%row
            if(placeholder(col,row).ne.LIS_rc%udef) then 
-              NOAHMP401_struc(n)%noahmp401(t)%prcp_scalef =&
+              NOAHMP401_struc(n)%noahmp401(t)%param%snowf_scalef =&
                    placeholder(col, row)
            endif
         enddo

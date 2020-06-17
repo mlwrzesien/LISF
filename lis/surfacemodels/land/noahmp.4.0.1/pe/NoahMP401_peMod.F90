@@ -409,9 +409,9 @@ contains
              enddo
           endif
           
-          if(vname.eq."PRCP_SCALEF") then 
+          if(vname.eq."SNOWF_SCALEF") then 
              do t=1,NT 
-                vardata(t) = NoahMP401_struc(n)%noahmp401(t)%prcp_scalef
+                vardata(t) = NoahMP401_struc(n)%noahmp401(t)%param%snowf_scalef
              enddo
           endif
 

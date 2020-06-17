@@ -351,6 +351,7 @@ MODULE MODULE_SF_NOAHMPLSM_401
      REAL :: T_ulimit
      REAL :: T_llimit
      REAL :: T_mlimit
+     real :: snowf_scalef
 
   END TYPE noahmp_parameters
 
@@ -995,8 +996,9 @@ contains
      ENDIF
 
      RAIN   = PRCP * (1.-FPICE)
-     SNOW   = PRCP * FPICE
+     SNOW   = PRCP * FPICE * parameters%snowf_scalef
 
+     PRCP = RAIN + SNOW
 
   END SUBROUTINE ATM
 

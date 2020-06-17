@@ -365,7 +365,7 @@ module NoahMP401_module
         real               :: swdown
         real               :: lwdown
         real               :: prcp
-        real               :: prcp_scalef
+
         !--------------------------------------------------------
         ! spatial parameter
         !--------------------------------------------------------

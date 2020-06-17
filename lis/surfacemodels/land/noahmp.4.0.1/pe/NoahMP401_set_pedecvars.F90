@@ -405,8 +405,8 @@ subroutine NoahMP401_setVars(n,DEC_State,mod_flag_NoahMP401)
                    NoahMP401_struc(n)%noahmp401(t)%param%T_MLIMIT = vardata(t)
               if(vname.eq."T_LLIMIT") &
                    NoahMP401_struc(n)%noahmp401(t)%param%T_LLIMIT = vardata(t)
-              if(vname.eq."PRCP_SCALEF") &
-                   NoahMP401_struc(n)%noahmp401(t)%prcp_scalef = vardata(t)
+              if(vname.eq."SNOWF_SCALEF") &
+                   NoahMP401_struc(n)%noahmp401(t)%param%snowf_scalef = vardata(t)
               if(vname.eq."RHOL1") &
                    NoahMP401_struc(n)%noahmp401(t)%param%RHOL(1) = vardata(t)
               if(vname.eq."RHOL2") &
