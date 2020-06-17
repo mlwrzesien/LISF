@@ -153,6 +153,10 @@ contains
          LVT_computeRnkCorr, LVT_writeMetric_RnkCorr, LVT_resetMetric_RnkCorr,&
          LVT_writerestart_RnkCorr, LVT_readrestart_RnkCorr
 
+    use LVT_AnomalyRnkCorrMod, only : LVT_initAnomalyRnkCorr, LVT_diagnoseAnomalyRnkCorr, &
+         LVT_computeAnomalyRnkCorr, LVT_writeMetric_AnomalyRnkCorr, LVT_resetMetric_AnomalyRnkCorr,&
+         LVT_writerestart_AnomalyRnkCorr, LVT_readrestart_AnomalyRnkCorr
+
     use LVT_AnomalyCorrMod, only : LVT_initAnomalyCorr, &
          LVT_diagnoseAnomalyCorr, LVT_computeAnomalyCorr,&
          LVT_writeMetric_AnomalyCorr, LVT_resetMetric_AnomalyCorr,&
@@ -322,6 +326,13 @@ contains
          LVT_resetMetric_ConditionalEntropy, &
          LVT_writerestart_ConditionalEntropy, &
          LVT_readrestart_ConditionalEntropy
+
+    use LVT_JointEntropyMod, only : LVT_initJointEntropy, &
+         LVT_diagnoseJointEntropy, LVT_computeJointEntropy,&
+         LVT_writeMetric_JointEntropy, &
+         LVT_resetMetric_JointEntropy, &
+         LVT_writerestart_JointEntropy, &
+         LVT_readrestart_JointEntropy
 
     use LVT_MutualInformationMod, only : LVT_initMutualInformation, &
          LVT_diagnoseMutualInformation, LVT_computeMutualInformation,&
@@ -569,6 +580,15 @@ contains
     call registermetricreset(LVT_RNKCORRid,LVT_resetMetric_RnkCorr)
     call registermetricwriterestart(LVT_RNKCORRid,LVT_writerestart_RnkCorr)
     call registermetricreadrestart(LVT_RNKCORRid,LVT_readrestart_RnkCorr)
+
+    call registermetricinit(LVT_ARNKCORRid,LVT_initAnomalyRnkCorr)
+    call registermetricdiagnose(LVT_ARNKCORRid, LVT_diagnoseAnomalyRnkCorr)
+    call registermetriccompute(LVT_ARNKCORRid, LVT_computeAnomalyRnkCorr)
+    call registermetricwriteentry(LVT_ARNKCORRid,&
+         LVT_writeMetric_AnomalyRnkCorr)
+    call registermetricreset(LVT_ARNKCORRid,LVT_resetMetric_AnomalyRnkCorr)
+    call registermetricwriterestart(LVT_ARNKCORRid,LVT_writerestart_AnomalyRnkCorr)
+    call registermetricreadrestart(LVT_ARNKCORRid,LVT_readrestart_AnomalyRnkCorr)
 
     call registermetricinit(LVT_ACORRid,LVT_initAnomalyCorr)
     call registermetricdiagnose(LVT_ACORRid, LVT_diagnoseAnomalyCorr)
@@ -942,6 +962,15 @@ contains
     call registermetricreset(LVT_CEid,LVT_resetMetric_ConditionalEntropy)
     call registermetricwriterestart(LVT_CEid,LVT_writerestart_ConditionalEntropy)
     call registermetricreadrestart(LVT_CEid,LVT_readrestart_ConditionalEntropy)
+
+    call registermetricinit(LVT_JEid,LVT_initJointEntropy)
+    call registermetricdiagnose(LVT_JEid, LVT_diagnoseJointEntropy)
+    call registermetriccompute(LVT_JEid, LVT_computeJointEntropy)
+    call registermetricwriteentry(LVT_JEid,&
+         LVT_writeMetric_JointEntropy)
+    call registermetricreset(LVT_JEid,LVT_resetMetric_JointEntropy)
+    call registermetricwriterestart(LVT_JEid,LVT_writerestart_JointEntropy)
+    call registermetricreadrestart(LVT_JEid,LVT_readrestart_JointEntropy)
 
     call registermetricinit(LVT_miid,LVT_initMutualInformation)
     call registermetricdiagnose(LVT_miid, LVT_diagnoseMutualInformation)
