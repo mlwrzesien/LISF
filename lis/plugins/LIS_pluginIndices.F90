@@ -28,6 +28,7 @@ module LIS_pluginIndices
 !  27 Jan 2014: Shugong Wang, added HRAP projection
 !   4 Nov 2014: Jonathan Case, added support for daily NESDIS/VIIRS GVF for Noah
 !  16 Aug 2016: Mahdi Navari, added PILDAS  
+!  14 Apr 2020: Kristi Arsenault, added G. Liston's SnowModel
 !
 !EOP
   PRIVATE
@@ -67,6 +68,7 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_noah39Id    = "Noah.3.9"
    character*50, public,  parameter :: LIS_noahmp36Id  = "NoahMP.3.6"
    character*50, public,  parameter :: LIS_noahmp401Id = "Noah-MP.4.0.1"
+   character*50, public,  parameter :: LIS_snowmodelId = "SnowModel"
    character*50, public,  parameter :: LIS_ruc37Id     = "RUC.3.7"
    character*50, public,  parameter :: LIS_clm2Id      = "CLM.2"
    character*50, public,  parameter :: LIS_vic411Id    = "VIC.4.1.1"
@@ -75,13 +77,13 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_hyssibId    = "HySSIB"
    !character*50, public,  parameter :: LIS_sib2Id      = "SiB2"
    !character*50, public,  parameter :: LIS_tessId      = "HTESSEL"
-   character*50, public,  parameter :: LIS_jules43Id     = "JULES.4.3"
-   character*50, public,  parameter :: LIS_jules50Id     = "JULES.5.0"
-   character*50, public,  parameter :: LIS_jules51Id     = "JULES.5.1"
-   character*50, public,  parameter :: LIS_jules52Id     = "JULES.5.2"
-   character*50, public,  parameter :: LIS_jules53Id     = "JULES.5.3"
-   character*50, public,  parameter :: LIS_jules54Id     = "JULES.5.4"
-   character*50, public,  parameter :: LIS_jules5xId     = "JULES"
+   character*50, public,  parameter :: LIS_jules43Id   = "JULES.4.3"
+   character*50, public,  parameter :: LIS_jules50Id   = "JULES.5.0"
+   character*50, public,  parameter :: LIS_jules51Id   = "JULES.5.1"
+   character*50, public,  parameter :: LIS_jules52Id   = "JULES.5.2"
+   character*50, public,  parameter :: LIS_jules53Id   = "JULES.5.3"
+   character*50, public,  parameter :: LIS_jules54Id   = "JULES.5.4"
+   character*50, public,  parameter :: LIS_jules5xId   = "JULES"
    character*50, public,  parameter :: LIS_cableId     = "CABLE"
    character*50, public,  parameter :: LIS_fasstId     = "FASST"
    !character*50, public,  parameter :: LIS_sheelsId    = "SHEELS"
