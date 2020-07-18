@@ -76,6 +76,12 @@ subroutine snowmodel_readconfig()
      call LIS_verify(rc,'Write out SnowModel forcing file fields: not defined')
   enddo
 
+  call ESMF_ConfigFindLabel(LIS_config,"SnowModel parameters source option:",rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%sm_params_opt,rc=rc)
+     call LIS_verify(rc,'SnowModel parameters source option: not defined')
+  enddo
+
   call ESMF_ConfigFindLabel(LIS_config,"SnowModel preprocess code option:",rc=rc)
   do n=1,LIS_rc%nnest
      call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%call_sm_preproc,rc=rc)

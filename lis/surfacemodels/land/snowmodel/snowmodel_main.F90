@@ -281,11 +281,37 @@ subroutine snowmodel_main(n)
      ! Solid precipitation portion (units: m/time_step, for SnowModel)
      snowmodel_struc(n)%sm(t)%snowf = &
             sprec(col,row)
-      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWF, &
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWF, &
            value=snowmodel_struc(n)%sm(t)%snowf, &
            unit="m", vlevel=1, direction="DN", &
 !           unit="kg m-2", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
+
+     ! U-/V-wind components (units: m/s):
+     snowmodel_struc(n)%sm(t)%uwind = &
+            uwind_grid(col,row)
+     snowmodel_struc(n)%sm(t)%vwind = &
+            vwind_grid(col,row)
+
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_EWINDFORC, &
+           value=snowmodel_struc(n)%sm(t)%uwind, &
+           unit="m s-1", vlevel=1, direction="E", &
+           surface_type=LIS_rc%lsm_index)
+
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_NWINDFORC, &
+           value=snowmodel_struc(n)%sm(t)%vwind, &
+           unit="m s-1", vlevel=1, direction="N", &
+           surface_type=LIS_rc%lsm_index)
+
+     ! Albedo (units: -)
+     snowmodel_struc(n)%sm(t)%albedo = &
+            albedo(col,row)
+
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_ALBEDO, &
+           value=snowmodel_struc(n)%sm(t)%albedo, &
+           unit="-", vlevel=1, direction="-", &
+           surface_type=LIS_rc%lsm_index)
+
 
 ! ..............................................................
 !

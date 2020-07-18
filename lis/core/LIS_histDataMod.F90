@@ -2573,7 +2573,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_NWINDFORC,&
             LIS_histData(n)%head_lsm_list,&
-            n,1,ntiles,(/"m/s"/),2,(/"E", "N"/),1,1,1,&
+            n,1,ntiles,(/"m/s   "/),2,(/"E", "N"/),1,1,1,&
             model_patch=.true.)
     endif
 
@@ -2585,7 +2585,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_EWINDFORC,&
             LIS_histData(n)%head_lsm_list,&
-            n,1,ntiles,(/"m/s"/),2,(/"E", "N"/),1,1,1,&
+            n,1,ntiles,(/"m/s   "/),2,(/"E", "N"/),1,1,1,&
             model_patch=.true.)
     endif
 

@@ -87,6 +87,12 @@ module snowmodel_module
      real :: psurf
      real :: fheight
 
+!-------------------------------------------------------------------------
+! SnowModel Parameters
+!-------------------------------------------------------------------------
+     real :: smtopo          ! SnowModel topography field
+     real :: smvege          ! SnowModel vegetation class map
+
 !-----------------------------------------------------------------------
 ! SnowModel Output variables
 !-----------------------------------------------------------------------

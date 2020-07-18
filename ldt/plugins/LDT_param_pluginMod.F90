@@ -68,6 +68,7 @@ contains
     use Mosaic_parmsMod
     use RUC_parmsMod
     use JULES50_parmsMod
+    use SnowModel_parmsMod
 
   ! Noah 2.7.1 LSM:
     call registerlsmparamprocinit(trim(LDT_noah271Id)//char(0),&
@@ -229,6 +230,14 @@ contains
          JULES50Parms_writeHeader)
     call registerlsmparamprocwritedata(trim(LDT_jules50Id)//char(0),&
          JULES50Parms_writeData)
+
+  ! SnowModel LSM:
+    call registerlsmparamprocinit(trim(LDT_snowmodelId)//char(0),&
+         SnowModelParms_init)
+    call registerlsmparamprocwriteheader(trim(LDT_snowmodelId)//char(0),&
+         SnowModelParms_writeHeader)
+    call registerlsmparamprocwritedata(trim(LDT_snowmodelId)//char(0),&
+         SnowModelParms_writeData)
 
   end subroutine LDT_LSMparam_plugin
 

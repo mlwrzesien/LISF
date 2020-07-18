@@ -47,7 +47,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_gaussId     = "gaussian"   ! 4
    character*50, public,  parameter :: LDT_polarId     = "polar"      ! 5
    character*50, public,  parameter :: LDT_easev2Id    = "ease V2"    !
-   character*50, public,  parameter :: LDT_utmId       = "UTM"        ! ?
+   character*50, public,  parameter :: LDT_utmId       = "UTM"        ! ??
    character*50, public,  parameter :: LDT_hrapId      = "hrap"       ! 10
    character*50, public,  parameter :: LDT_catdomainId = "catchment"
 
@@ -179,6 +179,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_sachtet356Id  = "SACHTET.3.5.6"
    character*50, public,  parameter :: LDT_snow17Id      = "SNOW17"
    character*50, public,  parameter :: LDT_ruc37Id       = "RUC.3.7"
+   character*50, public,  parameter :: LDT_snowmodelId   = "SnowModel"
 
 !-------------------------------------------------------------------------
 ! Lake models and data

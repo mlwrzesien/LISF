@@ -111,9 +111,9 @@ subroutine readinput_lambert
   endif
 
   if(LDT_rc%npesx*LDT_rc%npesy.ne.LDT_npes) then 
-     write(LDT_logunit,*) 'Layout does not match the number of processors...'
-     write(LDT_logunit,*) 'npex, npey, ',LDT_rc%npesx,'x',LDT_rc%npesy,'!=',LDT_npes
-     write(LDT_logunit,*) 'Stopping program ..'
+     write(LDT_logunit,*) '[ERR] Layout does not match the number of processors...'
+     write(LDT_logunit,*) ' npex, npey, ',LDT_rc%npesx,'x',LDT_rc%npesy,'!=',LDT_npes
+     write(LDT_logunit,*) ' Stopping program ..'
      call LDT_endrun()
   endif
 

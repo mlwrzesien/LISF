@@ -17,6 +17,7 @@
 subroutine snowmodel_finalize()
 ! !USES:
   use LIS_coreMod,  only : LIS_rc
+  use LIS_logMod,   only : LIS_logunit
   use snowmodel_lsmMod
 !
 ! !DESCRIPTION:
@@ -29,18 +30,12 @@ subroutine snowmodel_finalize()
   integer :: t,n
 
   ! Print a banner when the model run is finished.
-  print *
-  print *,&
+  write(LIS_logunit,*)&
        & 'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
-  print *,&
-       & 'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
-  print *,&
+  write(LIS_logunit,*)&
        & '                 The SnowModel Run Has Finished                '
-  print *,&
+  write(LIS_logunit,*)&
        & 'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
-  print *,&
-       & 'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
-  print *
 
 
 end subroutine snowmodel_finalize

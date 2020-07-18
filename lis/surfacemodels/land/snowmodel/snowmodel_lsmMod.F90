@@ -82,6 +82,7 @@ module snowmodel_lsmMod
      real                     :: ht_rhobs
      integer                  :: call_sm_preproc
      integer                  :: write_sm_metfields
+     character(10)            :: sm_params_opt
 
      real, allocatable        :: lyrthk(:)
      real, allocatable        :: inittemp(:)
@@ -226,8 +227,17 @@ contains
        output_path_wo_assim,output_path_wi_assim,Tabler_1_flag,&
        Tabler_2_flag,tabler_sfc_path_name,print_var)
 
+
+      ! Check SnowModel parameter source origins:
+      if( snowmodel_struc(n)%sm_params_opt == "LDT" ) then
+        write(LIS_logunit,*) "[INFO] Reading in SnowModel LSM parameters from LDT"
+        ascii_topoveg = 2.0    ! No file read in by SnowModel; use LDT input
+      else
+        write(LIS_logunit,*) "[INFO] Reading in SnowModel LSM parameters from snowmodel.par file "
+      endif
+
        ! Check inputs to driving SnowModel:
-       write(LIS_logunit,*) "[INFO] Reading in SnowModel parameter options"
+       write(LIS_logunit,*) "[INFO] Reading in SnowModel input options"
        write(LIS_logunit,*) ' Run Micromet   : ',run_micromet
        write(LIS_logunit,*) ' Run EnBal      : ',run_enbal
        write(LIS_logunit,*) ' Run Snowpack   : ',run_snowpack
@@ -481,8 +491,6 @@ contains
        !  preprocessing necessary inputs to the submodel components:
        ! All below from the original snomodel_main.f ...
 
-       write(LIS_logunit,*) "[INFO] SnowModel 'main' calls for preprocessing inputs"
-
        ! This loop runs the correction/data assimilation adjustment
        !  iterations.
        if (ihrestart_flag.ge.0) then
@@ -512,47 +520,6 @@ contains
           endif
         endif
 
-        ! Perform a variety of preprocessing and model setup steps, like
-        !  read in topography and vegetation arrays, open input and output
-        !  files, etc.
-
-        if( snowmodel_struc(n)%call_sm_preproc == 1 ) then 
-
-         write(LIS_logunit,*) "[INFO] Calling original 'preprocess_code' routine "
-
-         CALL PREPROCESS_CODE(topoveg_fname,const_veg_flag,&
-          vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&
-          wind_min,Up_const,dz_susp,ztop_susp,fall_vel,Ur_const,&
-          ro_water,ro_air,gravity,vonKarman,pi,twopio360,snow_z0,&
-          nx,ny,sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&
-          topo_land,snow_d,topoflag,snow_d_init,snow_d_init_const,&
-          soft_snow_d,met_input_fname,igrads_metfile,deltax,deltay,&
-          snowtran_output_fname,micromet_output_fname,&
-          enbal_output_fname,snowpack_output_fname,print_micromet,&
-          print_enbal,print_snowpack,print_snowtran,run_micromet,&
-          run_enbal,run_snowpack,run_snowtran,ro_snow_grid,swe_depth,&
-          sum_runoff,sum_prec,ro_snow,twolayer_flag,sum_Qcs,&
-          canopy_int,ascii_topoveg,topo_ascii_fname,icorr_factor_loop,&
-          veg_ascii_fname,undef,isingle_stn_flag,max_iter,&
-          i_tair_flag,i_rh_flag,i_wind_flag,i_prec_flag,sum_glacmelt,&
-          snow_depth,sum_d_canopy_int,corr_factor,icorr_factor_index,&
-          sum_sfcsublim,barnes_lg_domain,n_stns_used,k_stn,xmn,ymn,&
-          ro_soft_snow_old,sum_swemelt,xlat,lat_solar_flag,xlat_grid,&
-          xlon_grid,UTC_flag,dt,swe_depth_old,canopy_int_old,&
-          vegsnowd_xy,iveg_ht_flag,ihrestart_flag,i_dataassim_loop,&
-          multilayer_snowpack,max_layers,multilayer_output_fname,&
-          print_multilayer,KK,tslsnowfall,tsls_threshold,&
-          irun_data_assim,izero_snow_date,iclear_mn,iclear_dy,&
-          xclear_hr,snod_layer,swed_layer,ro_layer,T_old,gamma,&
-          icond_flag,curve_lg_scale_flag,curve_wt_lg,check_met_data,&
-          seaice_run,snowmodel_line_flag,xg_line,yg_line,print_user,&
-          cf_precip_flag,cf_precip,print_inc,xhour_init,Tabler_1_flag,&
-          Tabler_2_flag,iyear_init,imonth_init,iday_init,print_var,&
-          output_path_wo_assim,output_path_wi_assim,nrecs_max,&
-          tabler_sfc_path_name,print_outvars,diam_layer)
-
-         endif
-
        end do
 
        ! ------------------------------
@@ -573,6 +540,8 @@ contains
           snowmodel_struc(n)%sm(t)%rainf = 0
           snowmodel_struc(n)%sm(t)%snowf = 0
 !          snowmodel_struc(n)%sm(t)%z0 = 0
+          snowmodel_struc(n)%sm(t)%uwind = 0
+          snowmodel_struc(n)%sm(t)%vwind = 0
        enddo
 
        ! Initialize snow fields (for now here; will be added as 

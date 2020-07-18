@@ -327,8 +327,11 @@ subroutine READPARAM_CODE(dt,deltax,deltay,Utau_t_flag,&
             cpar_name(ipar_count) = c_param(1:i_param_chars)
             call char2real(ascii_topoveg,i_value_chars,c_value,&
                  &        c_param(1:i_param_chars))
-            if (ascii_topoveg.ne.0.0 .and. ascii_topoveg.ne.1.0) then
-               print *,'ascii_topoveg not 0.0 or 1.0'
+!            if (ascii_topoveg.ne.0.0 .and. ascii_topoveg.ne.1.0) then
+!               print *,'ascii_topoveg not 0.0 or 1.0'
+!           Update here to allow for fields to be read in from LDT (KRA; 2020-07-16)
+            if (ascii_topoveg.lt.0.0 .and. ascii_topoveg.gt.2.0) then
+               print *,'ascii_topoveg not 0.0, 1.0, or 2.0'
                stop
             endif
          endif
