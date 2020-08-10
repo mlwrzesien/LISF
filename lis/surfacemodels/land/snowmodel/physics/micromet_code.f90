@@ -2,6 +2,7 @@
 
 ! ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ! ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+#include "LIS_misc.h"
 
 subroutine MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay,&
      &  iyear_init,imonth_init,iday_init,xhour_init,dt,undef,&
@@ -25,6 +26,7 @@ subroutine MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay,&
 
   use snowmodel_inc
   use LIS_logMod,   only : LIS_logunit
+  use LIS_coreMod
  
   implicit none
 
@@ -121,7 +123,7 @@ subroutine MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay,&
 ! ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
   ! ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-   write(LIS_logunit,*) "[INFO] MICRO MET ... (KRA) "
+!   write(LIS_logunit,*) "[INFO] MICRO MET ... (KRA) "
 
   if(.not.allocated(topo_ref_grid)) then
      allocate(topo_ref_grid(nx,ny))
@@ -1078,9 +1080,17 @@ subroutine wind(nx,ny,deltax,deltay,xmn,ymn,windspd_orig,&
 ! c   with interpolating over the 360/0 direction line.)
 
   use snowmodel_inc
+! KRA
+  use LIS_coreMod
+  use LIS_mpiMod
+  use snowmodel_lsmMod, only : snowmodel_struc
+! KRA
+
   implicit none
 
 !      include 'snowmodel.inc'
+
+  integer :: ierr  ! KRA
   
   integer nx       ! number of x output values
   integer ny       ! number of y output values
@@ -1111,11 +1121,11 @@ subroutine wind(nx,ny,deltax,deltay,xmn,ymn,windspd_orig,&
   real u(nstns_max)      ! u component of wind
   real v(nstns_max)      ! v component of wind
 
-  real dn                  ! average observation spacing
-  real uwind_grid(nx,ny)  ! output values
-  real vwind_grid(nx,ny)  ! output values
-  real u_grid(nx,ny)  ! temporary u wind component
-  real v_grid(nx,ny)  ! temporary v wind component
+  real dn                   ! average observation spacing
+  real uwind_grid(nx,ny)    ! output values
+  real vwind_grid(nx,ny)    ! output values
+  real u_grid(nx,ny)        ! temporary u wind component
+  real v_grid(nx,ny)        ! temporary v wind component
   real winddir_grid(nx,ny)  ! temporary wind direction
   real windspd_grid(nx,ny)  ! temporary wind speed
 
@@ -1258,6 +1268,38 @@ subroutine wind(nx,ny,deltax,deltay,xmn,ymn,windspd_orig,&
         v_sum = v_sum + vwind_grid(i,j)
      enddo
   enddo
+
+! KRA
+#if (defined SPMD)
+! CAF calls for locating totals ... (Alessandro)
+!  call co_sum(u_sum)
+!  call co_sum(v_sum)
+!  call co_max(windspd_flag)
+
+!  print *, "wind: ",LIS_localPet+1, u_sum, v_sum, windspd_flag
+  call MPI_Barrier(LIS_MPI_COMM, ierr)
+  call MPI_ALLREDUCE(u_sum, snowmodel_struc(1)%usum_glb, 1,&
+           MPI_REAL, MPI_SUM,&
+           LIS_mpi_comm, ierr)
+  call MPI_Barrier(LIS_MPI_COMM, ierr)
+  call MPI_ALLREDUCE(v_sum, snowmodel_struc(1)%vsum_glb, 1,&
+           MPI_REAL, MPI_SUM,&
+           LIS_mpi_comm, ierr)
+  call MPI_Barrier(LIS_MPI_COMM, ierr)
+  call MPI_ALLREDUCE(windspd_flag, snowmodel_struc(1)%windspdflg_glb, 1,&
+           MPI_REAL, MPI_MAX,&
+           LIS_mpi_comm, ierr)
+
+  u_sum = snowmodel_struc(1)%usum_glb
+  v_sum = snowmodel_struc(1)%vsum_glb
+  windspd_flag = snowmodel_struc(1)%windspdflg_glb
+
+!  print *, " final u_sum: ",u_sum
+!  print *, " final v_sum: ",v_sum
+!  print *, " final wspdflag: ",windspd_flag
+
+#endif
+! KRA
 
   u_sum = u_sum / real(nx*ny)
   v_sum = v_sum / real(nx*ny)
@@ -1451,6 +1493,8 @@ subroutine temperature(nx,ny,deltax,deltay,xmn,ymn,&
 ! c   Greenland. J. Applied Meteorology and Climatology, 49, 47-67.
 
   use snowmodel_inc
+  use LIS_coreMod
+
   implicit none
 
   !include 'snowmodel.inc'
@@ -1478,8 +1522,8 @@ subroutine temperature(nx,ny,deltax,deltay,xmn,ymn,&
   real elev_orig(nstns_max) ! station elevation
   real Tair_orig(nstns_max) ! input values
 
-  real dn                  ! average observation spacing
-  real topo(nx,ny) ! grid topography
+  real dn               ! average observation spacing
+  real topo(nx,ny)      ! grid topography
   real Tair_grid(nx,ny) ! output values
 
   integer ifill    ! flag (=1) forces a value in every cell
@@ -1492,6 +1536,20 @@ subroutine temperature(nx,ny,deltax,deltay,xmn,ymn,&
   integer i,j,k,n_stns_used
   integer k_stn(nx,ny,9)
   real seaice_run
+
+
+!KRA
+!  print *, nstns_orig, n_stns_used
+
+!  print *, xhour
+!  print *, T_lapse_rate
+!  print *, dn
+!  print *, ifill, iobsint
+
+!  print *, nx, ny
+!  print *, deltax, deltay
+!  print *, xmn, ymn
+!KRA
 
 ! c Filter through the original input data, and eliminate any
 ! c   missing values.
@@ -1515,12 +1573,36 @@ subroutine temperature(nx,ny,deltax,deltay,xmn,ymn,&
        &  k_stn,snowmodel_line_flag,xg_line,yg_line,seaice_run)
 
 !c Convert these grid values back to the actual gridded elevations.
+
+#if 0
+        if( LIS_localPet+1 == 1 ) then
+          do j=1,ny
+            do i=1, nx
+              write(110,*) i,j,topo(i,j)
+            enddo
+          enddo
+        elseif( LIS_localPet+1 == 2 ) then
+          do j=1,ny
+            do i=1,nx
+!               write(101,*) LIS_localPet+1, i+LIS_rc%lnc(n),j,topo(i,j)
+               write(111,*) i+nx,j,topo(i,j)
+            enddo
+          enddo
+        endif
+#endif
+
   do j=1,ny
      do i=1,nx
+!        write(199,*) i,j,tair_grid(i,j)
         delta_topo = topo(i,j) - topo_ref
         Tair_grid(i,j) = Tair_grid(i,j) + T_lapse_rate * delta_topo
+!        write(200,*) i, j, topo(i,j) 
      enddo
   enddo
+
+! KRA
+! stop
+! KRA
 
   return
 end subroutine temperature
@@ -1534,10 +1616,16 @@ subroutine topo_mod_winds(nx,ny,winddir_grid,slopewt,curvewt,&
      &  vegsnowd_xy,curve_len_scale,deltax,deltay)
 
   use snowmodel_inc
+! KRA
+  use LIS_coreMod
+  use LIS_mpiMod
+  use snowmodel_lsmMod, only : snowmodel_struc
+! KRA
   implicit none
 
    !   include 'snowmodel.inc'
 
+  integer :: ierr  ! KRA
   integer i,j,nx,ny,nveg,k
 
   real pi,deg2rad,rad2deg,slopewt,curvewt,dirdiff,curve_len_scale, &
@@ -1584,6 +1672,19 @@ subroutine topo_mod_winds(nx,ny,winddir_grid,slopewt,curvewt,&
         wslope_max = max(wslope_max,abs(wind_slope(i,j)))
      enddo
   enddo
+
+! KRA
+#if (defined SPMD)
+! call co_max(wslope_max)
+!  print *, "wslope_max: ",LIS_localPet+1, wslope_max
+  call MPI_Barrier(LIS_MPI_COMM, ierr)
+  call MPI_ALLREDUCE(wslope_max, snowmodel_struc(1)%wslopemax_glb, 1,&
+           MPI_REAL, MPI_MAX,&
+           LIS_mpi_comm, ierr)
+  wslope_max = snowmodel_struc(1)%wslopemax_glb
+!  print *, "final wslope_max: ",wslope_max
+#endif
+! KRA
   
   do j=1,ny
      do i=1,nx
@@ -1699,9 +1800,16 @@ subroutine topo_data(nx,ny,deltax,deltay,topo,&
      &  curvature,terrain_slope,slope_az,curve_len_scale)
 
   use snowmodel_inc
+! KRA
+  use LIS_coreMod
+  use LIS_mpiMod
+  use snowmodel_lsmMod, only : snowmodel_struc
+! KRA
   implicit none
 
 !      include 'snowmodel.inc'
+
+  integer :: ierr  ! KRA
 
   integer i,j,nx,ny,inc
 
@@ -1768,6 +1876,17 @@ subroutine topo_data(nx,ny,deltax,deltay,topo,&
            curve_max = max(curve_max,abs(curvature(i,j)))
         enddo
      enddo
+
+! KRA
+#if (defined SPMD)
+! call co_max(curve_max)
+  call MPI_Barrier(LIS_MPI_COMM, ierr)
+  call MPI_ALLREDUCE(curve_max, snowmodel_struc(1)%curvemax_glb, 1,&
+           MPI_REAL, MPI_MAX,&
+           LIS_mpi_comm, ierr)
+  curve_max = snowmodel_struc(1)%curvemax_glb
+#endif
+! KRA
 
      do j=1,ny
         do i=1,nx
@@ -1914,6 +2033,9 @@ subroutine interpolate(nx,ny,deltax,deltay,xmn,ymn,&
                    &          snowmodel_line_flag)
            endif
 
+           xstn_tmp = 0. 
+           ystn_tmp = 0.
+
            do j=1,ny
               do i=1,nx
 
@@ -1923,6 +2045,11 @@ subroutine interpolate(nx,ny,deltax,deltay,xmn,ymn,&
                     xstn_tmp(k) = xstn(k_stn(i,j,k))
                     ystn_tmp(k) = ystn(k_stn(i,j,k))
                     var_tmp(k) = var(k_stn(i,j,k))
+! KRA
+!                    write(299,*) k_stn(i,j,k), xstn_tmp(k_stn(i,j,k)), ystn_tmp(k_stn(i,j,k))
+!                    write(300,*) k, i, j, xstn(k_stn(i,j,k)), var(k_stn(i,j,k))
+!                    write(303,*) k, i, j, k_stn(i,j,k)
+! KRA
                  enddo
 !c Do the interpolation for this model grid cell.
                  call barnes_oi_ij(nx,ny,deltax,deltay,xmn,ymn,&

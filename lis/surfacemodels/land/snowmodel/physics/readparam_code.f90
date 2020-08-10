@@ -131,8 +131,9 @@ subroutine READPARAM_CODE(dt,deltax,deltay,Utau_t_flag,&
   cpar_name = '0'
 
   max_par_lines = 1500
-  nx = 0
-  ny = 0
+! KRA: Reading in nx, ny values
+!  nx = 0
+!  ny = 0
 
 !c     open (40,file='snowmodel.par')
   open (40,file=snowmodel_dot_par_fname)
@@ -161,8 +162,9 @@ subroutine READPARAM_CODE(dt,deltax,deltay,Utau_t_flag,&
         if (c_param(1:i_param_chars).eq.'nx') then
            ipar_count = ipar_count + 1
            cpar_name(ipar_count) = c_param(1:i_param_chars)
-           call char2int(nx,i_value_chars,c_value,&
-                &        c_param(1:i_param_chars))
+!KRA
+!           call char2int(nx,i_value_chars,c_value,&
+!                &        c_param(1:i_param_chars))
            if (nx.le.0) then
               print *,'nx cannot be less than or equal to 0'
               stop
@@ -172,8 +174,9 @@ subroutine READPARAM_CODE(dt,deltax,deltay,Utau_t_flag,&
         if (c_param(1:i_param_chars).eq.'ny') then
            ipar_count = ipar_count + 1
            cpar_name(ipar_count) = c_param(1:i_param_chars)
-           call char2int(ny,i_value_chars,c_value,&
-                &        c_param(1:i_param_chars))
+!KRA
+!           call char2int(ny,i_value_chars,c_value,&
+!                &        c_param(1:i_param_chars))
            if (ny.le.0) then
               print *,'ny cannot be less than or equal to 0'
               stop

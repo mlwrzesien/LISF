@@ -313,7 +313,9 @@ c Read the data in as real numbers, and do the yrev.
 
 c Now that we have read in the topo and veg data arrays, check
 c   whether all of the values look like valid numbers.
-      do i=1,nx
+c KRA
+      if (ascii_topoveg.eq.0.0 .or. ascii_topoveg.eq.1.0) then
+       do i=1,nx
         do j=1,ny
           if (vegtype(i,j).lt.1.0 .or. vegtype(i,j).gt.30.0) then
             print *, 'Found Invalid Vegetation-Type Value'
@@ -327,7 +329,9 @@ c   whether all of the values look like valid numbers.
             stop
           endif
         enddo
-      enddo
+       enddo
+      endif
+cKRA
 
 c Fill the the vegetation snow-holding depth array for vegetation
 c   types 1 through 24 (types 25 through 30 were filled from the
@@ -724,8 +728,10 @@ c   nearest-station indexing array.
           print *,'invalid n_stns_used value'
           stop
         endif
-        call get_nearest_stns_1(nx,ny,xmn,ymn,deltax,deltay,
-     &    n_stns_used,k_stn,snowmodel_line_flag,xg_line,yg_line)
+c KRA
+!        call get_nearest_stns_1(nx,ny,xmn,ymn,deltax,deltay,
+!     &    n_stns_used,k_stn,snowmodel_line_flag,xg_line,yg_line)
+c KRA
       endif
 
 c If this is a history restart run, advance the micromet input

@@ -2087,9 +2087,16 @@ end subroutine SNOWTRAN_CODE
       &  snow_z0,veg_z0,bs_flag,nx,ny,Utau_t,soft_snow_d)
 
    use snowmodel_inc
+! KRA
+   use LIS_coreMod
+   use LIS_mpiMod
+   use snowmodel_lsmMod, only : snowmodel_struc
+! KRA
    implicit none
 
 !      include 'snowmodel.inc'
+
+   integer :: ierr  ! KRA
    
    integer i,j,nx,ny
 
@@ -2185,6 +2192,19 @@ end subroutine SNOWTRAN_CODE
          
       enddo
    enddo
+
+! KRA
+#if (defined SPMD)
+!  call co_max(bs_flag)
+!   print *, "bs_flag: ", LIS_localPet+1, bs_flag
+   call MPI_Barrier(LIS_MPI_COMM, ierr)
+   call MPI_ALLREDUCE(bs_flag, snowmodel_struc(1)%bsflag_glb, 1,&
+           MPI_REAL, MPI_MAX,&
+           LIS_mpi_comm, ierr)
+   bs_flag = snowmodel_struc(1)%bsflag_glb
+!   print *, "final bs_flag: ", bs_flag
+#endif
+! KRA
    
    return
  end subroutine solveUtau

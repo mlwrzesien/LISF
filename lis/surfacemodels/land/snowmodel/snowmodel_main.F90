@@ -22,6 +22,7 @@ subroutine snowmodel_main(n)
   use LIS_logMod,        only : LIS_logunit, LIS_endrun
   use LIS_histDataMod
   use LIS_FORC_AttributesMod
+
   use snowmodel_module
   use snowmodel_lsmMod
   use snowmodel_inc
@@ -41,16 +42,25 @@ subroutine snowmodel_main(n)
 !   index of the nest
 !  \end{description}
 !EOP
-    implicit none
+  implicit none
 
-    integer, intent(in)   :: n
-    integer               :: t, status
-    integer               :: row, col
+  integer, intent(in)   :: n
+
+  integer           :: t, status
+  integer           :: row, col
+  double precision  :: xmn_part  ! center x of local LL starting point
+  double precision  :: ymn_part  ! center y of local LL starting point
 
 ! --------------------------------------------
 
    write(LIS_logunit,*) '[INFO] Call to the SnowModel Main routine ...'
 
+!   print *, LIS_localPet, LIS_localPet+1
+!   print *, LIS_ews_halo_ind(n,LIS_localPet+1), &
+!            LIS_ewe_halo_ind(n,LIS_localPet+1), &
+!            LIS_nss_halo_ind(n,LIS_localPet+1), &
+!            LIS_nse_halo_ind(n,LIS_localPet+1)
+ 
    iter_start = 1
    snowmodel_struc(n)%iter = snowmodel_struc(n)%iter + 1
    iter = snowmodel_struc(n)%iter
@@ -60,7 +70,18 @@ subroutine snowmodel_main(n)
    ! Distribute the meteorological station data.
    if (run_micromet.eq.1.0) then
 !      print *, "Calling micromet ..."
-      CALL MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay, &
+
+       ! Using local parallel subdomain starting index values:
+       ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
+       xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
+       ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
+
+!       print *, xmn, ymn
+!       print *, LIS_ews_halo_ind(n,LIS_localPet+1), LIS_nss_halo_ind(n,LIS_localPet+1)
+!       print *, xmn_part, ymn_part
+
+!      CALL MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay, &
+      CALL MICROMET_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),xmn_part,ymn_part,deltax,deltay, &
          iyear_init,imonth_init,iday_init,xhour_init,dt,undef,&
          ifill,iobsint,dn,iter,curve_len_scale,slopewt,curvewt,&
          topo,curvature,terrain_slope,slope_az,Tair_grid,&
@@ -84,7 +105,8 @@ subroutine snowmodel_main(n)
    ! Perform a surface energy balance over the domain.
    if (run_enbal.eq.1.0) then
 !      print *, "Calling enbal ..."
-       CALL ENBAL_CODE(nx,ny,Tair_grid,uwind_grid,sfc_pressure,&
+!       CALL ENBAL_CODE(nx,ny,Tair_grid,uwind_grid,sfc_pressure,&
+       CALL ENBAL_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),Tair_grid,uwind_grid,sfc_pressure,&
          vwind_grid,rh_grid,Tsfc,Qsi_grid,Qli_grid,Qle,Qh,Qe,&
          Qc,Qm,e_balance,Qf,snow_d,ht_windobs,icond_flag,&
          albedo,snow_z0,veg_z0,vegtype,undef,albedo_snow_forest,&
@@ -96,7 +118,8 @@ subroutine snowmodel_main(n)
    !   precipitation inputs.
    if (run_snowpack.eq.1.0) then
 !      print *, "Calling snowpack ..."
-      CALL SNOWPACK_CODE(nx,ny,Tair_grid,rh_grid,ro_nsnow,&
+!      CALL SNOWPACK_CODE(nx,ny,Tair_grid,rh_grid,ro_nsnow,&
+      CALL SNOWPACK_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),Tair_grid,rh_grid,ro_nsnow,&
          dt,swe_depth,Tsfc,snow_d,prec_grid,runoff,Qm,rain,&
          sprec,iter,w_balance,sum_prec,sum_runoff,xro_snow,&
          undef,ro_snow,ro_snow_grid,soft_snow_d,sum_sprec,&
@@ -120,7 +143,8 @@ subroutine snowmodel_main(n)
          conc_salt,deltax,deltay,dh_salt,dh_salt_u,dh_salt_v,&
          dh_susp,dh_susp_u,dh_susp_v,dt,dz_susp,fall_vel,fetch,&
          gravity,h_const,h_star,ht_rhobs,ht_windobs,index_ue,&
-         index_uw,index_vn,index_vs,iter,nx,ny,pi,Qsalt,Qsalt_max,&
+!         index_uw,index_vn,index_vs,iter,nx,ny,pi,Qsalt,Qsalt_max,&
+         index_uw,index_vn,index_vs,iter,LIS_rc%lnc(n),LIS_rc%lnr(n),pi,Qsalt,Qsalt_max,&
          Qsalt_maxu,Qsalt_maxv,Qsalt_u,Qsalt_v,Qsubl,Qsusp,&
          Qsusp_u,Qsusp_v,rh_grid,ro_air,ro_snow,ro_water,snow_d,&
          snow_d_init,snow_z0,soft_snow_d,sprec,sum_glacmelt,&
@@ -149,7 +173,8 @@ subroutine snowmodel_main(n)
 #if 0
    ! Save the outputs from the SNOWPACK and SNOWTRAN routines
    if (print_user.eq.1.0) then
-      CALL OUTPUTS_USER(nx,ny,iter,Tair_grid,rh_grid,&
+!      CALL OUTPUTS_USER(nx,ny,iter,Tair_grid,rh_grid,&
+      CALL OUTPUTS_USER(LIS_rc%lnc(n),LIS_rc%lnr(n),iter,Tair_grid,rh_grid,&
          uwind_grid,vwind_grid,windspd_grid,winddir_grid,&
          Qsi_grid,Qli_grid,prec_grid,Tsfc,Qle,Qh,Qe,Qc,Qm,Qf,&
          e_balance,snow_depth,xro_snow,swe_depth,ro_nsnow,&
@@ -312,6 +337,21 @@ subroutine snowmodel_main(n)
            unit="-", vlevel=1, direction="-", &
            surface_type=LIS_rc%lsm_index)
 
+     ! Parameter fields:
+     ! Topographic - elevation (m):
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_ELEVATION, &
+!           value=snowmodel_struc(n)%sm(t)%smtopo, &
+           value=topo(col,row), &
+!           value=topo_land(col,row), &
+           unit="m", vlevel=1, direction="-", &
+           surface_type=LIS_rc%lsm_index)
+
+     ! Vegetation type:
+     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_LANDCOVER, &
+!           value=snowmodel_struc(n)%sm(t)%smvege, &
+           value=vegtype(col,row), &
+           unit="-", vlevel=1, direction="-", &
+           surface_type=LIS_rc%lsm_index)
 
 ! ..............................................................
 !
@@ -375,13 +415,15 @@ subroutine snowmodel_main(n)
         xhour.eq.xclear_hr) then
 
       if (seaice_run.eq.4.0) then
-         CALL ZERO_SNOW_SEAICE_4(nx,ny,snow_depth,ro_snow_grid,&
+!         CALL ZERO_SNOW_SEAICE_4(nx,ny,snow_depth,ro_snow_grid,&
+         CALL ZERO_SNOW_SEAICE_4(LIS_rc%lnc(n),LIS_rc%lnr(n),snow_depth,ro_snow_grid,&
             ro_snow,swe_depth,swe_depth_old,canopy_int_old,KK,&
             sum_swemelt,tslsnowfall,snod_layer,swed_layer,&
             ro_layer,T_old,sum_sprec,multilayer_snowpack,&
             tsls_threshold,iyear,diam_layer,output_path_wo_assim)
       else
-         CALL ZERO_SNOW(nx,ny,snow_depth,ro_snow_grid,ro_snow,&
+!         CALL ZERO_SNOW(nx,ny,snow_depth,ro_snow_grid,ro_snow,&
+         CALL ZERO_SNOW(LIS_rc%lnc(n),LIS_rc%lnr(n),snow_depth,ro_snow_grid,ro_snow,&
             swe_depth,swe_depth_old,canopy_int_old,KK,sum_swemelt,&
             tslsnowfall,snod_layer,swed_layer,ro_layer,T_old,&
             sum_sprec,multilayer_snowpack,tsls_threshold,&

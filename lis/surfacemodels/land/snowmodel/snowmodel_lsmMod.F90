@@ -116,7 +116,14 @@ module snowmodel_lsmMod
      real                     :: run_snowpack
      real                     :: run_snowtran
 
-!xmn,ymn,deltax,deltay,
+
+     real                     :: usum_glb
+     real                     :: vsum_glb
+     real                     :: windspdflg_glb
+     real                     :: wslopemax_glb
+     real                     :: curvemax_glb
+     real                     :: bsflag_glb
+
 !     &        iyear_init,imonth_init,iday_init,xhour_init,dt,undef,
 !     &        ifill,iobsint,dn,iter,curve_len_scale,slopewt,curvewt,
 !     &        topo,curvature,terrain_slope,slope_az,Tair_grid,
@@ -135,8 +142,6 @@ module snowmodel_lsmMod
 !     &        snowmodel_line_flag,xg_line,yg_line,irun_data_assim,
 !     &        wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,
 !     &        cloud_frac_grid,snowfall_frac,seaice_run
-
-
 
      type(snowmodeldec), allocatable :: sm(:)
 
@@ -158,8 +163,8 @@ contains
     use LIS_surfaceModelDataMod, only : LIS_sfmodel_struc
     use LIS_timeMgrMod,   only : LIS_clock, LIS_calendar, &
          LIS_update_timestep, LIS_registerAlarm
-    use LIS_logMod,       only : LIS_verify, LIS_logunit
-
+    use LIS_logMod,       only : LIS_verify, LIS_logunit,&
+                                 LIS_endrun
     use snowmodel_inc
     use snowmodel_vars
 !
@@ -191,6 +196,11 @@ contains
     do n=1,LIS_rc%nnest
 
       allocate(snowmodel_struc(n)%sm(LIS_rc%npatch(n,LIS_rc%lsm_index)))
+      allocate(glb_topoland(LIS_rc%gnc(n),LIS_rc%gnr(n)))
+      allocate(glb_vegtype(LIS_rc%gnc(n),LIS_rc%gnr(n)))
+
+      glb_topoland = 0.
+      glb_vegtype = 0.
 
       ! Call Snowmodel read parameter subroutine to read in
       !  primary parameter and input settings to run the model:
@@ -202,7 +212,8 @@ contains
        subgrid_flag,twolayer_flag,snowmodel_dot_par_fname,&
        bc_flag,curve_len_scale,slopewt,curvewt,ht_windobs,&
        ht_rhobs,ro_snow,snow_d_init_const,const_veg_flag,&
-       vegsnowdepth,nx,ny,max_iter,met_input_fname,xmn,ymn,&
+!       vegsnowdepth,nx,ny,max_iter,met_input_fname,xmn,ymn,&
+       vegsnowdepth,LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,met_input_fname,xmn,ymn,&
        iyear_init,imonth_init,iday_init,xhour_init,undef,ifill,&
        iobsint,dn,xlat,i_tair_flag,i_rh_flag,i_wind_flag,&
        i_solar_flag,i_prec_flag,isingle_stn_flag,igrads_metfile,&
@@ -226,7 +237,6 @@ contains
        iprecip_scheme,cf_precip_flag,snowfall_frac,print_inc,&
        output_path_wo_assim,output_path_wi_assim,Tabler_1_flag,&
        Tabler_2_flag,tabler_sfc_path_name,print_var)
-
 
       ! Check SnowModel parameter source origins:
       if( snowmodel_struc(n)%sm_params_opt == "LDT" ) then
@@ -509,13 +519,15 @@ contains
        ! calculations.
         if (irun_data_assim.eq.1 .and. icorr_factor_loop.eq.2) then
           write(LIS_logunit,*) "[WARN] No call to 'DATAASSIM_USER' at this time"    
-          CALL DATAASSIM_USER(nx,ny,icorr_factor_index,&
+!          CALL DATAASSIM_USER(nx,ny,icorr_factor_index,&
+          CALL DATAASSIM_USER(LIS_rc%lnc(n),LIS_rc%lnr(n),icorr_factor_index,&
             corr_factor,max_iter,deltax,deltay,xmn,ymn,nobs_dates,&
             print_inc,iday_init,imonth_init,iyear_init,dt,&
             output_path_wo_assim,xhour_init)
           if (ihrestart_flag.ge.-1) then
           write(LIS_logunit,*) "[WARN] No call to 'HRESTART_SAVE_DA' at this time"    
-            CALL HRESTART_SAVE_DA(nx,ny,max_iter,corr_factor,&
+!            CALL HRESTART_SAVE_DA(nx,ny,max_iter,corr_factor,&
+            CALL HRESTART_SAVE_DA(LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,corr_factor,&
               icorr_factor_index,nobs_dates)
           endif
         endif
