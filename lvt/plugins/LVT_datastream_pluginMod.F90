@@ -166,7 +166,9 @@ contains
     use ASOSWE_obsMod,          only : ASOSWE_obsinit
     use IMERG_dataMod,          only : IMERG_datainit
     use UASNOW_obsMod,          only : UASNOW_obsinit
- 
+    use OzFlux_obsMod,          only : OzFlux_obsinit
+    use JASMINsm_obsMod,        only : JASMINsm_obsInit
+
     external readtemplateObs
     external readLISoutput
     external readLIS6output
@@ -268,6 +270,8 @@ contains
     external readASOSWEObs
     external readIMERGdata
     external readUASNOWObs
+    external readOzFluxObs
+    external readJASMINsmobs
 
     call registerobsread(trim(LVT_LVTbenchmarkobsId)//char(0),&
          readLVTbenchmarkOUTobs)
@@ -678,5 +682,12 @@ contains
     call registerobssetup(trim(LVT_UASNOWdataId)//char(0), UASNOW_obsinit)
     call registerobsread(trim(LVT_UASNOWdataId)//char(0) , readUASNOWObs)
 
+    call registerobssetup(trim(LVT_OzFluxdataId)//char(0), OzFlux_obsinit)
+    call registerobsread(trim(LVT_OzFluxdataId)//char(0) , readOzFluxObs)
+
+    call registerobssetup(trim(LVT_JASMINsmobsId)//char(0), &
+         JASMINsm_obsinit)
+    call registerobsread(trim(LVT_JASMINsmobsId)//char(0),&
+         readJASMINsmobs)
   end subroutine LVT_datastream_plugin
 end module LVT_datastream_pluginMod

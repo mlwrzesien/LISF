@@ -18,6 +18,7 @@ module LDT_pluginIndices
 ! !REVISION HISTORY:
 !  23 Oct 2008: Sujay Kumar  -- Initial Specification
 !  17 Jul 2012: KR Arsenault -- Updated entries with capitalization rules
+!  01 Mar 2020: Yeosang Yoon -- Added MERIT DEM
 !
 !EOP
   PRIVATE
@@ -37,6 +38,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_StatDscaleMetforcprocId = "Statistical downscaling of met forcing"
    character*50, public,  parameter :: LDT_usafsiId = "USAFSI analysis"
    character*50, public,  parameter :: LDT_OPTUEparamprocId   = "OPTUE parameter processing"
+   character*50, public,  parameter :: LDT_LISHydropreprocId  = "LISHydro preprocessing for WRFHydro"
 
 !-------------------------------------------------------------------------
 ! Domains
@@ -115,6 +117,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_princetonId    = "PRINCETON"
    character*50, public,  parameter :: LDT_merralandId    = "MERRA-Land"
    character*50, public,  parameter :: LDT_merra2Id       = "MERRA2"
+   character*50, public,  parameter :: LDT_era5Id         = "ERA5"
    character*50, public,  parameter :: LDT_gswp1Id        = "GSWP1"
    character*50, public,  parameter :: LDT_gswp2Id        = "GSWP2"
    character*50, public,  parameter :: LDT_nldas1Id       = "NLDAS1"
@@ -234,6 +237,7 @@ module LDT_pluginIndices
    character*50, public, parameter :: LDT_gtopoNATId = "GTOPO30_Native"
    character*50, public, parameter :: LDT_srtmLISId  = "SRTM_LIS"
    character*50, public, parameter :: LDT_srtmNATId  = "SRTM_Native"
+   character*50, public, parameter :: LDT_merit1KId  = "MERIT_1K"
 
 !-------------------------------------------------------------------------
 ! Soils sources
