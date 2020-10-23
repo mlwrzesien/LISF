@@ -16,7 +16,7 @@ module snowmodel_inc
   ! c   If you want to run a longer time domain, then you have to
   ! c   change this number and recompile the code.
   
-  integer, parameter :: max_time_steps=30000
+  integer, parameter :: max_time_steps=8784
   
   ! c nstns_max is the maximum number of stations that can be used
   ! c   in the data assimilation routines.

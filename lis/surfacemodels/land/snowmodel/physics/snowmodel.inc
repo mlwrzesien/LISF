@@ -17,7 +17,7 @@ c max_time_steps defines the maximum number of time steps that
 c   will be used in the current compliled version of the code.
 c   If you want to run a longer time domain, then you have to
 c   change this number and recompile the code.
-      parameter (max_time_steps=30000)
+      parameter (max_time_steps=8784)
 
 c nstns_max is the maximum number of stations that can be used
 c   in the data assimilation routines.
