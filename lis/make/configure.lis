@@ -25,7 +25,7 @@ LIB_PROF_UTIL   =
 INC_CMEM        = 
 LIB_CMEM        = 
 LIB_LAPACK      = 
-CFLAGS          = -c  -g -Wall -Wcast-qual -Wcheck -Wdeprecated -Wextra-tokens -Wformat -Wformat-security -Wmissing-declarations -Wmissing-prototypes -Wpointer-arith -Wremarks -Wreturn-type -Wshadow -Wsign-compare -Wstrict-prototypes -Wtrigraphs -Wuninitialized -Wunused-function -Wunused-parameter -Wunused-variable -Wwrite-strings -check=conversions,stack,uninit -fp-stack-check -fp-trap=common -fp-trap-all=common -ftrapuv -traceback -DIFC -DLINUX -DLIS_JULES
-FFLAGS77        = -c  -g  -check bounds,format,output_conversion,pointers,stack,uninit -fp-stack-check -ftrapuv -traceback -nomixed_str_len_arg -names lowercase -convert little_endian -assume byterecl -DSPMD -DHIDE_SHR_MSG -DNO_SHR_VMATH -DIFC -DLINUX -I$(MOD_ESMF) -DUSE_INCLUDE_MPI -I$(INC_ECCODES) -I$(INC_NETCDF) -I$(INC_HDF5) -DLIS_JULES
-FFLAGS          = -c  -g  -check bounds,format,output_conversion,pointers,stack,uninit -fp-stack-check -ftrapuv -u -traceback -fpe0 -nomixed_str_len_arg -names lowercase -convert little_endian -assume byterecl -DSPMD -DHIDE_SHR_MSG -DNO_SHR_VMATH -DIFC -DLINUX -I$(MOD_ESMF) -DUSE_INCLUDE_MPI -I$(INC_ECCODES) -I$(INC_NETCDF) -I$(INC_HDF5) -DLIS_JULES
+CFLAGS          = -c   -traceback -DIFC -DLINUX -DLIS_JULES
+FFLAGS77        = -c  -O2 -traceback -mcmodel=medium -nomixed_str_len_arg -names lowercase -convert little_endian -assume byterecl -DSPMD -DHIDE_SHR_MSG -DNO_SHR_VMATH -DIFC -DLINUX -I$(MOD_ESMF) -DUSE_INCLUDE_MPI -I$(INC_ECCODES) -I$(INC_NETCDF) -I$(INC_HDF5) -DLIS_JULES
+FFLAGS          = -c  -O2 -u -traceback -mcmodel=medium -fpe0 -nomixed_str_len_arg -names lowercase -convert little_endian -assume byterecl -DSPMD -DHIDE_SHR_MSG -DNO_SHR_VMATH -DIFC -DLINUX -I$(MOD_ESMF) -DUSE_INCLUDE_MPI -I$(INC_ECCODES) -I$(INC_NETCDF) -I$(INC_HDF5) -DLIS_JULES
 LDFLAGS         =  -L$(LIB_ESMF) -lesmf -lstdc++ -limf -lrt -lmpi -L$(LIB_ECCODES) -leccodes_f90 -leccodes -L$(LIB_JPEG2000) -lopenjp2 -L$(LIB_NETCDF) -lnetcdff -lnetcdf -L$(LIB_HDF5) -lhdf5_fortran -lhdf5_hl -lhdf5 -lz

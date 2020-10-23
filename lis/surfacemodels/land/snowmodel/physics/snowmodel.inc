@@ -10,14 +10,14 @@ c nx_max and ny_max define the maximum nx and ny grid points
 c   that you can have in your model run.  If you want to run a
 c   larger domain, then you have to change these numbers and
 c   recompile the code.
-      parameter (nx_max=1001,ny_max=1001)
+      parameter (nx_max=3701,ny_max=3701)
 !      parameter (nx_max=10001,ny_max=10001)
 
 c max_time_steps defines the maximum number of time steps that
 c   will be used in the current compliled version of the code.
 c   If you want to run a longer time domain, then you have to
 c   change this number and recompile the code.
-      parameter (max_time_steps=8784)
+      parameter (max_time_steps=30000)
 
 c nstns_max is the maximum number of stations that can be used
 c   in the data assimilation routines.

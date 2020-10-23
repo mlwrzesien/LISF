@@ -8,7 +8,7 @@ module snowmodel_inc
   ! c   larger domain, then you have to change these numbers and
   ! c   recompile the code.
   
-  integer,parameter :: nx_max=1001,ny_max=1001
+  integer,parameter :: nx_max=3701,ny_max=3701
 !  integer,parameter :: nx_max=10001,ny_max=10001
   
   ! c max_time_steps defines the maximum number of time steps that
@@ -16,7 +16,7 @@ module snowmodel_inc
   ! c   If you want to run a longer time domain, then you have to
   ! c   change this number and recompile the code.
   
-  integer, parameter :: max_time_steps=8784
+  integer, parameter :: max_time_steps=30000
   
   ! c nstns_max is the maximum number of stations that can be used
   ! c   in the data assimilation routines.
