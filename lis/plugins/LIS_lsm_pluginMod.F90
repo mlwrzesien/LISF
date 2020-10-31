@@ -149,6 +149,10 @@ subroutine LIS_lsm_plugin
    use NoahMP401_lsmMod, only : noahmp401_ini
 #endif
 
+#if ( defined SM_SNOWMODEL )
+   use snowmodel_lsmMod, only : snowmodel_ini
+#endif
+
 #if ( defined SM_RUC_3_7 )
    use RUC37_lsmMod, only : ruc37_ini
 #endif
@@ -377,6 +381,17 @@ subroutine LIS_lsm_plugin
    external noahmp401_writerst
    external noahmp401_finalize
    external noahmp401_reset
+#endif
+
+#if ( defined SM_SNOWMODEL )
+   external snowmodel_main
+   external snowmodel_setup
+   external snowmodel_readrst
+   external snowmodel_dynsetup
+   external snowmodel_f2t
+   external snowmodel_writerst
+   external snowmodel_finalize
+   external snowmodel_reset
 #endif
 
 #if ( defined SM_RUC_3_7 )
@@ -698,6 +713,21 @@ subroutine LIS_lsm_plugin
    call registerlsmwrst(trim(LIS_noahmp401Id)//char(0),noahmp401_writerst)
    call registerlsmfinalize(trim(LIS_noahmp401Id)//char(0),noahmp401_finalize)
    call registerlsmreset(trim(LIS_noahmp401Id)//char(0),noahmp401_reset)
+#endif
+
+#if ( defined SM_SNOWMODEL )
+   call registerlsminit(trim(LIS_snowmodelId)//char(0),snowmodel_ini)
+   call registerlsmsetup(trim(LIS_snowmodelId)//char(0),snowmodel_setup)
+   call registerlsmf2t(trim(LIS_snowmodelId)//"+"&
+        //trim(LIS_retroId)//char(0),snowmodel_f2t)
+   call registerlsmf2t(trim(LIS_snowmodelId)//"+"//&
+        trim(LIS_agrmetrunId)//char(0),snowmodel_f2t)
+   call registerlsmrun(trim(LIS_snowmodelId)//char(0),snowmodel_main)
+   call registerlsmrestart(trim(LIS_snowmodelId)//char(0),snowmodel_readrst)
+   call registerlsmdynsetup(trim(LIS_snowmodelId)//char(0),snowmodel_dynsetup)
+   call registerlsmwrst(trim(LIS_snowmodelId)//char(0),snowmodel_writerst)
+   call registerlsmfinalize(trim(LIS_snowmodelId)//char(0),snowmodel_finalize)
+   call registerlsmreset(trim(LIS_snowmodelId)//char(0),snowmodel_reset)
 #endif
 
 #if ( defined SM_RUC_3_7 )
