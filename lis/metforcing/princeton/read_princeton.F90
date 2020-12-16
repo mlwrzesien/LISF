@@ -492,14 +492,14 @@ subroutine princetongrid_2_lisgrid( nx, ny, grid_data )
   ! Some checks
   ! ------------------------------------------------------------------
   if( ((nx /= 360) .or. (ny /= 180)) .and. ((nx /= 1440) .or. (ny /= 600)) ) then
-     write(LIS_logunit,*) '[ERR] Rprincetongrid_2_gldasgrid(): This routine has only been'
+     write(LIS_logunit,*) '[ERR] Princetongrid_2_gldasgrid(): This routine has only been'
      write(LIS_logunit,*) '  checked for nx=360 and ny=180 (version 2 and 2.2) and for '
      write(LIS_logunit,*) '  nx=1440 and ny=600 (version 3). ' 
      write(LIS_logunit,*) '  Make sure you know what you are doing. STOPPING.'
      call LIS_endrun()
   end if  
   if ((mod(nx,2) /= 0) .or. (mod(ny,2) /= 0)) then
-     write(LIS_logunit,*) '[ERR] Rprincetongrid_2_gldasgrid(): This routine can only work'
+     write(LIS_logunit,*) '[ERR] Princetongrid_2_gldasgrid(): This routine can only work'
      write(LIS_logunit,*) '  for even nx and ny. Make sure you know'
      write(LIS_logunit,*) '  what you are doing. STOPPING.'
      call LIS_endrun()
