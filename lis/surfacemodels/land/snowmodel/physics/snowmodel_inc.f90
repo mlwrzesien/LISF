@@ -41,7 +41,7 @@ module snowmodel_inc
   !   nz_max=2 it will avoid a warning message if you are compiling
   !   the code with gfortran).
   !     parameter (nz_max=25)
-  integer, parameter :: nz_max=2
+  integer, parameter :: nz_max=7
 
   ! This is the number of print variables that are controlled by
   !   the variable list in snowmodel.par.
