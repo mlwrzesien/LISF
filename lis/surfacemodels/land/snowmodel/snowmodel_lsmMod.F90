@@ -83,6 +83,7 @@ module snowmodel_lsmMod
      integer                  :: call_sm_preproc
      integer                  :: write_sm_metfields
      character(10)            :: sm_params_opt
+     character(10)            :: sm_micromet_opt
 
      real, allocatable        :: lyrthk(:)
      real, allocatable        :: inittemp(:)
@@ -250,6 +251,19 @@ contains
         ascii_topoveg = 2.0    ! No file read in by SnowModel; use LDT input
       else
         write(LIS_logunit,*) "[INFO] Reading in SnowModel LSM parameters from snowmodel.par file "
+      endif
+
+      ! Check SnowModel Micromet source calls:
+      if( snowmodel_struc(n)%sm_micromet_opt == "SnowModel" ) then
+         write(LIS_logunit,*) "[INFO] Calling MicroMet routines within SnowModel "
+      elseif( snowmodel_struc(n)%sm_micromet_opt == "LIS" ) then
+         write(LIS_logunit,*) "[INFO] Calling MicroMet routines from LIS metforcing layer "
+      else
+         write(LIS_logunit,*) "[ERR] Incorrect option set for "
+         write(LIS_logunit,*) "[ERR]  SnowModel MicroMet input source: "
+         write(LIS_logunit,*) "[ERR]  See documentation in configs/lis.config.adoc "
+         write(LIS_logunit,*) "[ERR]  for option details. "
+         call LIS_endrun
       endif
 
        ! Check inputs to driving SnowModel:
@@ -572,7 +586,6 @@ contains
        snowmodel_struc(n)%sm(:)%runoff = 0.
 
 
-
 !------------------------------------------------------------------------
 !      Model timestep Alarm
 !------------------------------------------------------------------------
@@ -586,6 +599,8 @@ contains
        call LIS_registerAlarm("SnowModel restart alarm "//trim(fnest),&
             snowmodel_struc(n)%ts,&
             snowmodel_struc(n)%rstInterval)
+
+       print *, snowmodel_struc(n)%ts, snowmodel_struc(n)%rstInterval
 
        LIS_sfmodel_struc(n)%ts = snowmodel_struc(n)%ts
 

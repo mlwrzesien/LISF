@@ -134,7 +134,7 @@ subroutine snowmodel_f2t(n)
      call LIS_verify(status,'snowmodel_f2t: error getting Snowf')
   endif
 
-  call ESMF_FieldGet(tmpField, localDE=0, farrayPtr= tmp,rc=status)
+  call ESMF_FieldGet(tmpField, localDE=0, farrayPtr=tmp,rc=status)
   call LIS_verify(status, 'snowmodel_f2t: error retrieving Tair')
 
   call ESMF_FieldGet(q2Field,localDE=0, farrayPtr=q2,rc=status)
@@ -168,7 +168,7 @@ subroutine snowmodel_f2t(n)
      call LIS_verify(status,'snowmodel_f2t: error retrieving snowf')
   endif
 
-  snowmodel_struc(n)%forc_count = snowmodel_struc(n)%forc_count  + 1
+  snowmodel_struc(n)%forc_count = snowmodel_struc(n)%forc_count + 1
 
   do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
      ! Transform tile to the patch
@@ -191,8 +191,11 @@ subroutine snowmodel_f2t(n)
         snowmodel_struc(n)%sm(t)%rainf=snowmodel_struc(n)%sm(t)%rainf + 0.0
      endif
 
-     ! If there is snowf add it to precipitation. SnowModel does not use
-     ! separate rainf and snowf.  It determines what to do with precipitation.
+     ! If there is snowf add it to precipitation. 
+     ! NOTE: SnowModel has options/code to discriminate between rainf/snowf
+     !        within MicroMet.
+     !   Will need to address this issue ...
+     !   Place options / code in new "sliced out" MicroMet routines ...
      if ( LIS_FORC_Snowf%selectOpt.eq.1) then
         if(snowf(tid).ne.LIS_rc%udef) then
            snowmodel_struc(n)%sm(t)%rainf=snowmodel_struc(n)%sm(t)%rainf + &
@@ -202,6 +205,15 @@ subroutine snowmodel_f2t(n)
      snowmodel_struc(n)%sm(t)%snowf = snowmodel_struc(n)%sm(t)%snowf+ 0.0
 
   enddo
+
+!     if(pcp(100) < 0) then
+!   print *, "pcp :: ",snowmodel_struc(n)%forc_count, pcp(100)
+!     endif
+!  print *, tmp(100), snowmodel_struc(n)%sm(100)%tair
+!  print *, uwind(100), snowmodel_struc(n)%sm(100)%uwind
+!  print *, vwind(100), snowmodel_struc(n)%sm(100)%vwind
+!  print *, psurf(100), snowmodel_struc(n)%sm(100)%psurf
+!  print *, pcp(100), snowmodel_struc(n)%sm(100)%rainf
 
 end subroutine snowmodel_f2t
 

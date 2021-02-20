@@ -22,6 +22,7 @@ subroutine snowmodel_main(n)
   use LIS_logMod,        only : LIS_logunit, LIS_endrun
   use LIS_histDataMod
   use LIS_FORC_AttributesMod
+  use LIS_mpiMod
 
   use snowmodel_module
   use snowmodel_lsmMod
@@ -46,12 +47,23 @@ subroutine snowmodel_main(n)
 
   integer, intent(in)   :: n
 
-  integer           :: t, status
+  integer           :: t, status, ierr
   integer           :: row, col
   double precision  :: xmn_part  ! center x of local LL starting point
   double precision  :: ymn_part  ! center y of local LL starting point
+  real              :: rad2deg
+
+  character*3       :: fnest
+  logical           :: isTimeToRunCheck
 
 ! --------------------------------------------
+
+  write(fnest,'(i3.3)') n
+  isTimeToRunCheck = LIS_isAlarmRinging(LIS_rc, "SnowModel model alarm "//trim(fnest) ) 
+
+!  if(isTimeToRunCheck) print *, "** SnowModel runtime check: ", isTimeToRunCheck
+  if(isTimeToRunCheck .neqv. .true.) return
+
 
    write(LIS_logunit,*) '[INFO] Call to the SnowModel Main routine ...'
 
@@ -67,20 +79,138 @@ subroutine snowmodel_main(n)
 
    write(LIS_logunit,*) "[INFO] Print Snowmodel iter counter: ",iter
 
-   ! Distribute the meteorological station data.
-   if (run_micromet.eq.1.0) then
-!      print *, "Calling micromet ..."
+   ! Determine source of calls to MicroMet-based routines:
+   if( snowmodel_struc(n)%sm_micromet_opt == "LIS" ) then
 
-       ! Using local parallel subdomain starting index values:
-       ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
-       xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
-       ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
+      print *, "Calling LIS micromet routines ..."
 
-!       print *, " **** "
-!       print *, xmn, ymn
-!       print *, LIS_ews_halo_ind(n,LIS_localPet+1), LIS_nss_halo_ind(n,LIS_localPet+1)
-!       print *, xmn_part, ymn_part
-!       print *, " **** "
+! ***
+      ! Temporarily including Micromet routine call ...
+      !  UNTIL WE CAN REPLACE MANY OF THE REQUIRED CALLS / FIELDS ...
+      ! Using local parallel subdomain starting index values:
+      ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
+      xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
+      ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
+
+!      print *, "before-mm, rainfall < 0!! :",(snowmodel_struc(n)%sm(100)%rainf/snowmodel_struc(n)%forc_count)
+
+      CALL MICROMET_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),xmn_part,ymn_part,deltax,deltay, &
+         iyear_init,imonth_init,iday_init,xhour_init,dt,undef,&
+         ifill,iobsint,dn,iter,curve_len_scale,slopewt,curvewt,&
+         topo,curvature,terrain_slope,slope_az,Tair_grid,&
+         rh_grid,uwind_grid,vwind_grid,Qsi_grid,prec_grid,&
+         i_tair_flag,i_rh_flag,i_wind_flag,i_solar_flag,&
+         i_prec_flag,isingle_stn_flag,igrads_metfile,&
+         windspd_grid,winddir_grid,windspd_flag,winddir_flag,&
+         sprec,windspd_min,Qli_grid,i_longwave_flag,vegtype,&
+         forest_LAI,iyear,imonth,iday,xhour,corr_factor,&
+         icorr_factor_index,lapse_rate_user_flag,&
+         iprecip_lapse_rate_user_flag,use_shortwave_obs,&
+         use_longwave_obs,use_sfc_pressure_obs,sfc_pressure,&
+         run_enbal,run_snowpack,calc_subcanopy_met,vegsnowd_xy,&
+         gap_frac,cloud_frac_factor,barnes_lg_domain,n_stns_used,&
+         k_stn,xlat_grid,xlon_grid,UTC_flag,icorr_factor_loop,&
+         snowmodel_line_flag,xg_line,yg_line,irun_data_assim,&
+         wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,&
+         cloud_frac_grid,snowfall_frac,seaice_run)
+
+      ! Convert local LIS npatch array to the the SnowModel nx,ny grids
+      write(*,*) "Replacing MicroMet grid forcings with LIS forcing "
+      write(*,*) "main:", LIS_rc%mo, LIS_rc%da, LIS_rc%hr, snowmodel_struc(n)%forc_count
+
+      ! Constants required for wind direction and RH calculations:
+      rad2deg = 180.0 / (2.0 * acos(0.0))  ! pi = (2.0 * acos(0.0))
+
+      do t = 1,LIS_rc%npatch(n,LIS_rc%lsm_index)
+         col = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%col
+         row = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row
+
+         ! Translate LIS-based metforcing into SnowModel required inputs:
+         tair_grid(col,row) = snowmodel_struc(n)%sm(t)%tair / snowmodel_struc(n)%forc_count
+         Qsi_grid(col,row) = snowmodel_struc(n)%sm(t)%swdown / snowmodel_struc(n)%forc_count
+         Qli_grid(col,row) = snowmodel_struc(n)%sm(t)%lwdown / snowmodel_struc(n)%forc_count
+         sfc_pressure(col,row) = snowmodel_struc(n)%sm(t)%psurf / snowmodel_struc(n)%forc_count
+
+         ! Total precip (in meters)
+         prec_grid(col,row) = snowmodel_struc(n)%sm(t)%rainf / snowmodel_struc(n)%forc_count
+
+         ! Convert the precipitation values from mm to m swe.  Also, make
+         !   sure the interpolation has not created any negetive
+         !   precipitation values.
+         prec_grid(col,row) = (prec_grid(col,row) / 1000.0) * 3600
+         prec_grid(col,row) = max(0.0,prec_grid(col,row))
+
+         ! Snowfall (in meters)
+!         sprec(col,row) =  ( Needs to come from code within MicroMet and options set there)
+!                             Option: snowfall_frac = 3.0
+         ! Calculate relative humidity:
+!         rh_grid ... == need to add a new set of required "micromet" type routines to 
+!                         handle this rh calculation required by SnowModel routines
+
+         uwind_grid(col,row) = snowmodel_struc(n)%sm(t)%uwind / snowmodel_struc(n)%forc_count
+         vwind_grid(col,row) = snowmodel_struc(n)%sm(t)%vwind / snowmodel_struc(n)%forc_count
+
+         ! Wind speed grid:
+         windspd_grid(col,row) = sqrt(uwind_grid(col,row)**2 + vwind_grid(col,row)**2)
+         ! Max windspeed flag:
+         !  need to deterime max windspeed for entire domain
+#if (defined SPMD)
+         call MPI_Barrier(LIS_MPI_COMM, ierr)
+         call MPI_ALLREDUCE(windspd_flag, snowmodel_struc(n)%windspdflg_glb, 1,&
+              MPI_REAL, MPI_MAX,&
+              LIS_mpi_comm, ierr)
+         windspd_flag = snowmodel_struc(n)%windspdflg_glb
+#endif
+         ! Wind direction:
+         ! Some compilers do not allow both u and v to be 0.0 in
+         !  the atan2 computation.
+         if( abs(uwind_grid(col,row)).lt.1e-10 ) then 
+           uwind_grid(col,row) = 1e-10
+         endif 
+         winddir_grid(col,row) = rad2deg * atan2(uwind_grid(col,row),vwind_grid(col,row))
+         if( winddir_grid(col,row).ge.180.0 ) then
+           winddir_grid(col,row) = winddir_grid(col,row) - 180.0
+         else
+           winddir_grid(col,row) = winddir_grid(col,row) + 180.0
+         endif
+
+         ! Forest LAI:
+!         forest_LAI == Need to add this code into new set of "MicroMet" routines
+
+      end do
+!      write(*,*) tair_grid(40,2), uwind_grid(40,2), vwind_grid(40,2)
+!      write(*,*) qsi_grid(40,2), &
+!         (snowmodel_struc(n)%sm(100)%swdown/snowmodel_struc(n)%forc_count), &
+!          qli_grid(40,2), &
+!         (snowmodel_struc(n)%sm(100)%lwdown/snowmodel_struc(n)%forc_count)
+!      write(*,*) sfc_pressure(40,2), (snowmodel_struc(n)%sm(100)%psurf / snowmodel_struc(n)%forc_count)
+!      if(prec_grid(40,2)>0.0 .and. &
+!          (snowmodel_struc(n)%sm(100)%rainf / snowmodel_struc(n)%forc_count)>0.0) then
+!       write(*,*) prec_grid(40,2), (snowmodel_struc(n)%sm(100)%rainf / snowmodel_struc(n)%forc_count)
+!      endif
+!!       if( (snowmodel_struc(n)%sm(100)%rainf / snowmodel_struc(n)%forc_count) < 0.0) then
+!       if( prec_grid(40,2) < 0.0) then
+         print *, "post-mm, rainfall < 0!! :", prec_grid(40,2)
+!       endif
+
+! ***
+
+   elseif( snowmodel_struc(n)%sm_micromet_opt == "SnowModel" .and. &
+           run_micromet.eq.1.0 ) then
+
+      print *, "Calling SnowModel micromet routines ..."
+      ! SnowModel calls: Distribute the meteorological station data.
+
+      ! Using local parallel subdomain starting index values:
+      ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
+      xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
+      ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
+
+!      print *, " **** "
+!      print *, xmn, ymn
+!      print *, LIS_ews_halo_ind(n,LIS_localPet+1), LIS_nss_halo_ind(n,LIS_localPet+1)
+!      print *, xmn_part, ymn_part
+!      print *, " **** "
 
 !      CALL MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay, &
       CALL MICROMET_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),xmn_part,ymn_part,deltax,deltay, &
@@ -102,6 +232,13 @@ subroutine snowmodel_main(n)
          snowmodel_line_flag,xg_line,yg_line,irun_data_assim,&
          wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,&
          cloud_frac_grid,snowfall_frac,seaice_run)
+
+   else
+      write(LIS_logunit,*) "[ERR] Incorrect option set for "
+      write(LIS_logunit,*) "[ERR]  SnowModel MicroMet input source: "
+      write(LIS_logunit,*) "[ERR]  See documentation in configs/lis.config.adoc "
+      write(LIS_logunit,*) "[ERR]  for option details. "
+      call LIS_endrun
    endif
 
    ! Perform a surface energy balance over the domain.
@@ -121,6 +258,9 @@ subroutine snowmodel_main(n)
    if (run_snowpack.eq.1.0) then
 !      print *, "Calling snowpack ..."
 !      CALL SNOWPACK_CODE(nx,ny,Tair_grid,rh_grid,ro_nsnow,&
+!       if( prec_grid(40,2) < 0.0) then
+         print *, "before-snowpack, rainfall < 0!! :", prec_grid(40,2)
+!       endif
       CALL SNOWPACK_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),Tair_grid,rh_grid,ro_nsnow,&
          dt,swe_depth,Tsfc,snow_d,prec_grid,runoff,Qm,rain,&
          sprec,iter,w_balance,sum_prec,sum_runoff,xro_snow,&
@@ -137,6 +277,9 @@ subroutine snowmodel_main(n)
          multilayer_snowpack,seaice_run,seaice_conc,ht_windobs,&
          windspd_2m_grid,diam_layer,flux_layer)
    endif
+!       if( prec_grid(40,2) < 0.0) then
+         print *, "post-snowpack, rainfall < 0!! :", prec_grid(40,2)
+!       endif
 
    ! Run the blowing-snow model.
    if (run_snowtran.eq.1.0) then
@@ -171,6 +314,10 @@ subroutine snowmodel_main(n)
          output_path_wi_assim,icorr_factor_loop,windspd_2m_grid,&
          Qsubl_depth)
    endif
+
+!       if( prec_grid(40,2) < 0.0) then
+         print *, "post-snowtran, rainfall < 0!! :", prec_grid(40,2)
+!       endif
 
 #if 0
    ! Save the outputs from the SNOWPACK and SNOWTRAN routines
@@ -213,12 +360,45 @@ subroutine snowmodel_main(n)
       snowmodel_struc(n)%sm(t)%tair = &
             tair_grid(col,row)
 
+      ! Downward radiation components:
+      snowmodel_struc(n)%sm(t)%swdown = &
+            Qsi_grid(col,row)
+
+      snowmodel_struc(n)%sm(t)%lwdown = &
+            Qli_grid(col,row)
+
+      ! U-/V-wind components (units: m/s):
+      snowmodel_struc(n)%sm(t)%uwind = &
+             uwind_grid(col,row)
+      snowmodel_struc(n)%sm(t)%vwind = &
+             vwind_grid(col,row)
+
       ! Write out SnowModel metforcing file fields ("native" text file fields):
       if( snowmodel_struc(n)%write_sm_metfields == 1 ) then
 
         call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_TAIRFORC, &
              value=snowmodel_struc(n)%sm(t)%tair,&
              unit="K",vlevel=1,direction="-",&
+             surface_type=LIS_rc%lsm_index)
+
+        call LIS_diagnoseSurfaceOutputVar(n,t,LIS_MOC_SWDOWNFORC,&
+             value=snowmodel_struc(n)%sm(t)%swdown,&
+             unit="W m-2",vlevel=1,direction="DN",&
+             surface_type=LIS_rc%lsm_index)
+
+        call LIS_diagnoseSurfaceOutputVar(n,t,LIS_MOC_LWDOWNFORC,&
+             value=snowmodel_struc(n)%sm(t)%lwdown,&
+             unit="W m-2",vlevel=1,direction="DN",&
+             surface_type=LIS_rc%lsm_index)
+
+        call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_EWINDFORC, &
+             value=snowmodel_struc(n)%sm(t)%uwind, &
+             unit="m s-1", vlevel=1, direction="E", &
+             surface_type=LIS_rc%lsm_index)
+
+        call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_NWINDFORC, &
+             value=snowmodel_struc(n)%sm(t)%vwind, &
+             unit="m s-1", vlevel=1, direction="N", &
              surface_type=LIS_rc%lsm_index)
     
       endif
@@ -314,22 +494,6 @@ subroutine snowmodel_main(n)
 !           unit="kg m-2", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
 
-     ! U-/V-wind components (units: m/s):
-     snowmodel_struc(n)%sm(t)%uwind = &
-            uwind_grid(col,row)
-     snowmodel_struc(n)%sm(t)%vwind = &
-            vwind_grid(col,row)
-
-     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_EWINDFORC, &
-           value=snowmodel_struc(n)%sm(t)%uwind, &
-           unit="m s-1", vlevel=1, direction="E", &
-           surface_type=LIS_rc%lsm_index)
-
-     call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_NWINDFORC, &
-           value=snowmodel_struc(n)%sm(t)%vwind, &
-           unit="m s-1", vlevel=1, direction="N", &
-           surface_type=LIS_rc%lsm_index)
-
      ! Albedo (units: -)
      snowmodel_struc(n)%sm(t)%albedo = &
             albedo(col,row)
@@ -405,6 +569,20 @@ subroutine snowmodel_main(n)
 !      enddo
 !
 ! .........................................................................
+
+       ! Reset forcing variables to 0 and counter:
+       snowmodel_struc(n)%forc_count = 0
+       snowmodel_struc(n)%sm(t)%tair = 0
+       snowmodel_struc(n)%sm(t)%qair = 0
+       snowmodel_struc(n)%sm(t)%swdown = 0
+       snowmodel_struc(n)%sm(t)%lwdown = 0
+       snowmodel_struc(n)%sm(t)%uwind = 0
+       snowmodel_struc(n)%sm(t)%vwind = 0
+       snowmodel_struc(n)%sm(t)%psurf = 0
+       snowmodel_struc(n)%sm(t)%rainf = 0
+       snowmodel_struc(n)%sm(t)%snowf = 0
+       snowmodel_struc(n)%sm(t)%uwind = 0
+       snowmodel_struc(n)%sm(t)%vwind = 0
 
    enddo   ! End 1-d tile space loop
 

@@ -88,6 +88,12 @@ subroutine snowmodel_readconfig()
      call LIS_verify(rc,'SnowModel preprocess code option: not defined')
   enddo
 
+  call ESMF_ConfigFindLabel(LIS_config,"SnowModel MicroMet input source:",rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%sm_micromet_opt,rc=rc)
+     call LIS_verify(rc,'SnowModel MicroMet input source: not defined')
+  enddo
+
 
   call ESMF_ConfigFindLabel(LIS_config,"SnowModel number of snow layers:",rc=rc)
   do n=1,LIS_rc%nnest

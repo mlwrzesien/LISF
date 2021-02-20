@@ -22,6 +22,7 @@ subroutine snowmodel_reset()
   use LIS_timeMgrMod,   only : LIS_clock, LIS_calendar, &
        LIS_update_timestep
   use LIS_logMod,       only : LIS_verify, LIS_logunit
+  use snowmodel_lsmMod
 !
 ! !DESCRIPTION: 
 ! 
@@ -35,8 +36,31 @@ subroutine snowmodel_reset()
 ! \end{description}
 !EOP
   implicit none
-  integer                 :: i,n
-  integer                 :: status
+  integer          :: i,n
+  integer          :: status
 
+
+    do n=1,LIS_rc%nnest
+       write(LIS_logunit,*)  &
+            'SnowModel resetting'
+       write(*,*)  &
+            'SnowModel resetting'
+
+       write(*,*) "reset:", LIS_rc%mo, LIS_rc%da, LIS_rc%hr, snowmodel_struc(n)%forc_count
+
+       snowmodel_struc(n)%forc_count = 0
+       do i=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
+          snowmodel_struc(n)%sm(i)%tair = 0
+          snowmodel_struc(n)%sm(i)%qair = 0
+          snowmodel_struc(n)%sm(i)%swdown = 0
+          snowmodel_struc(n)%sm(i)%lwdown = 0
+          snowmodel_struc(n)%sm(i)%uwind = 0
+          snowmodel_struc(n)%sm(i)%vwind = 0
+          snowmodel_struc(n)%sm(i)%psurf = 0
+          snowmodel_struc(n)%sm(i)%rainf = 0
+!          snowmodel_struc(n)%sm(i)%snowf = 0
+       enddo
+ 
+    enddo
 
 end subroutine snowmodel_reset

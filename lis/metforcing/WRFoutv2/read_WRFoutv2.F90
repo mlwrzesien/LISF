@@ -331,10 +331,10 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
       
         !== Transferring current data to 1-D array for interpolation
         c=0
-        do i=1,WRFoutv2_struc(n)%nr
-           do j=1,WRFoutv2_struc(n)%nc
+        do j=1,WRFoutv2_struc(n)%nr
+           do i=1,WRFoutv2_struc(n)%nc
               c = c + 1
-              f(c) = temp2WRFoutv2(j,i,v)
+              f(c) = temp2WRFoutv2(i,j,v)
 !              if(v.eq.1 .and. f(c).ne.-9999.0) write(LIS_logunit,*) c,f(c)
            enddo
         enddo
