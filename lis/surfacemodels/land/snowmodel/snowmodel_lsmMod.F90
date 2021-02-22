@@ -600,7 +600,7 @@ contains
             snowmodel_struc(n)%ts,&
             snowmodel_struc(n)%rstInterval)
 
-       print *, snowmodel_struc(n)%ts, snowmodel_struc(n)%rstInterval
+!       print *, snowmodel_struc(n)%ts, snowmodel_struc(n)%rstInterval
 
        LIS_sfmodel_struc(n)%ts = snowmodel_struc(n)%ts
 

@@ -156,7 +156,7 @@
      &  curvature,terrain_slope,slope_az,curve_len_scale)
 
 ! Calculate the temperature and dew-point lapse rates to be used in
-!   the interpoations.
+!   the interpolations.
       call get_lapse_rates(imonth,iday,T_lapse_rate,&
      &  Td_lapse_rate,xlat_grid(1,1),lapse_rate_user_flag,&
      &  precip_lapse_rate,iprecip_lapse_rate_user_flag)
@@ -1915,8 +1915,8 @@
 
       integer nstns        ! number of input values, all good
       real undef           ! undefined value
-      real dn                  ! average observation spacing
-      real grid(nx,ny) ! output values
+      real dn              ! average observation spacing
+      real grid(nx,ny)     ! output values
 
       integer i,j      ! col, row counters
       integer ifill    ! flag (=1) forces a value in every cell
