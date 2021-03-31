@@ -102,7 +102,7 @@
      &  lapse_rate_user_flag,iprecip_lapse_rate_user_flag,&
      &  n_stns_used,iveg_ht_flag,lat_solar_flag,ihrestart_inc,&
      &  ihrestart_flag,i_dataassim_loop,multilayer_snowpack,max_layers,&
-     &  izero_snow_date,iprecip_scheme
+     &  izero_snow_date,iprecip_scheme, metforce_opt
 
       double precision xmn,ymn
       real xhour_init,dn
@@ -120,7 +120,8 @@
       integer k,max_par_lines,i_param_chars,i_value_chars,&
      &  icomment_flag,ipar_flag
 
-      integer, parameter :: npars=139
+!      integer, parameter :: npars=139
+      integer, parameter :: npars=140
       integer ipar_count
       character*40 cpar_name(npars)
 
@@ -290,6 +291,18 @@
               stop
             endif
           endif
+
+          if (c_param(1:i_param_chars).eq.'metforce_opt') then
+            ipar_count = ipar_count + 1
+            cpar_name(ipar_count) = c_param(1:i_param_chars)
+            call char2int(metforce_opt,i_value_chars,c_value,&
+     &        c_param(1:i_param_chars))
+            if (metforce_opt.ne.0 .and. metforce_opt.ne.1) then
+              print *,'metforce_opt not 0 or 1'
+              stop
+            endif
+          endif
+
 
           if (c_param(1:i_param_chars).eq.'igrads_metfile') then
             ipar_count = ipar_count + 1

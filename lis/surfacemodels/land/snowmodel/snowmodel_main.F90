@@ -23,6 +23,7 @@ subroutine snowmodel_main(n)
   use LIS_histDataMod
   use LIS_FORC_AttributesMod
   use LIS_mpiMod
+  use LIS_metforcingMod, only : LIS_forc
 
   use snowmodel_module
   use snowmodel_lsmMod
@@ -50,13 +51,19 @@ subroutine snowmodel_main(n)
   integer, intent(in)   :: n
 
   integer           :: t, status, ierr
-  integer           :: row, col
+  integer           :: row, col, c, r
   double precision  :: xmn_part  ! center x of local LL starting point
   double precision  :: ymn_part  ! center y of local LL starting point
 
   integer           :: J_day     ! model Julian day, actually day-of-year
   real              :: rad2deg
-  real              :: sphm, tair, pres, rh, prec, snowf
+  real, allocatable :: sphm_grid(:,:)
+
+  real              :: delta_topo
+  real              :: T_lapse_rate, Td_lapse_rate
+  real              :: precip_lapse_rate
+  real              :: forcelev
+
 !  integer, parameter :: nftypes = 5
 !  real              :: forest_LAI(nftypes)
 
@@ -78,6 +85,17 @@ subroutine snowmodel_main(n)
 !            LIS_ewe_halo_ind(n,LIS_localPet+1), &
 !            LIS_nss_halo_ind(n,LIS_localPet+1), &
 !            LIS_nse_halo_ind(n,LIS_localPet+1)
+
+    ! Using local parallel subdomain starting index values:
+    ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
+    xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
+    ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
+
+!   print *, " **** "
+!   print *, xmn, ymn
+!   print *, LIS_ews_halo_ind(n,LIS_localPet+1), LIS_nss_halo_ind(n,LIS_localPet+1)
+!   print *, xmn_part, ymn_part
+!   print *, " **** "
  
    iter_start = 1
    snowmodel_struc(n)%iter = snowmodel_struc(n)%iter + 1
@@ -88,13 +106,12 @@ subroutine snowmodel_main(n)
    ! Determine source of calls to MicroMet-based routines:
    if( snowmodel_struc(n)%sm_micromet_opt == "LIS" ) then
 
-      print *, "Calling LIS micromet routines ..."
-
       ! Calculate what the current simulation date should be.
       call get_model_time(iyear_init,imonth_init,iday_init,&
                           xhour_init,iter,dt,iyear,imonth,iday,xhour,J_day)
 
       if (irun_data_assim.eq.1) then
+        write(LIS_logunit,150) icorr_factor_loop,iyear,imonth,iday,xhour
         write (*,150) icorr_factor_loop,iyear,imonth,iday,xhour
   150   format('In Assim Loop #',i1,';  WORKING ON MODEL TIME =', &
                i5,2i4,f6.1)
@@ -104,33 +121,6 @@ subroutine snowmodel_main(n)
                i5,2i4,f6.1)
       endif
 
-! ***
-      ! Temporarily including Micromet routine call ...
-      !  UNTIL WE CAN REPLACE MANY OF THE REQUIRED CALLS / FIELDS ...
-#if 0
-      xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
-      ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
-
-      CALL MICROMET_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),xmn_part,ymn_part,deltax,deltay, &
-         iyear_init,imonth_init,iday_init,xhour_init,dt,undef,&
-         ifill,iobsint,dn,iter,curve_len_scale,slopewt,curvewt,&
-         topo,curvature,terrain_slope,slope_az,Tair_grid,&
-         rh_grid,uwind_grid,vwind_grid,Qsi_grid,prec_grid,&
-         i_tair_flag,i_rh_flag,i_wind_flag,i_solar_flag,&
-         i_prec_flag,isingle_stn_flag,igrads_metfile,&
-         windspd_grid,winddir_grid,windspd_flag,winddir_flag,&
-         sprec,windspd_min,Qli_grid,i_longwave_flag,vegtype,&
-         forest_LAI,iyear,imonth,iday,xhour,corr_factor,&
-         icorr_factor_index,lapse_rate_user_flag,&
-         iprecip_lapse_rate_user_flag,use_shortwave_obs,&
-         use_longwave_obs,use_sfc_pressure_obs,sfc_pressure,&
-         run_enbal,run_snowpack,calc_subcanopy_met,vegsnowd_xy,&
-         gap_frac,cloud_frac_factor,barnes_lg_domain,n_stns_used,&
-         k_stn,xlat_grid,xlon_grid,UTC_flag,icorr_factor_loop,&
-         snowmodel_line_flag,xg_line,yg_line,irun_data_assim,&
-         wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,&
-         cloud_frac_grid,snowfall_frac,seaice_run)
-#endif
       ! _________________________________________________________
 
       ! Convert local LIS npatch array to the the SnowModel nx,ny grids
@@ -140,6 +130,8 @@ subroutine snowmodel_main(n)
       ! Constants required for wind direction and RH calculations:
       rad2deg = 180.0 / (2.0 * acos(0.0))  ! pi = (2.0 * acos(0.0))
       windspd_flag = 0.0
+
+      allocate( sphm_grid(LIS_rc%lnc(n),LIS_rc%lnr(n)) )
 
       do t = 1,LIS_rc%npatch(n,LIS_rc%lsm_index)
          col = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%col
@@ -169,7 +161,7 @@ subroutine snowmodel_main(n)
          ! Wind speed grid:
          windspd_grid(col,row) = sqrt(uwind_grid(col,row)**2 + vwind_grid(col,row)**2)
          ! Max windspeed flag:
-         windspd_flag = max(windspd_flag,windspd_grid(col,row))
+         windspd_flag = max(windspd_flag,windspd_grid(col,row)) ! Handled below in "micromet_wind" call
 
          ! Wind direction:
          ! Some compilers do not allow both u and v to be 0.0 in
@@ -183,9 +175,49 @@ subroutine snowmodel_main(n)
          else
            winddir_grid(col,row) = winddir_grid(col,row) + 180.0
          endif
+
+         ! Specific humidity:
+         sphm_grid(col,row) = snowmodel_struc(n)%sm(t)%qair / snowmodel_struc(n)%forc_count
+
       end do
 
-      ! Need to deterime max windspeed for entire domain
+
+      ! Call functions to derive additional forcing inputs to SnowModel:
+      call micromet_relhum( LIS_rc%lnc(n),LIS_rc%lnr(n), & 
+                            tair_grid, sphm_grid, sfc_pressure, rh_grid )
+
+      call micromet_snowfall(LIS_rc%lnc(n),LIS_rc%lnr(n), &
+                             snowfall_frac, prec_grid, tair_grid, sprec)
+
+      deallocate( sphm_grid )
+
+      ! Calculate the forest lai for each of the five forest types, and
+      !   for this day of the simulation (the lai varies seasonally for
+      !   the case of deciduous trees).
+      call get_lai(J_day,forest_LAI)
+
+      ! Make the topographic calculations required by the wind and solar
+      !   radiation models.  These calculations are not fixed in time
+      !   because as the snow depth evolves it modifies the "topography".
+      call topo_data(LIS_rc%lnc(n),LIS_rc%lnr(n),deltax,deltay,topo,&
+                     curvature,terrain_slope,slope_az,curve_len_scale)
+
+      ! Calculate the temperature and dew-point lapse rates to be used in
+      !   the interpolations.
+      call get_lapse_rates(imonth,iday,T_lapse_rate,&
+               Td_lapse_rate,xlat_grid(1,1),lapse_rate_user_flag,&
+               precip_lapse_rate,iprecip_lapse_rate_user_flag)
+
+      ! WIND SPEED AND DIRECTION.
+      if (i_wind_flag.eq.1) then
+        call micromet_wind( LIS_rc%lnc(n),LIS_rc%lnr(n),deltax,deltay, &
+                         uwind_grid,vwind_grid,slopewt,curvewt,&
+                         curvature,slope_az,terrain_slope,windspd_grid,&
+                         winddir_grid,windspd_flag,windspd_min,&
+                         vegtype,forest_LAI,calc_subcanopy_met,vegsnowd_xy,&
+                         topo,wind_lapse_rate,curve_len_scale)
+      else
+      ! Need to deterime max windspeed for entire domain:
 #if (defined SPMD)
       call MPI_Barrier(LIS_MPI_COMM, ierr)
       call MPI_ALLREDUCE(windspd_flag, snowmodel_struc(n)%windspdflg_glb, 1,&
@@ -193,42 +225,75 @@ subroutine snowmodel_main(n)
            LIS_mpi_comm, ierr)
       windspd_flag = snowmodel_struc(n)%windspdflg_glb
 #endif
+      endif
 
-      ! Call functions to derive additional forcing inputs to SnowModel:
-      ! THESE ROUTINES WILL BE UPDATED WITH 2D GRIDDED CALLS TO THESE
-      !  MICROMET-BASED ROUTINE PHYSICS ...
-      do t = 1,LIS_rc%npatch(n,LIS_rc%lsm_index)
-         col = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%col
-         row = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row
+#if 0
+      ! SOLAR RADIATION.
+      if (i_solar_flag.eq.1) then
+!       print *,'   solving for solar radiation'
+        call solar(LIS_rc%lnc(n),LIS_rc%lnr(n),&
+     &    xhour,J_day,topo,rh_grid,Tair_grid,&
+     &    xlat_grid,Qsi_grid,slope_az,terrain_slope,dt,vegtype,&
+     &    forest_LAI,T_lapse_rate,Td_lapse_rate,&
+     &    calc_subcanopy_met,gap_frac,cloud_frac_factor,UTC_flag,&
+     &    xlon_grid,cloud_frac_grid)
+      endif
 
-         ! Snowfall (in meters)
-         tair = tair_grid(col,row)
-         prec = prec_grid(col,row)
-         call micromet_snowfall(snowfall_frac, prec, tair, snowf)
-         sprec(col,row) = snowf
+      ! INCOMING LONGWAVE RADIATION.
+      if (i_longwave_flag.eq.1) then
+!       print *,'   solving for incoming longwave radiation'
+        call longwave(LIS_rc%lnc(n),LIS_rc%lnr(n),&
+     &    rh_grid,Tair_grid,Qli_grid,topo,&
+     &    vegtype,forest_LAI,T_lapse_rate,Td_lapse_rate,&
+     &    calc_subcanopy_met,cloud_frac_factor)
+      endif
+#endif 
 
-         ! Calculate relative humidity:
-         sphm = snowmodel_struc(n)%sm(t)%qair / snowmodel_struc(n)%forc_count
-         pres = sfc_pressure(col,row)
-         call micromet_relhum( tair, sphm, pres, rh )
-         rh_grid(col,row) = rh
 
-      end do
+#if 0
+      ! Topographic downscaling of certain forcing fields:
 
-      ! Calculate the forest lai for each of the five forest types, and
-      !   for this day of the simulation (the lai varies seasonally for
-      !   the case of deciduous trees).
-      call get_lai(J_day,forest_LAI)
-!      print *, J_day, forest_LAI(:)
+      ! TEMPERATURE: 
+      if (i_tair_flag.eq.1) then
+        print *,'   solving for temperature'
+        do r = 1, LIS_rc%lnr(n)
+          do c = 1, LIS_rc%lnc(n)
+             if(LIS_domain(n)%gindex(c,r).ne.-1) then
+!                forcelev = LIS_forc(n,findex)%modelelev(LIS_domain(n)%gindex(c,r)) 
+                forcelev = LIS_forc(n,1)%modelelev(LIS_domain(n)%gindex(c,r)) 
+             endif
+!             delta_topo = topo(c,r) - LIS_forc(n,m)%modelelev ! "modelelev" = forcing elevation
+             delta_topo = topo(c,r) - forcelev    ! "modelelev" = forcing elevation
+             Tair_grid(c,r) = Tair_grid(c,r) + T_lapse_rate * delta_topo
+          enddo
+        enddo
+        ! NOTE: TO GET THE ABOVE TO WORK, WE NEED TO TURN ON TOPOGRAPHIC 
+        !       CORRECTION ON THE LIS-METFORCING SIDE ...
+!        call temperature(nx,ny,deltax,deltay,xmn,ymn,&
+!     &    nstns_orig,xstn_orig,ystn_orig,Tair_orig,dn,Tair_grid,&
+!     &    undef,ifill,iobsint,iyear,imonth,iday,xhour,elev_orig,&
+!     &    topo,T_lapse_rate,barnes_lg_domain,n_stns_used,k_stn,&
+!     &    snowmodel_line_flag,xg_line,yg_line,seaice_run)
+      endif
+
+      if (i_wind_flag.eq.1) then
+!       print *,'   solving for wind speed and direction'
+!        call wind(nx,ny,deltax,deltay,xmn,ymn,windspd_orig,&
+        call wind(LIS_rc%lnc(n),LIS_rc%lnr(n),deltax,deltay,&
+          xmn_part,ymn_part,windspd_orig,&
+     &    nstns_orig,xstn_orig,ystn_orig,dn,undef,ifill,&
+     &    iobsint,iyear,imonth,iday,xhour,elev_orig,&
+     &    winddir_orig,uwind_grid,vwind_grid,slopewt,curvewt,&
+     &    curvature,slope_az,terrain_slope,windspd_grid,&
+     &    winddir_grid,windspd_flag,winddir_flag,windspd_min,&
+     &    vegtype,forest_LAI,calc_subcanopy_met,vegsnowd_xy,&
+     &    barnes_lg_domain,n_stns_used,k_stn,snowmodel_line_flag,&
+     &    xg_line,yg_line,topo_ref_grid,topo,wind_lapse_rate,&
+     &    curve_len_scale,seaice_run,metforce_opt)
+      endif
+#endif
 
 ! -------------------------------------------------------------------  
-!      write(*,*) tair_grid(40,2), uwind_grid(40,2), vwind_grid(40,2)
-!      write(*,*) qsi_grid(40,2), &
-!         (snowmodel_struc(n)%sm(100)%swdown/snowmodel_struc(n)%forc_count), &
-!          qli_grid(40,2), &
-!         (snowmodel_struc(n)%sm(100)%lwdown/snowmodel_struc(n)%forc_count)
-!      write(*,*) sfc_pressure(40,2), (snowmodel_struc(n)%sm(100)%psurf / snowmodel_struc(n)%forc_count)
-!      write(*,*) prec_grid(40,2), (snowmodel_struc(n)%sm(100)%rainf / snowmodel_struc(n)%forc_count)
 
 ! ***
 
@@ -236,19 +301,8 @@ subroutine snowmodel_main(n)
            run_micromet.eq.1.0 ) then
 
       print *, "Calling SnowModel micromet routines ..."
+
       ! SnowModel calls: Distribute the meteorological station data.
-
-      ! Using local parallel subdomain starting index values:
-      ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
-      xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
-      ymn_part = ymn + deltay * ( real(LIS_nss_halo_ind(n,LIS_localPet+1)) - 1.0 )
-
-!      print *, " **** "
-!      print *, xmn, ymn
-!      print *, LIS_ews_halo_ind(n,LIS_localPet+1), LIS_nss_halo_ind(n,LIS_localPet+1)
-!      print *, xmn_part, ymn_part
-!      print *, " **** "
-
 !      CALL MICROMET_CODE(nx,ny,xmn,ymn,deltax,deltay, &
       CALL MICROMET_CODE(LIS_rc%lnc(n),LIS_rc%lnr(n),xmn_part,ymn_part,deltax,deltay, &
          iyear_init,imonth_init,iday_init,xhour_init,dt,undef,&
@@ -268,7 +322,7 @@ subroutine snowmodel_main(n)
          k_stn,xlat_grid,xlon_grid,UTC_flag,icorr_factor_loop,&
          snowmodel_line_flag,xg_line,yg_line,irun_data_assim,&
          wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,&
-         cloud_frac_grid,snowfall_frac,seaice_run)
+         cloud_frac_grid,snowfall_frac,seaice_run,metforce_opt)
 
    else
       write(LIS_logunit,*) "[ERR] Incorrect option set for "

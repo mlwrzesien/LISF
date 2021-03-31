@@ -22,7 +22,7 @@
      &  k_stn,xlat_grid,xlon_grid,UTC_flag,icorr_factor_loop,&
      &  snowmodel_line_flag,xg_line,yg_line,irun_data_assim,&
      &  wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,&
-     &  cloud_frac_grid,snowfall_frac,seaice_run)
+     &  cloud_frac_grid,snowfall_frac,seaice_run,metforce_opt)
 
       use snowmodel_inc
 !KRA
@@ -51,8 +51,8 @@
       real windspd_orig(nstns_max)  ! input values
       real prec_orig(nstns_max)     ! input values
       real elev_orig(nstns_max)     ! station elevation
-      real dn                  ! average observation spacing
-      real topo(nx,ny) ! grid topography
+      real dn               ! average observation spacing
+      real topo(nx,ny)      ! grid topography
       real xlat_grid(nx,ny) ! lat (dec deg) of cell centers
       real xlon_grid(nx,ny) ! lon (dec deg) of cell centers
 
@@ -96,7 +96,7 @@
       integer i_tair_flag,i_rh_flag,i_wind_flag,i_solar_flag,&
      &  i_prec_flag,i_longwave_flag,isingle_stn_flag,igrads_metfile,&
      &  lapse_rate_user_flag,iprecip_lapse_rate_user_flag,n_stns_used,&
-     &  icorr_factor_loop,irun_data_assim,iprecip_scheme
+     &  icorr_factor_loop,irun_data_assim,iprecip_scheme,metforce_opt
 
       real windspd_flag,winddir_flag,windspd_min,calc_subcanopy_met,&
      &  T_lapse_rate,Td_lapse_rate,precip_lapse_rate,&

@@ -130,7 +130,7 @@ module snowmodel_vars
        &  i_prec_flag,i_longwave_flag,isingle_stn_flag,igrads_metfile,&
        &  lapse_rate_user_flag,iprecip_lapse_rate_user_flag,n_stns_used,&
        &  lat_solar_flag,ihrestart_inc,iter_start,ihrestart_flag,&
-       &  iprecip_scheme
+       &  iprecip_scheme, metforce_opt
   
   real xhour,ascii_topoveg,use_shortwave_obs,gap_frac,&
        &  use_longwave_obs,use_sfc_pressure_obs,calc_subcanopy_met,&

@@ -1130,10 +1130,42 @@ contains
              call LIS_lapseRateCorrection(n, LIS_forc(n,m)%modelelev,&
                   LIS_FORC_Base_State(n,m))
              call LIS_slopeAspectCorrection(n, LIS_FORC_Base_State(n,m))
+
+          ! New MicroMet option:
+          elseif(LIS_rc%met_ecor(m).eq."micromet") then
+
+             if( LIS_rc%useelevationmap(n)  == "none" ) then
+                write(LIS_logunit,*) "[ERR] 'micromet' turned on for"
+                write(LIS_logunit,*) "[ERR] the forcing dataset, ",trim(LIS_rc%metforc(m)),","
+                write(LIS_logunit,*) "[ERR] ... Though NO LDT-generated elev fields read in ... "
+                write(LIS_logunit,*) "[ERR] This LIS run is ending ..."
+                call LIS_endrun
+             endif
+
+             call LIS_MicroMetCorrection(n, LIS_forc(n,m)%modelelev,&
+                  LIS_FORC_Base_State(n,m))
+
+          ! Apply MicroMet with slope-aspect option:
+          elseif(LIS_rc%met_ecor(m).eq."micromet and slope-aspect") then
+
+             if( LIS_rc%useelevationmap(n)  == "none" .or. &
+                 LIS_rc%useslopemap(n)  == "none" .or. &
+                 LIS_rc%useaspectmap(n) == "none" ) then
+                write(LIS_logunit,*) "[ERR] 'micromet and slope-aspect' turned on for"
+                write(LIS_logunit,*) "[ERR] the forcing dataset, ",trim(LIS_rc%metforc(m)),","
+                write(LIS_logunit,*) "[ERR] ... Though NO LDT-generated elev/slope/aspect fields read in ... "
+                write(LIS_logunit,*) "[ERR] This LIS run is ending ..."
+                call LIS_endrun
+             endif
+
+             call LIS_MicroMetCorrection(n, LIS_forc(n,m)%modelelev,&
+                  LIS_FORC_Base_State(n,m))
+             call LIS_slopeAspectCorrection(n, LIS_FORC_Base_State(n,m))
+
           end if
        enddo
        
-!blending algorithms (overlay, forcing ensembles, bias correction..)
+       ! Blending algorithms (overlay, forcing ensembles, bias correction..)
        if(LIS_rc%metforc_blend_alg.eq."overlay") then ! simple overlays
           call overlayForcings(n)
        elseif(LIS_rc%metforc_blend_alg.eq."ensemble") then !forcing ensembles

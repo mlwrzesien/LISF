@@ -94,8 +94,8 @@ contains
 !  \begin{description}
 !   \item [nest]
 !     index of the domain or nest.
-!   \item [findex]
-!     index of the forcing dataset
+!   \item [modelelev]
+!     forcing elevation
 !  \end{description}
 !
 !EOP
