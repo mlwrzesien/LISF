@@ -43,7 +43,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_MetForcprocId    = "Metforce processing"
    character*50, public,  parameter :: LDT_MetTDscaleprocId = "Metforce temporal downscaling"
    character*50, public,  parameter :: LDT_StatDscaleMetforcprocId = "Statistical downscaling of met forcing"
-   character*50, public,  parameter :: LDT_usafsiId = "USAFSI analysis"
+   character*50, public,  parameter :: LDT_usafsiId         = "USAFSI analysis"
    character*50, public,  parameter :: LDT_OPTUEparamprocId   = "OPTUE parameter processing"
    character*50, public,  parameter :: LDT_LISHydropreprocId  = "LISHydro preprocessing for WRFHydro"
 
@@ -193,6 +193,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_sachtet356Id  = "SACHTET.3.5.6"
    character*50, public,  parameter :: LDT_snow17Id      = "SNOW17"
    character*50, public,  parameter :: LDT_ruc37Id       = "RUC.3.7"
+   character*50, public,  parameter :: LDT_snowmodelId   = "SnowModel"
 
 !-------------------------------------------------------------------------
 ! Lake models and data

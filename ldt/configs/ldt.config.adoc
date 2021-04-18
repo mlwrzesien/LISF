@@ -98,6 +98,7 @@ Surface model types:  "LSM"
 |RDHM.3.5.6 |Sacramento+snow17
 |GeoWRSI.2 |GeoWRSI, v2.0
 |SiB2 |SiB v2
+!SnowModel |SnowModel
 ifdef::devonly[]
 |FASST |FASST
 |CABLE |CABLE
@@ -2774,6 +2775,25 @@ SiB2 upper right lat:              49.475
 SiB2 upper right lon:             -67.025
 SiB2 resolution (dx):               0.05
 SiB2 resolution (dy):               0.05
+....
+
+`Snowmodel topo-veg data source:` specifies the data format of SnowModel (by Glen Liston) parameter files. Current option is "Grads_binary".
+
+`Snowmodel topo-veg map:` specifies specifies the location of SnowModel (by Glen Liston) parameter files. These files contain vegetation- and topo-based parameter information that can be used in a SnowModel (SM) model run.
+
+`Snowmodel topo-veg map projection:` specfies the general SnowModel parameter map projection.  [red]#What projections are available?#
+
+`Snowmodel topo-veg spatial transform:` specifies the grid transform option. Currently, none, neighbor or average are available options.
+
+`SnowModel topo-veg parameter fill option:` specifies the general SnowModel parameter fill option.
+
+.Example _ldt.config_ entry
+....
+Snowmodel topo-veg data source:  Grads_binary    
+Snowmodel topo-veg map:          ./topo_vege.gdat
+Snowmodel topo-veg spatial transform:  none       
+Snowmodel topo-veg map projection:    latlon
+Snowmodel topo-veg fill option:        none       
 ....
 
 ==== WRSI model parameter files
