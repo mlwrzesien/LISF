@@ -96,14 +96,14 @@ contains
 !  \begin{description}
 !   \item [nest]
 !     index of the domain or nest.
-!   \item [findex]
-!     index of the forcing dataset
+!   \item [modelelev]
+!     forcing elevation
 !  \end{description}
 !
 !EOP
     integer:: t
     real :: force_tmp,force_hum,&
-         force_lwd,force_prs
+            force_lwd,force_prs
     real :: elevdiff
     integer, parameter :: bb=2016
     integer :: index

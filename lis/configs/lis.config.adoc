@@ -374,6 +374,8 @@ Acceptable values are:
 |"`none`"         | Do not apply topographic correction for forcing
 |"`lapse-rate`"   | Use lapse rate correction for forcing
 |"`slope-aspect`" | Apply slope-aspect correction for forcing
+|"`lapse-rate and slope-aspect`" | Apply both lapse-rate and slope-aspect correction for forcing
+|"`micromet`"     | Apply MicroMet-based lapse-rate and slope-aspect correction for forcing
 |====
 
 .Example _lis.config_ entry
