@@ -157,7 +157,7 @@ contains
     write(LDT_logunit,fmt=*)"[INFO] Initializing MERRA-2 forcing grid ... "
 
  !- Read in config file entries:
-    call readcrd_merra2()
+    call readcrd_merra2(findex)
 
     do n=1, LDT_rc%nnest
        merra2_struc(n)%ts = 3600  

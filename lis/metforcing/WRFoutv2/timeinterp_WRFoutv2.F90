@@ -196,7 +196,7 @@ subroutine timeinterp_WRFoutv2(n, findex)
                 + wt2 * WRFoutv2_struc(n)%metdata2(kk,6,index1)
        psurf(t) = wt1 * WRFoutv2_struc(n)%metdata1(kk,7,index1) & 
                 + wt2 * WRFoutv2_struc(n)%metdata2(kk,7,index1)
-       pcp(t) = WRFoutv2_struc(n)%metdata1(kk,8,index1)
+       pcp(t) = WRFoutv2_struc(n)%metdata1(kk,8,index1)/3600.  ! Convert to mm/sec
      enddo
   enddo
 

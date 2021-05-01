@@ -17,7 +17,7 @@
 ! 12 Nov 2015: KR Arsenault, added to LDT
 !
 ! !INTERFACE:    
-subroutine readcrd_merra2()
+subroutine readcrd_merra2(findex)
 ! !USES:
   use ESMF
   use LDT_coreMod, only : LDT_rc, LDT_config
@@ -31,8 +31,22 @@ subroutine readcrd_merra2()
 !  
 !EOP
   implicit none
+  integer, intent(in) :: findex
 
   integer :: n,rc
+
+  ! Static MERRA-2 terrain height map option:
+  if( LDT_rc%met_ecor_parms(findex).ne."none" .and. &
+      LDT_rc%runmode == "LSM parameter processing" ) then
+ 
+     call ESMF_ConfigFindLabel(LDT_config,"MERRA2 geopotential terrain height file:",rc=rc)
+     do n=1,LDT_rc%nnest
+        call ESMF_ConfigGetAttribute(LDT_config,merra2_struc(n)%merra2hgt_file,rc=rc)
+        call LDT_verify(rc,&
+             'MERRA2 geopotential terrain height file: not defined')
+     enddo
+     return
+  endif
 
   call ESMF_ConfigFindLabel(LDT_config,"MERRA2 forcing directory:",rc=rc)
   do n=1,LDT_rc%nnest
@@ -54,14 +68,6 @@ subroutine readcrd_merra2()
      call ESMF_ConfigGetAttribute(LDT_config,merra2_struc(n)%usecorr,rc=rc)
      call LDT_verify(rc,&
           'MERRA2 use corrected total precipitation: not defined')
-  enddo
-
-  ! New! - Added static MERRA-2 terrain height map option:
-  call ESMF_ConfigFindLabel(LDT_config,"MERRA2 geopotential terrain height file:",rc=rc)
-  do n=1,LDT_rc%nnest
-     call ESMF_ConfigGetAttribute(LDT_config,merra2_struc(n)%merra2hgt_file,rc=rc)
-     call LDT_verify(rc,&
-          'MERRA2 geopotential terrain height file: not defined')
   enddo
 
   do n=1,LDT_rc%nnest
