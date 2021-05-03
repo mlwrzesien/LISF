@@ -58,7 +58,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 !  5. U10         10m U-dir wind vector [m s-1] \newline
 !  6. V10         10m V-dir wind vector [m s-1] \newline
 !  7. PSFC        Surface pressure [Pa] \newline
-!  8. PREC_ACC_NC Precipitation [kg m-2 s-1] \newline
+!  8. PREC_ACC_NC Precipitation [mm] \newline
 !
 !  \begin{description}
 !  \item[order]
