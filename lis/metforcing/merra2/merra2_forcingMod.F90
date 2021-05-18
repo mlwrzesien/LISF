@@ -328,8 +328,10 @@ contains
        merra2_struc(n)%merraforc1 = LIS_rc%udef
        merra2_struc(n)%merraforc2 = LIS_rc%udef
 
-       if ( LIS_rc%met_ecor(findex) == "lapse-rate" .or. &
-            LIS_rc%met_ecor(findex) == "lapse-rate and slope-aspect" ) then
+!       if ( LIS_rc%met_ecor(findex) == "lapse-rate" .or. &
+!            LIS_rc%met_ecor(findex) == "lapse-rate and slope-aspect" ) then
+       ! Read in MERRA2 terrain height file
+       if ( LIS_rc%met_ecor(findex) .ne. "none" ) then  ! KRA
           call read_merra2_elev(n,findex)
        endif
 

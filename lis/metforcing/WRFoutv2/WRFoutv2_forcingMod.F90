@@ -109,6 +109,7 @@ contains
         LIS_nss_halo_ind, LIS_nse_halo_ind
   use LIS_timeMgrMod, only : LIS_update_timestep, LIS_calendar
   use LIS_logMod,     only : LIS_logunit, LIS_endrun, LIS_verify
+  use LIS_spatialDownscalingMod, only : LIS_init_pcpclimo_native
   use LIS_forecastMod
   use map_utils   ! KRA
 
@@ -347,6 +348,18 @@ contains
          write(LIS_logunit,*) "  - bilinear, budget-bilinear, or neighbor - "
          call LIS_endrun
        end select
+
+       ! Read in WRF-forcing terrain height file
+       if ( LIS_rc%met_ecor(findex) .ne. "none" ) then  ! KRA
+          call read_WRFoutv2_elev(n,findex)
+       endif
+
+       ! Set up precipitation climate downscaling:
+       if(LIS_rc%pcp_downscale(findex).ne.0) then
+          call LIS_init_pcpclimo_native(n,findex,&
+               WRFoutv2_struc(n)%nc,&
+               WRFoutv2_struc(n)%nr)
+       endif
 
     enddo
 
