@@ -14,7 +14,6 @@
 !
 ! !REVISION HISTORY:
 !  26 Jan 2007: Hiroko Kato; Initial Specification adopted from LIS
-!  14 Mar 2013: Sujay Kumar ; Initial Version in LIS
 !  20 Nov 2020: K.R. Arsenault; Updated for different WRF output files
 ! 
 ! !INTERFACE:
@@ -56,6 +55,7 @@ subroutine get_WRFoutv2(n,findex)
 !    reads the native elevation of the WRFout data to be used
 !    for topographic adjustments to the forcing
 !  \end{description}
+!
 !EOP
   integer, parameter :: ndays = 10  ! # days to look back for forcing data
   integer :: try, ferror
@@ -65,56 +65,94 @@ subroutine get_WRFoutv2(n,findex)
   real*8  :: time1,time2,dumbtime1,dumbtime2
   real    :: gmt1,gmt2,ts1,ts2
   integer :: movetime      ! 1=move time 2 data into time 1
+  !===
 
   WRFoutv2_struc(n)%findtime1=0
   WRFoutv2_struc(n)%findtime2=0
   movetime=0
 
   !=== Determine Required Data Times (The previous hour & the future hour)
-  yr1=LIS_rc%yr    ! Previous Hour
-  mo1=LIS_rc%mo
-  da1=LIS_rc%da
-!  hr1=3*((LIS_rc%hr)/3)
-  hr1=LIS_rc%hr  ! KRA -- Input files are hourly
-  mn1=0
-  ss1=0
-  ts1=0
-  call LIS_tick(time1,doy1,gmt1,yr1,mo1,da1,hr1,mn1,ss1,ts1)
-
-  yr2=LIS_rc%yr    !Next Hour
-  mo2=LIS_rc%mo
-  da2=LIS_rc%da
-!  hr2=3*((LIS_rc%hr)/3)
-  hr2=LIS_rc%hr    ! KRA -- Input files are hourly
-  mn2=0
-  ss2=0
-  ts2=60*60        ! KRA -- Input files are hourly
-  call LIS_tick(time2,doy2,gmt2,yr2,mo2,da2,hr2,mn2,ss2,ts2) 
 
   !=== Check if time interval boundary was crossed
-  if(LIS_rc%time.gt.WRFoutv2_struc(n)%WRFouttime2) then
-     movetime=1
-     WRFoutv2_struc(n)%findtime2=1
+  ! Input files are hourly
+ if(mod(nint(LIS_rc%ts),3600).eq.0) then
+  if( LIS_rc%time.ge.WRFoutv2_struc(n)%WRFouttime2 ) then
+    yr1=LIS_rc%yr    ! Previous Hour
+    mo1=LIS_rc%mo
+    da1=LIS_rc%da
+    hr1=LIS_rc%hr   
+    mn1=0
+    ss1=0
+    ts1=-60*60
+    call LIS_tick(time1,doy1,gmt1,yr1,mo1,da1,hr1,mn1,ss1,ts1)
+
+    yr2=LIS_rc%yr    ! Next Hour
+    mo2=LIS_rc%mo
+    da2=LIS_rc%da
+    hr2=LIS_rc%hr    
+    mn2=0
+    ss2=0
+    ts2=0
+    call LIS_tick(time2,doy2,gmt2,yr2,mo2,da2,hr2,mn2,ss2,ts2)
+    movetime=1
+    WRFoutv2_struc(n)%findtime2=1
   endif
 
-  if (LIS_get_nstep(LIS_rc,n) .eq. 1.or.LIS_rc%rstflag(n).eq.1) then ! beginning of the run
+ else
+  if( LIS_rc%time.ge.WRFoutv2_struc(n)%WRFouttime2 ) then
+    yr1=LIS_rc%yr    ! Previous Hour
+    mo1=LIS_rc%mo
+    da1=LIS_rc%da
+    hr1=LIS_rc%hr  
+    mn1=0
+    ss1=0
+    ts1=0
+    call LIS_tick(time1,doy1,gmt1,yr1,mo1,da1,hr1,mn1,ss1,ts1)
+
+    yr2=LIS_rc%yr    ! Next Hour
+    mo2=LIS_rc%mo
+    da2=LIS_rc%da
+    hr2=LIS_rc%hr    
+    mn2=0
+    ss2=0
+    ts2=60*60
+    call LIS_tick(time2,doy2,gmt2,yr2,mo2,da2,hr2,mn2,ss2,ts2)
+    movetime=1
+    WRFoutv2_struc(n)%findtime2=1
+  endif
+ endif
+
+  !=== Beginning of the run
+  if( LIS_rc%tscount(n).eq.1 .or. LIS_rc%rstflag(n).eq.1 ) then
      WRFoutv2_struc(n)%findtime1=1
      WRFoutv2_struc(n)%findtime2=1
      movetime=0
      LIS_rc%rstflag(n) = 0
   endif
+
+  !=== Find new time2 value and tranfer time2 data to time1 
+  if(movetime.eq.1) then
+     WRFoutv2_struc(n)%WRFouttime1 = WRFoutv2_struc(n)%WRFouttime2
+     do f=1,LIS_rc%met_nf(findex)
+        do c=1,LIS_rc%ngrid(n)
+           WRFoutv2_struc(n)%metdata1(:,f,c)=WRFoutv2_struc(n)%metdata2(:,f,c)
+        enddo
+     enddo
+  endif  ! if movetime=1
     
-  !=== Establish fmodeltime1
-  if (WRFoutv2_struc(n)%findtime1==1) then  !need to get new time1 from the past
-     order=1   !Get data for glbdata1
+  !=== Look or "roll" back 10 days to see if previous days exist
+
+  if( WRFoutv2_struc(n)%findtime1==1 ) then  ! Need to get new time1 from the past
+     order = 1   ! Get data for glbdata1
      ferror = 0
      try = 0
      ts1 = -24*60*60
      do
-        if ( ferror /= 0 ) then
-           exit
+        if( ferror /= 0 ) then
+          exit
         end if
         try = try+1
+        ! Obtain file and variable records:
         call read_WRFoutv2(order,n,findex,yr1,mo1,da1,hr1,ferror)
 
         if ( ferror == 1 ) then !successfully retrieved forcing data
@@ -123,31 +161,22 @@ subroutine get_WRFoutv2(n,findex)
            call LIS_tick(dumbtime1,doy1,gmt1,yr1,mo1,da1,hr1,mn1,ss1,ts1)
         end if
         if ( try > ndays ) then 
-           write(LIS_logunit,*) '[ERR] WRFout data gap exceeds 10 days'
+           write(LIS_logunit,*) '[ERR] WRFout data file 1 gap exceeds 10 days'
            write(LIS_logunit,*) '[ERR] LIS run stopping ...'
            call LIS_endrun
         end if
      end do
   endif
 
-  !=== Find new time2 value and tranfer time2 data to time1 
-  if(movetime.eq.1) then
-     WRFoutv2_struc(n)%WRFouttime1=WRFoutv2_struc(n)%WRFouttime2
-     WRFoutv2_struc(n)%findtime2=1         !to ensure getting new time2 data
-     do f=1,LIS_rc%met_nf(findex)
-        do c=1,LIS_rc%ngrid(n)
-           WRFoutv2_struc(n)%metdata1(:,f,c)=WRFoutv2_struc(n)%metdata2(:,f,c)
-        enddo
-     enddo
-  endif  ! if movetime=1
-  
-  if(WRFoutv2_struc(n)%findtime2.eq.1) then ! need new time2 data
-     order=2     ! Get data for glbdata2
+  if( WRFoutv2_struc(n)%findtime2.eq.1 ) then ! need new time2 data
+     order = 2     ! Get data for glbdata2
      ferror = 0
      try = 0
      ts2 = -24*60*60
      do
-        if ( ferror /= 0 ) exit
+        if ( ferror /= 0 ) then
+          exit
+        endif
         try = try+1
         call read_WRFoutv2(order,n,findex,yr2,mo2,da2,hr2,ferror)
 
@@ -158,7 +187,7 @@ subroutine get_WRFoutv2(n,findex)
            call LIS_tick(dumbtime2,doy2,gmt2,yr2,mo2,da2,hr2,mn2,ss2,ts2)
         end if
         if ( try > ndays ) then
-           write(LIS_logunit,*)'[ERR] WRFout data gap exceeds 10 days'
+           write(LIS_logunit,*)'[ERR] WRFout data file 2 gap exceeds 10 days'
            write(LIS_logunit,*)'[ERR] Stopping LIS run.'
            call LIS_endrun
         end if

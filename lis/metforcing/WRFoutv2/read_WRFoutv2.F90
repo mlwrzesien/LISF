@@ -182,7 +182,6 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
      ! All subsequent years:
      timestep = (24*(doy - 1) + (1 + hr))  
    endif
-!   print *, LIS_rc%doy, doy, hr, timestep
 
    if(LIS_masterproc) then
       write(LIS_logunit,*)'[INFO] Order, timestep, doy, hr ::', &
@@ -248,10 +247,6 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
          status = nf90_get_var(ncid, lonid, lon, &
                        start=(/1,1/), &
                        count=(/WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr/))
- 
-!         print *, "Lat(1,1): ",lat(1,1)    ! t=1 ==> T2=295.2789
-!         print *, "Lon(1,1): ",lon(1,1)    ! t=1 ==> T2=295.2789
-
        endif
 
 !  Note: datain --> datain(y,x) when read in

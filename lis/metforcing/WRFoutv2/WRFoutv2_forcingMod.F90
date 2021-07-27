@@ -111,7 +111,7 @@ contains
   use LIS_logMod,     only : LIS_logunit, LIS_endrun, LIS_verify
   use LIS_spatialDownscalingMod, only : LIS_init_pcpclimo_native
   use LIS_forecastMod
-  use map_utils   ! KRA
+  use map_utils  
 
    implicit none
 ! !ARGUMENTS:  
@@ -250,13 +250,13 @@ contains
        WRFoutv2_struc(n)%gridDesci(11) = -98.0     ! standard long
        WRFoutv2_struc(n)%gridDesci(20) = 0.0
 
-!CEN_LAT = 39.70001f ;
-!CEN_LON = -98.f ;
-!TRUELAT1 = 28.f ;
-!TRUELAT2 = 50.f ;
-!MOAD_CEN_LAT = 39.70001f ;
-!STAND_LON = -98.f ;
-! KRA
+       ! CEN_LAT = 39.70001f 
+       ! CEN_LON = -98.f 
+       ! TRUELAT1 = 28.f 
+       ! TRUELAT2 = 50.f 
+       ! MOAD_CEN_LAT = 39.70001f 
+       ! STAND_LON = -98.f 
+
      ! CHECK FULL DOMAIN LAT/LONG:
      call map_set( PROJ_LC, &
               WRFoutv2_struc(n)%gridDesci(4), WRFoutv2_struc(n)%gridDesci(5),&
@@ -272,16 +272,8 @@ contains
              call ij_to_latlon(proj_temp,&
                         real(c), real(r),&
                         xlat(c,r), xlon(c,r))
-
-!             write(400,*) c, r, xlon(c,r), xlat(c,r)
           enddo
        enddo
-
-!   Starting lat/lon ...
-!     call ij_to_latlon(proj_temp,float(LIS_ews_halo_ind(n,LIS_localPet+1)),&
-!          float(LIS_nss_halo_ind(n,LIS_localPet+1)),lat_str,lon_str)
-!     print *, lat_str, lon_str, gridDesci(4), gridDesci(5)
-! KRA
 
        WRFoutv2_struc(n)%mi = WRFoutv2_struc(n)%nc*WRFoutv2_struc(n)%nr
 
