@@ -9,20 +9,19 @@
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
 !
-! !ROUTINE: readconfig_WRFoutv2
-!  \label{readconfig_WRFoutv2}
+! !ROUTINE: readconfig_WRF_AKdom
+!  \label{readconfig_WRF_AKdom}
 !
 ! !REVISION HISTORY:
-! 14 Mar 2013; Sujay Kumar, Initial Code
-! 20 Nov 2020; K.R. Arsenault, Updated for different WRF output files
+!  21 Jun 2021: K.R. Arsenault; Updated for different WRF AK files
 !
 ! !INTERFACE:    
-subroutine readconfig_WRFoutv2()
+subroutine readconfig_WRF_AKdom()
 ! !USES:
   use ESMF
   use LIS_coreMod,       only : LIS_rc, LIS_config
   use LIS_logMod,        only : LIS_logunit, LIS_verify
-  use WRFoutv2_forcingMod, only : WRFoutv2_struc
+  use WRF_AKdom_forcingMod, only : WRFAK_struc
 
   implicit none
 
@@ -34,20 +33,24 @@ subroutine readconfig_WRFoutv2()
 !EOP
 
   integer :: n,rc
-
-  write(unit=LIS_logunit,fmt=*)'[INFO] Using WRF output v2 forcing'
   
-  call ESMF_ConfigFindLabel(LIS_config,"WRF output v2 forcing directory:",rc=rc)
-  call LIS_verify(rc, 'WRF output v2 forcing directory: not defined')
+  call ESMF_ConfigFindLabel(LIS_config,"WRF AK forcing directory:",rc=rc)
+  call LIS_verify(rc, 'WRF AK forcing directory: not defined')
   do n=1,LIS_rc%nnest    
-     call ESMF_ConfigGetAttribute(LIS_config,WRFoutv2_struc(n)%WRFoutv2dir,rc=rc)
+     call ESMF_ConfigGetAttribute(LIS_config,WRFAK_struc(n)%WRFAKdir,rc=rc)
   enddo
+
+  do n=1,LIS_rc%nnest    
+     WRFAK_struc(n)%nest_id = 1
+  enddo
+
+  write(unit=LIS_logunit,fmt=*)'[INFO] Using WRF AK forcing'
 
   do n=1,LIS_rc%nnest
-     write(unit=LIS_logunit,fmt=*) '[INFO] WRF output v2 forcing directory :',WRFoutv2_struc(n)%WRFoutv2dir
+     write(unit=LIS_logunit,fmt=*) '[INFO] WRF AK forcing directory :',WRFAK_struc(n)%WRFAKdir
 
-     WRFoutv2_struc(n)%WRFouttime1 = 3000.0
-     WRFoutv2_struc(n)%WRFouttime2 = 0.0
+     WRFAK_struc(n)%WRFouttime1 = 3000.0
+     WRFAK_struc(n)%WRFouttime2 = 0.0
   enddo
 
-end subroutine readconfig_WRFoutv2
+end subroutine readconfig_WRF_AKdom

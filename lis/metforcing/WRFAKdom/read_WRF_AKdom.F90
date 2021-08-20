@@ -10,16 +10,14 @@
 #include "LIS_misc.h"
 !BOP
 !
-! !ROUTINE: read_WRFoutv2 
-!  \label{read_WRFoutv2}
+! !ROUTINE: read_WRF_AKdom
+!  \label{read_WRF_AKdom}
 !
 ! !REVISION HISTORY:
-!  26 Jan 2007: Hiroko Beaudoing; Initial specification
-!  14 Mar 2013: Sujay Kumar; Initial Specification in LIS
-!  20 Nov 2020: K.R. Arsenault; Updated for different WRF output files
+!  21 Jun 2021: K.R. Arsenault; Updated for different WRF output files
 !
 ! !INTERFACE:
-subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
+subroutine read_WRF_AKdom( order, n, findex, yr, mon, da, hr, ferror )
 
 ! !USES:
   use LIS_coreMod,          only : LIS_rc,LIS_domain, LIS_localPet, &
@@ -27,7 +25,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
   use LIS_metforcingMod,    only : LIS_forc
   use LIS_timeMgrMod,       only : LIS_tick
   use LIS_logMod,           only : LIS_logunit, LIS_endrun
-  use WRFoutv2_forcingMod,  only : WRFoutv2_struc
+  use WRF_AKdom_forcingMod, only : WRFAK_struc
   use LIS_forecastMod
   use LIS_mpiMod
 #if (defined USE_NETCDF3 || defined USE_NETCDF4)
@@ -44,7 +42,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 !
 ! !DESCRIPTION:
 !  For the given time, reads the parameters from 4-km
-!  WRF CONUS domain data, transforms into 8 LIS forcing 
+!  WRF Alaska (AK) data, transforms into 8 LIS forcing 
 !  parameters and interpolates to the LIS domain.
 !
 !  WRF variables used to force LIS are:
@@ -59,7 +57,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 !  5. U10         10m U-dir wind vector [m s-1] \newline
 !  6. V10         10m V-dir wind vector [m s-1] \newline
 !  7. PSFC        Surface pressure [Pa] \newline
-!  8. PREC_ACC_NC Accumulated Precipitation [mm] \newline
+!  8. PREC_ACC_NC Precipitation [mm] \newline
 !
 !  \begin{description}
 !  \item[order]
@@ -81,8 +79,6 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 ! 
 !  The routines invoked are: 
 !  \begin{description}
-!  \item[WRFoutv2grid\_2\_lisgrid](\ref{WRFoutv2grid_2_lisgrid}) \newline
-!    transform the WRF out data to the LIS grid 
 !  \item[bilinear\_interp](\ref{bilinear_interp}) \newline
 !    spatially interpolate the forcing data using bilinear interpolation
 !  \item[conserv\_interp](\ref{conserv_interp}) \newline
@@ -94,17 +90,17 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 !EOP
 
   integer, parameter :: NF = 8   ! # of S forcing variables
-  integer, parameter :: N_PF = 8 ! # of WRF out forcing variables
 
-  character(11), dimension(N_PF), parameter :: WRFoutv2_fv = (/  &
-       'T2         ',  &
-       'Q2         ',  & 
-       'SWDNB      ',  &
-       'LWDNB      ',  &
-       'U10        ',  &
-       'V10        ',  &
-       'PSFC       ',  &
-       'PREC_ACC_NC'   /)
+  character(11), dimension(NF), parameter :: WRFAK_fv = (/  &
+       'T2         ',  &    ! metdata(1) == tmp
+       'Q2         ',  &    ! metdata(2) == q2
+       'SWDOWN     ',  &    ! metdata(3) == swd
+       'GLW        ',  &    ! metdata(4) == lwd
+       'U10        ',  &    ! metdata(5) == uwind
+       'V10        ',  &    ! metdata(6) == vwind
+       'PSFC       ',  &    ! metdata(7) == psurf
+       'PREC_ACC_NC'   /)   ! metdata(8) == pcp
+!       'RAINNC     '   /)
 
   character(120) :: infile
 
@@ -117,11 +113,13 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
   integer :: doy,mn,ss,ts
   integer :: timestep
   character :: cyr*4
+  character :: cmo*2
+  character :: cda*2
 
   integer :: i, j, v, ii, r, k, eindex, x, y
   integer :: ios            ! set to non-zero if there's an error
   integer :: ierr
-  integer :: nWRFoutv2      ! Size of I/O 1D fields
+  integer :: nWRFAK         ! Size of I/O 1D fields
   integer :: iret, c
   real    :: gridDesco(50)         ! Input,output grid info arrays
 
@@ -132,7 +130,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
   real,allocatable :: lon(:,:)     ! input data (longitude,latitude)
 
   real,allocatable :: datain(:,:)  ! input data (longitude,latitude)
-  real,allocatable :: temp2WRFoutv2(:,:,:)
+  real,allocatable :: temp2WRFAK(:,:,:)
   real,allocatable :: templdas(:,:,:)
   real,allocatable :: f(:)         ! 1D in fields
   real,allocatable :: go(:)        ! 1D out fields
@@ -147,14 +145,14 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
    mo = LIS_rc%lnc(n)*LIS_rc%lnr(n)
 
    ! Allocate memory
-   allocate(lat(WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr))
-   allocate(lon(WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr))
-   allocate(datain(WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr))
-   allocate(temp2WRFoutv2(WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr,NF))
+   allocate(lat(WRFAK_struc(n)%nc,WRFAK_struc(n)%nr))
+   allocate(lon(WRFAK_struc(n)%nc,WRFAK_struc(n)%nr))
+   allocate(datain(WRFAK_struc(n)%nc,WRFAK_struc(n)%nr))
+   allocate(temp2WRFAK(WRFAK_struc(n)%nc,WRFAK_struc(n)%nr,NF))
 
-   allocate(f(WRFoutv2_struc(n)%nc*WRFoutv2_struc(n)%nr))
+   allocate(f(WRFAK_struc(n)%nc*WRFAK_struc(n)%nr))
    allocate(go(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-   allocate(lb(WRFoutv2_struc(n)%nc*WRFoutv2_struc(n)%nr))
+   allocate(lb(WRFAK_struc(n)%nc*WRFAK_struc(n)%nr))
    allocate(lo(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
    allocate(tg(LIS_rc%lnc(n),LIS_rc%lnr(n)))  
 
@@ -164,7 +162,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
      call LIS_endrun
    endif
 
-   temp2WRFoutv2 = 0.0     ! initialize
+   temp2WRFAK = 0.0     ! initialize
 
   !----------------------------------------------------------------
   ! Establish which file timestep the date & hour correspond to
@@ -175,131 +173,136 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
    ts=0
    call LIS_tick(timenow,doy,gmt,yr,mon,da,hr,mn,ss,real(ts))
 
- ! One file per year--use day of year to get to the time record
-   ! First year of data available begins in Oct 1, 2000:
-   if( yr == 2000 ) then 
-     timestep = (24*(doy - 1) + (1 + hr)) - 6576 ! Value represents: 24 * DOY of 09-30-2000
-   else
-     ! All subsequent years:
-     timestep = (24*(doy - 1) + (1 + hr))  
-   endif
+ ! One file per day - 24 hour records within each file:
+   timestep = hr + 1
 
    if(LIS_masterproc) then
-      write(LIS_logunit,*)'[INFO] Order, timestep, doy, hr ::', &
-            order, timestep, doy, hr
+      write(LIS_logunit,*)'[INFO] File,yr,mo,da,hr ::', &
+            order, yr, mon, da, timestep
    endif
 
-!=== Open WRF out forcing files ===
+!=== Open WRF-AK forcing files ===
 
   ! Loop over forecast index:
-  do kk= WRFoutv2_struc(n)%st_iterid, WRFoutv2_struc(n)%en_iterid
+  do kk= WRFAK_struc(n)%st_iterid, WRFAK_struc(n)%en_iterid
 
      ! Hindcast | OL run
      if(LIS_rc%forecastMode.eq.0) then 
         write(cyr, '(i4.4)') yr
+        write(cmo, '(i2.2)') mon
+        write(cda, '(i2.2)') da
 
      else ! Forecast mode (e.g., ESP)
         !sample yr, mo, da
-        call LIS_sample_forecastDate(n, kk, findex, yr, mo, da) 
+        call LIS_sample_forecastDate(n, kk, findex, yr, mon, da) 
         write(cyr, '(i4.4)') yr
+        write(cmo, '(i2.2)') mon
+        write(cda, '(i2.2)') da
      endif
 
+     ! File name for data wrf_d01_year-mo-da.nc
+     infile=trim(WRFAK_struc(n)%WRFAKdir)//"/hourly_"//cyr//&
+           '/wrf2d_d01_'//cyr//'-'//cmo//'-'//cda//'.nc4'
+
+     ! Open netCDF file.
+     status = nf90_open(infile, nf90_NoWrite, ncid)
+     if(status/=0) then
+       if(LIS_masterproc) then 
+          write(LIS_logunit,*)'[ERR] Problem opening file: ',infile,status
+          call LIS_endrun
+       endif
+     else
+       if(LIS_masterproc) then
+         write(LIS_logunit,*)'[INFO] Opened file: ',infile
+       endif
+     end if
+
      ! Forcing variable loop:
-     do v = 1, LIS_rc%met_nf(findex)  ! Number of met fields in WRFoutv2 data
-
-       ! File name for data wrf_annual_CTRL_variable(v)_year.nc
-       infile=trim(WRFoutv2_struc(n)%WRFoutv2dir)//&
-              '/wrf_annual_CTRL_'//trim(WRFoutv2_fv(v))//'_'//cyr//'.nc'
-
-       ! Open netCDF file.
-       status = nf90_open(infile, nf90_NoWrite, ncid)
-       if(status/=0) then
-         if(LIS_masterproc) then 
-            write(LIS_logunit,*)'[ERR] Problem opening file: ',infile,status
-            call LIS_endrun
-         endif
-       else
-         if(LIS_masterproc) then
-           write(LIS_logunit,*)'[INFO] Opened file: ',infile
-         endif
-       end if
+     do v = 1, LIS_rc%met_nf(findex)  ! Number of met fields in WRFAK data
 
        datain = LIS_rc%udef
-       status = nf90_inq_varid(ncid, trim(WRFoutv2_fv(v)), varid)
+       status = nf90_inq_varid(ncid, trim(WRFAK_fv(v)), varid)
        status = nf90_get_var(ncid, varid, datain, &
                      start=(/1,1,timestep/), &
-                     count=(/WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr,1/))
+                     count=(/WRFAK_struc(n)%nc,WRFAK_struc(n)%nr,1/))
+
 ! KRA TO BE UPDATED TO SUPPORT PARALLEL READING IN OF FILES ...
 !       status = nf90_get_var(ncid, varid, datain, &
 !                     start=(/1,1,timestep/), &
-!                     count=(/WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr,1/))
+!                     count=(/WRFAK_struc(n)%nc,WRFAK_struc(n)%nr,1/))
 ! KRA TO BE UPDATED TO SUPPORT PARALLEL READING IN OF FILES ...
 
-       if( trim(WRFoutv2_fv(v)) == "T2" .and. timestep == 1 ) then
+       if( trim(WRFAK_fv(v)) == "T2" .and. LIS_rc%tscount(n) == 1 ) then
          ! Read in lat and lon info from the file:
          lat = LIS_rc%udef
          status = nf90_inq_varid(ncid, "XLAT", latid)
          status = nf90_get_var(ncid, latid, lat, &
                        start=(/1,1/), &
-                       count=(/WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr/))
+                       count=(/WRFAK_struc(n)%nc,WRFAK_struc(n)%nr/))
 
          lon = LIS_rc%udef
          status = nf90_inq_varid(ncid, "XLONG", lonid)
          status = nf90_get_var(ncid, lonid, lon, &
                        start=(/1,1/), &
-                       count=(/WRFoutv2_struc(n)%nc,WRFoutv2_struc(n)%nr/))
+                       count=(/WRFAK_struc(n)%nc,WRFAK_struc(n)%nr/))
        endif
-
-       ! Close netCDF file.
-       status=nf90_close(ncid)
 
       !-----------------------------------------------------------------
       ! Filter out any unrealistic forcing values.
       ! Transfer WRF out forcing fields to LIS format
       !-----------------------------------------------------------------
-       do j=1,WRFoutv2_struc(n)%nr
-         do i=1,WRFoutv2_struc(n)%nc
+       do j=1,WRFAK_struc(n)%nr
+         do i=1,WRFAK_struc(n)%nc
 
            select case (v)
             case (1) ! Tair
-              temp2WRFoutv2(i,j,1) = datain(i,j)
+              temp2WRFAK(i,j,1) = datain(i,j)
 
             case (2) ! Qair
-              temp2WRFoutv2(i,j,2) = datain(i,j)
+              temp2WRFAK(i,j,2) = datain(i,j)
 
             case (3) ! Shortwave
               if (datain(i,j) < 0.0001) then
                 datain(i,j) = 0.0001
               endif
-              temp2WRFoutv2(i,j,3) = datain(i,j)
+              temp2WRFAK(i,j,3) = datain(i,j)
 
             case (4) ! Longwave
-              temp2WRFoutv2(i,j,4) = datain(i,j)
+              temp2WRFAK(i,j,4) = datain(i,j)
 
             case (5) ! U-vector wind
               if (datain(i,j) < 0.0001) then
                 datain(i,j) = 0.0001
               endif
-              temp2WRFoutv2(i,j,5) = datain(i,j)   ! Rotated wind
+              temp2WRFAK(i,j,5) = datain(i,j)   ! Rotated wind
 
             case (6) ! V-vector wind
               if (datain(i,j) < 0.0001) then
                 datain(i,j) = 0.0001
               endif
-              temp2WRFoutv2(i,j,6) = datain(i,j)   ! Rotated wind
+              temp2WRFAK(i,j,6) = datain(i,j)   ! Rotated wind
 
             case (7) ! Pressure
-              temp2WRFoutv2(i,j,7) = datain(i,j)    
+              temp2WRFAK(i,j,7) = datain(i,j)    
 
             case (8) ! Total precipitation: convective precp=0
               if (datain(i,j) < 0.0) then
                 datain(i,j) = 0.0
               endif
-              temp2WRFoutv2(i,j,8) = datain(i,j)
+              ! Temporary implementation due to how hourly precip
+              !  amounts were calculated <part-kluge>KRA
+              if( mon == 1 .and. da == 1 .and. timestep == 1 ) then
+                datain(i,j) = 0.0
+              endif
+              ! <part-kluge>KRA
+              temp2WRFAK(i,j,8) = datain(i,j)
            end select
          enddo
        enddo
      end do !v or variable loop
+
+     ! Close netCDF file.
+     status=nf90_close(ncid)
 
      !--------------------------------------------------------------
      ! Interpolate each forcing variable to LIS domain
@@ -312,9 +315,9 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
      gridDesco = LIS_rc%gridDesc(n,:)
 
      !=== Define input & output data bitmaps
-     nWRFoutv2 = WRFoutv2_struc(n)%nc*WRFoutv2_struc(n)%nr
+     nWRFAK = WRFAK_struc(n)%nc*WRFAK_struc(n)%nr
 
-     !== valid value over land and ocean for WRFoutv2 data
+     !== valid value over land and ocean for WRFAK data
      lb = .true.
      lo = .false.
 
@@ -324,10 +327,10 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
       
         !== Transferring current data to 1-D array for interpolation
         c=0
-        do j=1,WRFoutv2_struc(n)%nr
-           do i=1,WRFoutv2_struc(n)%nc
+        do j=1,WRFAK_struc(n)%nr
+           do i=1,WRFAK_struc(n)%nc
               c = c + 1
-              f(c) = temp2WRFoutv2(i,j,v)
+              f(c) = temp2WRFAK(i,j,v)
            enddo
         enddo
 
@@ -336,41 +339,40 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 
           case( "bilinear" )
             call bilinear_interp(gridDesco,lb,f,lo,go,&
-                 WRFoutv2_struc(n)%mi,mo, & 
+                 WRFAK_struc(n)%mi,mo, & 
                  LIS_domain(n)%lat, LIS_domain(n)%lon,&
-                 WRFoutv2_struc(n)%w111,WRFoutv2_struc(n)%w121,&
-                 WRFoutv2_struc(n)%w211,WRFoutv2_struc(n)%w221,& 
-                 WRFoutv2_struc(n)%n111,WRFoutv2_struc(n)%n121,&
-                 WRFoutv2_struc(n)%n211,WRFoutv2_struc(n)%n221,&
+                 WRFAK_struc(n)%w111,WRFAK_struc(n)%w121,&
+                 WRFAK_struc(n)%w211,WRFAK_struc(n)%w221,& 
+                 WRFAK_struc(n)%n111,WRFAK_struc(n)%n121,&
+                 WRFAK_struc(n)%n211,WRFAK_struc(n)%n221,&
                  LIS_rc%udef, iret)
 
          case( "budget-bilinear" )
           if(v.eq.8) then 
             call conserv_interp(gridDesco,lb,f,lo,go,&
-                 WRFoutv2_struc(n)%mi,mo, & 
+                 WRFAK_struc(n)%mi,mo, & 
                  LIS_domain(n)%lat, LIS_domain(n)%lon,&
-                 WRFoutv2_struc(n)%w112,WRFoutv2_struc(n)%w122,&
-                 WRFoutv2_struc(n)%w212,WRFoutv2_struc(n)%w222,& 
-                 WRFoutv2_struc(n)%n112,WRFoutv2_struc(n)%n122,&
-                 WRFoutv2_struc(n)%n212,WRFoutv2_struc(n)%n222,&
+                 WRFAK_struc(n)%w112,WRFAK_struc(n)%w122,&
+                 WRFAK_struc(n)%w212,WRFAK_struc(n)%w222,& 
+                 WRFAK_struc(n)%n112,WRFAK_struc(n)%n122,&
+                 WRFAK_struc(n)%n212,WRFAK_struc(n)%n222,&
                  LIS_rc%udef,iret)
           else
-            call bilinear_interp(gridDesco,lb,f,lo,go,WRFoutv2_struc(n)%mi,mo, & 
+            call bilinear_interp(gridDesco,lb,f,lo,go,WRFAK_struc(n)%mi,mo, & 
                  LIS_domain(n)%lat, LIS_domain(n)%lon,&
-                 WRFoutv2_struc(n)%w111,WRFoutv2_struc(n)%w121,&
-                 WRFoutv2_struc(n)%w211,WRFoutv2_struc(n)%w221,& 
-                 WRFoutv2_struc(n)%n111,WRFoutv2_struc(n)%n121,&
-                 WRFoutv2_struc(n)%n211,WRFoutv2_struc(n)%n221,LIS_rc%udef, iret)
+                 WRFAK_struc(n)%w111,WRFAK_struc(n)%w121,&
+                 WRFAK_struc(n)%w211,WRFAK_struc(n)%w221,& 
+                 WRFAK_struc(n)%n111,WRFAK_struc(n)%n121,&
+                 WRFAK_struc(n)%n211,WRFAK_struc(n)%n221,LIS_rc%udef, iret)
           endif
 
          case( "neighbor" )
            call neighbor_interp(gridDesco,lb,f,lo,go,&
-                WRFoutv2_struc(n)%mi,mo,&
+                WRFAK_struc(n)%mi,mo,&
                 LIS_domain(n)%lat, LIS_domain(n)%lon,&
-                WRFoutv2_struc(n)%n113,LIS_rc%udef,iret)
+                WRFAK_struc(n)%n113,LIS_rc%udef,iret)
 
         end select
-
     
         !== Convert data to original 3D array & a 2D array to 
         !== Fill in of missing points due to geography difference  
@@ -380,12 +382,14 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
             do i = 1, LIS_rc%lnc(n)
               if(LIS_domain(n)%gindex(i,j).ne.-1) then 
                 tg(i,j) = go(i+c)
+                if(tg(i,j) > 0. ) then
+                endif
               endif
             enddo
             c = c + LIS_rc%lnc(n)
          enddo
 
-         !== No need to fill in for WRFoutv2
+         !== No need to fill in for WRF-AK
 
          do j = 1, LIS_rc%lnr(n)
            do i = 1, LIS_rc%lnc(n)
@@ -407,9 +411,9 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
         do c = 1,LIS_rc%lnc(n)
           if (LIS_domain(n)%gindex(c,r).ne.-1) then
            if(order.eq.1)then
-              WRFoutv2_struc(n)%metdata1(kk,v,LIS_domain(n)%gindex(c,r))=templdas(c,r,v)
+              WRFAK_struc(n)%metdata1(kk,v,LIS_domain(n)%gindex(c,r))=templdas(c,r,v)
            else
-              WRFoutv2_struc(n)%metdata2(kk,v,LIS_domain(n)%gindex(c,r))=templdas(c,r,v)
+              WRFAK_struc(n)%metdata2(kk,v,LIS_domain(n)%gindex(c,r))=templdas(c,r,v)
            endif
           endif
         enddo !c
@@ -420,7 +424,7 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
 
   ! Deallocate local interp-based variables:
   deallocate(datain)
-  deallocate(temp2WRFoutv2)
+  deallocate(temp2WRFAK)
   deallocate(f)
   deallocate(go)
   deallocate(lb)
@@ -429,6 +433,6 @@ subroutine read_WRFoutv2( order, n, findex, yr, mon, da, hr, ferror )
   deallocate(templdas)
 #endif
 
-end subroutine read_WRFoutv2
+end subroutine read_WRF_AKdom
 
 
