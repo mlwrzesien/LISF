@@ -353,11 +353,13 @@ contains
          if( index(LDT_LSMparam_struc(n)%elevation%source,"Native").eq.0 .and. &
              index(LDT_LSMparam_struc(n)%elevation%source,"CONSTANT").eq.0 .and. &
              index(LDT_LSMparam_struc(n)%elevation%source,"1K").eq.0 ) then  ! add for MERIT_1K (Native file format)
+
             call ESMF_ConfigGetAttribute(LDT_config,LDT_rc%topo_proj,&
                  label="Topography map projection:",rc=rc)
             call LDT_verify(rc,'Topography map projection: option not specified in the config file')
 
-            call LDT_readDomainConfigSpecs("Topography", LDT_rc%topo_proj, LDT_rc%topo_gridDesc)
+            call LDT_readDomainConfigSpecs("Topography", LDT_rc%topo_proj, LDT_rc%topo_gridDesc(n,:))
+
             if( LDT_rc%topo_proj == "latlon" ) then
               call LDT_gridOptChecks( n, "Topography", LDT_rc%topo_gridtransform(n), &
                                       LDT_rc%topo_proj, LDT_rc%topo_gridDesc(n,9) )

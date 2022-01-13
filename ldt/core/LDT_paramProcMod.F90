@@ -947,8 +947,11 @@ contains
 !    LDT_rc%gnc_buf(n) = LDT_rc%gnc(n) + bufsize
 !    LDT_rc%gnr_buf(n) = LDT_rc%gnr(n) + bufsize
 
+    write(LDT_logunit,*) "-- Opening and writing to netcdf output file --"
+
 !SVK-edit
     if(LDT_masterproc) then 
+
        shuffle = NETCDF_shuffle
        deflate = NETCDF_deflate
        deflate_level =NETCDF_deflate_level
@@ -2536,12 +2539,18 @@ contains
         LDT_LSMparam_struc(n)%landcover%standard_name = &
             "CLM-4.5 PFT and landunits landcover map"
 
+      case( "NALCMS_SM" )
+        LDT_rc%lc_type(n) = "NALCMS_SM"
+        LDT_LSMparam_struc(n)%landcover%num_bins = 24
+        LDT_LSMparam_struc(n)%landcover%standard_name = &
+            "SnowModel-mapped NALCMS landcover classes map"
+
       case( "CONSTANT" ) 
         LDT_LSMparam_struc(n)%landcover%num_bins = 13
         LDT_LSMparam_struc(n)%landcover%standard_name = &
             "'CONSTANT' landcover field"
      case default
-       print*, 'Please define setLandcoverCategories '
+       print*, '[ERR] Please define setLandcoverCategories '
        print*, ' Stopping ... '
        stop
     end select

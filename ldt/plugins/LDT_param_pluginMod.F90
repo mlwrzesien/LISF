@@ -392,6 +392,7 @@ contains
     external read_CONSTANT_lc
     external read_SACHTET356_lc
     external read_CLM45_lc
+    external read_NALCMS_SM_lc
 
     external read_regmask_gis
     external read_regmask_wrsi
@@ -446,6 +447,8 @@ contains
     call registerreadlc(trim(LDT_sachtet356Id)//char(0), read_SACHTET356_lc)
   ! CLM-4.5 Landcover:
     call registerreadlc(trim(LDT_clm45lcId)//char(0), read_CLM45_lc)
+  ! SnowModel-based NALCMS Landcover:
+    call registerreadlc(trim(LDT_nalcmsSMlcId)//char(0), read_NALCMS_SM_lc)
 
   ! Constant Landcover:
     call registerreadlc(trim(LDT_constId)//char(0), read_CONSTANT_lc)
@@ -556,6 +559,12 @@ contains
     external read_MERIT1K_slope
     external read_MERIT1K_aspect
 
+    external read_NED_SM_elev
+    external read_NED_SM_slope
+    external read_NED_SM_aspect
+    external read_NED_SM_curvature
+
+
  !- GTOPO30:
     call registerreadelev(trim(LDT_gtopoLISId)//char(0),read_GTOPO30_elev)
     call registerreadelev(trim(LDT_gtopoGFSId)//char(0),read_GTOPO30_GFS_elev)
@@ -581,6 +590,12 @@ contains
     call registerreadelev(trim(LDT_merit1KId)//char(0),read_MERIT1K_elev)
     call registerreadslope(trim(LDT_merit1KId)//char(0),read_MERIT1K_slope)
     call registerreadaspect(trim(LDT_merit1KId)//char(0),read_MERIT1K_aspect)
+
+!- NED (SnowModel file version) elevation:
+    call registerreadelev(trim(LDT_nedSMId)//char(0),read_NED_SM_elev)
+    call registerreadslope(trim(LDT_nedSMId)//char(0),read_NED_SM_slope)
+    call registerreadaspect(trim(LDT_nedSMId)//char(0),read_NED_SM_aspect)
+    call registerreadcurv(trim(LDT_nedSMId)//char(0),read_NED_SM_curvature)
 
   end subroutine LDT_topo_plugin
 

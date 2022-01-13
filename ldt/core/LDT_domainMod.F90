@@ -964,30 +964,7 @@ end subroutine LDT_timeInit
        endif
     enddo
 
-! Original LDT code:
-#if 0
-     LDT_ews_halo_ind(n,LDT_localPet+1) = max(ips-LDT_rc%halox, 1)   ! Switched haloy and halox 
-     LDT_ewe_halo_ind(n,LDT_localPet+1) = min(ipe+LDT_rc%halox, nc)
-     LDT_nss_halo_ind(n,LDT_localPet+1) = max(jps-LDT_rc%haloy, 1)
-     LDT_nse_halo_ind(n,LDT_localPet+1) = min(jpe+LDT_rc%haloy, nr)
-     LDT_ews_ind(n,LDT_localPet+1) = ips
-     LDT_ewe_ind(n,LDT_localPet+1) = min(ipe, nc)
-     LDT_nss_ind(n,LDT_localPet+1) = jps
-     LDT_nse_ind(n,LDT_localPet+1) = min(jpe, nr)
-
-     LDT_rc%lnc(n) = LDT_ewe_halo_ind(n,LDT_localPet+1)-&
-          LDT_ews_halo_ind(n,LDT_localPet+1)+1
-     LDT_rc%lnr(n) = LDT_nse_halo_ind(n,LDT_localPet+1)-&
-          LDT_nss_halo_ind(n,LDT_localPet+1)+1
-
-     LDT_rc%lnc_red(n)= (LDT_ewe_ind(n,LDT_localPet+1)-&
-          LDT_ews_ind(n,LDT_localPet+1))+1
-     LDT_rc%lnr_red(n)= (LDT_nse_ind(n,LDT_localPet+1)-&
-          LDT_nss_ind(n,LDT_localPet+1))+1
-#endif
-
-! LIS-7 code:
-!#if 0
+     ! LIS-7 code:
      ews_halo_ind = max(ips-LDT_rc%halox, 1)
      ewe_halo_ind = min(ipe+LDT_rc%halox, nc)
      nss_halo_ind = max(jps-LDT_rc%haloy, 1)
@@ -1007,7 +984,6 @@ end subroutine LDT_timeInit
           ews_ind+1
      LDT_rc%lnr_red(n)= nse_ind-&
           nss_ind+1
-!#endif
 
      write(unit=LDT_logunit,fmt=*)'local domain',':(',LDT_rc%lnc(n),LDT_rc%lnr(n),')'
      write(unit=LDT_logunit,fmt=*)'local domain without halo',':(',&

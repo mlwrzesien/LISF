@@ -164,11 +164,29 @@ contains
       call LDT_verify(rc,'Snowmodel topo-veg map projection: option not specified in the config file')
       SnowModel_struc(:)%topoveg_proj = topoveg_proj
 
+      ! SnowModel parameter projection check:
+      do n=1,LDT_rc%nnest
+         if( LDT_rc%lis_map_proj(n) .ne. SnowModel_struc(n)%topoveg_proj ) then
+            write(LDT_logunit,*)"[ERR] SnowModel parameter projection should be set "
+            write(LDT_logunit,*)"  the same as the LIS domain projection, for now.  "
+            write(LDT_logunit,*)"  Future options will be provided to process input "
+            write(LDT_logunit,*)"  SnowModel parameters for LIS model runs."
+            call LDT_endrun
+         endif
+      enddo
+
       call ESMF_ConfigFindLabel(LDT_config,"Snowmodel topo-veg spatial transform:",rc=rc)
       do n=1,LDT_rc%nnest
          call ESMF_ConfigGetAttribute(LDT_config,SnowModel_struc(n)%topoveg_gridtransform,&
               rc=rc)
          call LDT_verify(rc,'Snowmodel topo-veg spatial transform: option not specified in the config file')
+      enddo
+      do n=1,LDT_rc%nnest
+         if( SnowModel_struc(n)%topoveg_gridtransform .ne. "none" ) then
+            write(LDT_logunit,*)"[ERR] Currently, spatial grid transform of SnowModel parameter"
+            write(LDT_logunit,*)"  is not supported but will be in future versions."
+            call LDT_endrun
+         endif
       enddo
 
       ! Read in SnowModel topo-veg "fill" options:

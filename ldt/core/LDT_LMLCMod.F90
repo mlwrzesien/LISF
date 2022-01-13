@@ -878,6 +878,9 @@ contains
        case( "UMD" )
          call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMBER_LANDCATS", &
               13))
+       case( "NALCMS_SM" )
+         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMBER_LANDCATS", &
+              24))
        case( "Bondville" ) 
          call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMBER_LANDCATS", &
               20))
@@ -934,6 +937,9 @@ contains
       case ( "CLM45" )
         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
              36))
+      case ( "NALCMS_SM" )
+        call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
+             24))
       case ( "Bondville" )
         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
              17))
@@ -941,7 +947,7 @@ contains
         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
              LDT_LSMparam_struc(n)%landcover%num_bins))
       case default
-         write(LDT_logunit,*) ' Land cover scheme not currently recognized.' 
+         write(LDT_logunit,*) ' [ERR] Land cover scheme not currently recognized.' 
          write(LDT_logunit,*) ' Please select one of the following: ' 
          write(LDT_logunit,*) ' -- UMD ' 
          write(LDT_logunit,*) ' -- IGBP ' 
@@ -950,6 +956,7 @@ contains
          write(LDT_logunit,*) ' -- MOSAIC ' 
          write(LDT_logunit,*) ' -- ISA ' 
          write(LDT_logunit,*) ' -- CLM45 ' 
+         write(LDT_logunit,*) ' -- NALCMS_SM ' 
          write(LDT_logunit,*) ' -- CONSTANT ' 
          write(LDT_logunit,*) ' ... program stopping. ' 
          call LDT_endrun
@@ -1107,11 +1114,14 @@ contains
       case ( "ISA" )
         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
              13))
+      case ( "NALCMS_SM" )
+        call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
+             24))
       case ( "CONSTANT" )
         call LDT_verify(nf90_put_att(ftn,NF90_GLOBAL,"NUMVEGTYPES", &
              LDT_LSMparam_struc(n)%landcover%num_bins))
       case default
-         write(LDT_logunit,*) ' Land cover scheme not currently recognized.' 
+         write(LDT_logunit,*) '[ERR] Land cover scheme not currently recognized.' 
          write(LDT_logunit,*) ' Please select one of the following: ' 
          write(LDT_logunit,*) ' -- UMD ' 
          write(LDT_logunit,*) ' -- IGBP ' 
@@ -1119,6 +1129,7 @@ contains
          write(LDT_logunit,*) ' -- USGS ' 
          write(LDT_logunit,*) ' -- MOSAIC ' 
          write(LDT_logunit,*) ' -- ISA ' 
+         write(LDT_logunit,*) ' -- NALCMS_SM ' 
          write(LDT_logunit,*) ' -- CONSTANT ' 
          write(LDT_logunit,*) ' ... program stopping. ' 
          call LDT_endrun
