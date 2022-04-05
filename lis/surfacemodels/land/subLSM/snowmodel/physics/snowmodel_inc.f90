@@ -9,8 +9,10 @@ module snowmodel_inc
   !   recompile the code.
   
 !  integer,parameter :: nx_max=1001,ny_max=1001
-  integer,parameter :: nx_max=3131,ny_max=3603
+!  integer,parameter :: nx_max=3131,ny_max=3603
 !  integer,parameter :: nx_max=10001,ny_max=10001
+!  integer,parameter :: nx_max=17636,ny_max=17784
+  integer,parameter :: nx_max=22001,ny_max=22001
   
   ! max_time_steps defines the maximum number of time steps that
   !   will be used in the current compliled version of the code.
@@ -21,7 +23,8 @@ module snowmodel_inc
   
   ! nstns_max is the maximum number of stations that can be used
   !   in the data assimilation routines.
-  integer, parameter :: nstns_max=10000
+!  integer, parameter :: nstns_max=10000
+  integer, parameter :: nstns_max=22894
 
   ! max_obs_dates is used in the data assimilation routines.  It
   !   must be greater than or equal to the number of observation

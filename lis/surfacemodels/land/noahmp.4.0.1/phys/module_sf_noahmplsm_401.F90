@@ -725,9 +725,16 @@ contains
                      CANLIQ ,CANICE ,TV     ,SFCTMP ,TG     ,         & !in
                      QINTR  ,QDRIPR ,QTHROR ,QINTS  ,QDRIPS ,QTHROS , & !out
                      PAHV   ,PAHG   ,PAHB   ,QRAIN  ,QSNOW  ,SNOWHIN, & !out
-	             FWET   ,CMC                                    )   !out
+                     FWET   ,CMC                                    )   !out
 
 ! compute energy budget (momentum & energy fluxes and phase changes) 
+
+    ! KRA ADDED HERE THIS CHECK FOR VALUES BEFORE CALL TO ENERGY ...
+    IF(SNOWH <= 1.E-6 .OR. SNEQV <= 1.E-3) THEN  
+      SNOWH = 0.0
+      SNEQV = 0.0
+    END IF
+    ! KRA
 
     CALL ENERGY (parameters,ICE    ,VEGTYP ,IST    ,NSNOW  ,NSOIL  , & !in
                  ISNOW  ,DT     ,RHOAIR ,SFCPRS ,QAIR   , & !in
@@ -737,7 +744,7 @@ contains
                  ELAI   ,ESAI   ,FWET   ,FOLN   ,         & !in
                  FVEG   ,PAHV   ,PAHG   ,PAHB   ,                 & !in
                  QSNOW  ,DZSNSO ,LAT    ,CANLIQ ,CANICE ,iloc, jloc , & !in
-		 Z0WRF  ,                                         &
+                 Z0WRF  ,                                         &
                  IMELT  ,SNICEV ,SNLIQV ,EPORE  ,T2M    ,FSNO   , & !out
                  SAV    ,SAG    ,QMELT  ,FSA    ,FSR    ,TAUX   , & !out
                  TAUY   ,FIRA   ,FSH    ,FCEV   ,FGEV   ,FCTR   , & !out
@@ -753,7 +760,7 @@ contains
                  FSRG   ,RSSUN   ,RSSHA ,BGAP   ,WGAP, TGV,TGB,&
                  Q1     ,Q2V    ,Q2B    ,Q2E    ,CHV   ,CHB     , & !out
                  EMISSI ,PAH    ,                                 &
-		 SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2,&
+                 SHG,SHC,SHB,EVG,EVB,GHV,GHB,IRG,IRC,IRB,TR,EVC,CHLEAF,CHUC,CHV2,CHB2,&
                  JULIAN, SWDOWN, PRCP, FB, GECROS1D )        
 !jref:end
 
@@ -771,7 +778,7 @@ contains
                  ESAI   ,SFCTMP ,QVAP   ,QDEW   ,ZSOIL  ,BTRANI , & !in
                  FICEOLD,PONDING,TG     ,IST    ,FVEG   ,iloc,jloc , SMCEQ , & !in
                  BDFALL ,FP     ,RAIN   ,SNOW   ,                 & !in  MB/AN: v3.7
-		 QSNOW  ,QRAIN  ,SNOWHIN,LATHEAV,LATHEAG,frozen_canopy,frozen_ground,  & !in  MB
+                 QSNOW  ,QRAIN  ,SNOWHIN,LATHEAV,LATHEAG,frozen_canopy,frozen_ground,  & !in  MB
                  ISNOW  ,CANLIQ ,CANICE ,TV     ,SNOWH  ,SNEQV  , & !inout
                  SNICE  ,SNLIQ  ,STC    ,ZSNSO  ,SH2O   ,SMC    , & !inout
                  SICE   ,ZWT    ,WA     ,WT     ,DZSNSO ,WSLAKE , & !inout
@@ -807,9 +814,9 @@ contains
    IF (OPT_CROP == 1 .and. crop_active) THEN
     CALL CARBON_CROP (parameters,NSNOW  ,NSOIL  ,VEGTYP ,DT     ,ZSOIL  ,JULIAN , & !in 
                          DZSNSO ,STC    ,SMC    ,TV     ,PSN    ,FOLN   ,BTRAN  , & !in
-			 SOLDN  ,T2M    ,                                         & !in
+                         SOLDN  ,T2M    ,                                         & !in
                          LFMASS ,RTMASS ,STMASS ,WOOD   ,STBLCP ,FASTCP ,GRAIN  , & !inout
-			 LAI    ,SAI    ,GDD    ,                                 & !inout
+                         LAI    ,SAI    ,GDD    ,                                 & !inout
                          GPP    ,NPP    ,NEE    ,AUTORS ,HETERS ,TOTSC  ,TOTLB, PGS    ) !out
    END IF
    
@@ -830,7 +837,7 @@ contains
        Q2B = QSFC
     END IF
 
-    IF(SNOWH <= 1.E-6 .OR. SNEQV <= 1.E-3) THEN
+    IF(SNOWH <= 1.E-6 .OR. SNEQV <= 1.E-3) THEN  !! KRA -- WHY DOES THIS OCCUR HERE AND NOT SOONER ??? ...
      SNOWH = 0.0
      SNEQV = 0.0
     END IF
@@ -1793,7 +1800,8 @@ ENDIF   ! CROPTYPE == 0
 ! ground snow cover fraction [Niu and Yang, 2007, JGR]
 
      FSNO = 0.
-     IF(SNOWH.GT.0.)  THEN
+!     IF(SNOWH.GT.0.)  THEN       ! KRA
+     IF(SNOWH.GT.(0.001))  THEN  ! Update by KRA when have very small snowdepth values
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
          FSNO     = TANH( SNOWH /(2.5* Z0 * FMELT))
@@ -8171,7 +8179,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
 ! Respiration as a function of temperature
 
   real :: r,x
-          r(x) = exp(0.08*(x-298.16))
+          r(x) = exp(0.08*(x-298.16))  ! KRA -- IS THIS EQUATION RIGHT ?? 
+                                       ! how is r a function of x here???
 ! ---------------------------------------------------------------------------------
 
 ! constants
@@ -8559,8 +8568,8 @@ END  SUBROUTINE SHALLOWWATERTABLE
 
 ! Respiration as a function of temperature
 
-  real :: r,x
-          r(x) = exp(0.08*(x-298.16))
+  real :: r, x
+          r(x) = exp(0.08*(x-298.16))   ! KRA -- DOES THIS CODE LOOK RIGHT?
 ! ---------------------------------------------------------------------------------
 
 ! constants

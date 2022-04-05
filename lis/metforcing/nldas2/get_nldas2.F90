@@ -222,8 +222,8 @@ subroutine get_nldas2(n,findex)
         if(ferror.ge.1) nldas2_struc(n)%nldas2time1=time1
         call LIS_tick(dtime1,doy1,gmt1,yr1,mo1,da1,hr1,mn1,ss1,ts1)
         if(try.gt.11)then
-           write(*,*)'error: NLDAS-2 data gap exceeds 10 days on file 1'
-           stop
+           write(*,*)'[ERR] NLDAS-2 data gap exceeds 10 days on file 1'
+           call LIS_endrun()
         endif
      enddo
 !=== end of data search
@@ -280,8 +280,8 @@ subroutine get_nldas2(n,findex)
         endif
         call LIS_tick(dtime2,doy2,gmt2,yr2,mo2,da2,hr2,mn2,ss2,ts2)
         if(try.gt.11)then
-           write(*,*)'error: NLDAS-2 data gap exceeds 10 days on file 2'
-           stop
+           write(*,*)'[ERR] NLDAS-2 data gap exceeds 10 days on file 2'
+           call LIS_endrun()
         endif
      enddo
      !=== end of data search

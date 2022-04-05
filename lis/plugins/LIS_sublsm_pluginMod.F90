@@ -167,8 +167,8 @@ contains
    external snowmodel_getLSMexport
 
 #if ( defined SM_NOAHMP_4_0_1 )
-   external NoahMP401_getSnowmodelexport
-   external NoahMP401_setSnowmodelimport
+   external NoahMP401_getSnowModelexport
+   external NoahMP401_setSnowModelimport
 #endif
 
 #endif
@@ -228,7 +228,6 @@ contains
    call registersublsm2lsmgetexport(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_snowmodelId)//char(0),SnowModel_getLSMexport)
 #endif
-
 #endif
 
   end subroutine LIS_sublsm_plugin

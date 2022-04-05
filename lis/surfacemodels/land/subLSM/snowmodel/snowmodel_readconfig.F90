@@ -110,13 +110,8 @@ subroutine snowmodel_readconfig()
      call LIS_verify(rc,'SnowModel initial snow water equivalent: not defined')
   enddo
 
-  ! Other soil layer information (currently not available in SnowModel version):
-
-!  call ESMF_ConfigFindLabel(LIS_config,"Snowmodel number of soil layers:",rc=rc)
-!  do n=1,LIS_rc%nnest
-!     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%nslay,rc=rc)
-!     call LIS_verify(rc,'SnowModel number of soil layers: not defined')
-!  enddo
+! Future expansion to include SnowModel snow layers ...
+!  Below is an example from soil layer thicknesses ...
 !  call ESMF_ConfigFindLabel(LIS_config,"SnowModel layer thicknesses: ",rc=rc)
 !  do n=1,LIS_rc%nnest
 !     allocate(snowmodel_struc(n)%lyrthk(snowmodel_struc(n)%nslay))
@@ -125,7 +120,6 @@ subroutine snowmodel_readconfig()
 !     enddo
 !     call LIS_verify(rc,'SnowModel layer thicknesses: not defined')
 !  enddo
-
 
 
   write(LIS_logunit,*) '[INFO] Running SnowModel (Liston):'

@@ -146,7 +146,4 @@ module snowmodel_module
 
   end type snowmodeldec
 
-  real, public, allocatable :: glb_topoland(:,:)
-  real, public, allocatable :: glb_vegtype(:,:)
-
 end module snowmodel_module

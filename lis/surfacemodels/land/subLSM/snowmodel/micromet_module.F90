@@ -18,6 +18,7 @@ module micromet_module
 ! !REVISION HISTORY:
 !  01 Mar 2006: G. Liston and K. Elder; MicroMet routine authors
 !  16 Feb 2021: K. Arsenault; Added MicroMet routines to LIS
+!  03 Feb 2022: K. Arsenault; Added MicroMet's solar routines
 ! 
 !EOP
   implicit none
@@ -194,7 +195,7 @@ contains
   subroutine micromet_wind( nx, ny, deltax, deltay, &
                          uwind_grid,vwind_grid,slopewt,curvewt,& 
                          curvature,slope_az,terrain_slope,windspd_grid,& 
-                         winddir_grid,windspd_flag,windspd_min,&
+                         winddir_grid,windspd_flag,winddir_flag,windspd_min,&
                          vegtype,forest_LAI,calc_subcanopy_met,vegsnowd_xy,&
                          topo,wind_lapse_rate,curve_len_scale)
 
@@ -214,6 +215,7 @@ contains
     real,    intent(inout) :: winddir_grid(nx,ny)  ! output wind direction
     real,    intent(inout) :: windspd_grid(nx,ny)  ! output wind speed
     real,    intent(inout) :: windspd_flag
+    real,    intent(inout) :: winddir_flag
 
     ! Input parameters
     real,    intent(in) :: curvature(nx,ny)
@@ -251,8 +253,8 @@ contains
 ! If desired, impose a wind speed increase with elevation.  Here
 !   the wind_lapse_rate = the wind speed increase per 1-km elevation
 !   gain.  The adjustment is patterned after the precipitation-
-!   elevation adjustment.  topo_ref_grid here comes from the
-!   precipitation adjustment.
+!   elevation adjustment.  
+!   Note: topo_ref_grid here comes from the precipitation adjustment.
     if (wind_lapse_rate.ne.0.0) then
       alfa1 = (wind_lapse_rate - 1.0) / (1.0 + wind_lapse_rate)
       ! Convert to m-1.
@@ -345,21 +347,75 @@ contains
 
 ! NOTE: winddir_flag never gets used in any subsequent 
 !      SnowModel submodels, like snowtran3d
-!     u_sum = u_sum / real(nx*ny)
-!     v_sum = v_sum / real(nx*ny)
+     u_sum = u_sum / real(nx*ny)
+     v_sum = v_sum / real(nx*ny)
 
 ! Some compilers do not allow both u and v to be 0.0 in
 !   the atan2 computation.
-!     if (abs(u_sum).lt.1e-10) u_sum = 1e-10
-!     winddir_flag = rad2deg * atan2(u_sum,v_sum)
-!     if (winddir_flag.ge.180.0) then
-!       winddir_flag = winddir_flag - 180.0
-!     else
-!       winddir_flag = winddir_flag + 180.0
-!     endif
-
+     if (abs(u_sum).lt.1e-10) then
+       u_sum = 1e-10
+     endif
+     winddir_flag = rad2deg * atan2(u_sum,v_sum)
+     if (winddir_flag.ge.180.0) then
+       winddir_flag = winddir_flag - 180.0
+     else
+       winddir_flag = winddir_flag + 180.0
+     endif
 
  end subroutine micromet_wind
+
+
+!BOP
+!
+! !ROUTINE: micromet_solar
+! \label{micromet_solar}
+!
+! !DESCRIPTION:  
+!  Calculate solar radiation and estiamte a cloud cover
+!  for SWdown inputs to SnowModel.
+!
+!  Options selected in snowmodel.par
+!
+! !INTERFACE:
+! subroutine micromet_solar( nx,ny,xhour,J_day,topo,rh_grid,Tair_grid,&
+!       xlat_grid,Qsi_grid,slope_az,terrain_slope,dt,vegtype,&
+!       forest_LAI,T_lapse_rate,Td_lapse_rate,&
+!       calc_subcanopy_met,gap_frac,cloud_frac_factor,UTC_flag,&
+!       xlon_grid,cloud_frac_grid)
+
+!    use LIS_mpiMod
+!    use snowmodel_lsmMod, only : snowmodel_struc
+
+!    implicit none
+
+!    integer, intent(in) :: nx
+!    integer, intent(in) :: ny
+!    real,    intent(in) :: xhour                 ! model decimal hour
+!    integer, intent(in) :: J_day                 ! model day of year 
+
+    ! Input parameters and fields
+!    real,    intent(in) :: rh_grid(nx,ny)    
+!    real,    intent(in) :: Tair_grid(nx,ny)    
+!    real,    intent(in) :: xlat_grid(nx,ny)    
+!    real,    intent(in) :: xlon_grid(nx,ny)
+!    real,    intent(in) :: topo(nx,ny)    
+!    real,    intent(in) :: slope_az(nx,ny)
+!    real,    intent(in) :: terrain_slope(nx,ny)
+!    real,    intent(in) :: vegtype(nx,ny)    
+!    real,    intent(in) :: cloud_frac_grid(nx,ny)    
+!    real,    intent(in) :: dt
+!    real,    intent(in) :: forest_LAI
+!    real,    intent(in) :: T_lapse_rate
+!    real,    intent(in) :: Td_lapse_rate
+!    real,    intent(in) :: calc_subcanopy_met
+!    real,    intent(in) :: gap_frac
+!    real,    intent(in) :: cloud_frac_factor
+!    real,    intent(in) :: UTC_flag
+
+    ! Output SWdown fields
+!    real,    intent(inout) :: Qsi_grid(nx,ny)    ! output SWdown values
+
+! end subroutine micromet_solar
 
 end module micromet_module
 

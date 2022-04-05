@@ -34,31 +34,37 @@ subroutine snowmodel_getLSMexport(n, SubLSM2LSM_State)
 ! 
 ! 
 !EOP
-
   type(ESMF_Field)   :: snwdField, sweField
   real, pointer      :: swe(:), snwd(:)
   integer            :: t
   integer            :: status
   real               :: tmp_SLOPE
-
  
   call ESMF_StateGet(SubLSM2LSM_State,"Total SWE",sweField,rc=status)
-  call LIS_verify(status)
+  call LIS_verify(status,'Snowmodel_getLSMexport: SM SWE state error get')
   call ESMF_StateGet(SubLSM2LSM_State,"Total snowdepth",snwdField,rc=status)
-  call LIS_verify(status)
+  call LIS_verify(status,'Snowmodel_getLSMexport: SM snowd state error get')
 
   call ESMF_FieldGet(sweField,localDE=0,farrayPtr=swe,rc=status)
-  call LIS_verify(status)
+  call LIS_verify(status,'Snowmodel_getLSMexport: SM swe field error get')
   call ESMF_FieldGet(snwdField,localDE=0,farrayPtr=snwd,rc=status)
-  call LIS_verify(status)
+  call LIS_verify(status,'Snowmodel_getLSMexport: SM snwd field error get')
 
   do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
-!     tmp_SLOPE = snowmodel_struc(n)%crocus81(t)%SLOPE
-!     swe(t) = snowmodel_struc(n)%crocus81(t)%SWE_1D / COS(tmp_SLOPE)
-!     snwd(t) = snowmodel_struc(n)%crocus81(t)%SD_1D / COS(tmp_SLOPE)
-!  SnowModel
+   ! SnowModel states
      swe(t)  = snowmodel_struc(n)%sm(t)%swe_depth 
      snwd(t) = snowmodel_struc(n)%sm(t)%snow_depth
+     ! If values are very small -- set to 0.
+     if( swe(t) < 0.0001 ) then 
+       swe(t) = 0.
+     endif
+     if( snwd(t) < 0.001 ) then 
+       snwd(t) = 0.
+     endif 
+
+!     if( swe(t) > 0. .or. snwd(t) > 0. ) then 
+!        write(500,*), t, swe(t), snwd(t)
+!     endif
   enddo
 
 end subroutine snowmodel_getLSMexport

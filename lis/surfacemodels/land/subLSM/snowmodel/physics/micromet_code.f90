@@ -835,6 +835,7 @@
               trans_veg = gap_frac * (1.0 - trans_veg) + trans_veg
 
               Qsi_grid(i,j) = trans_veg * Qsi_grid(i,j)
+
             endif
           endif
 

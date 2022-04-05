@@ -23,7 +23,6 @@ subroutine snowmodel_f2t(n)
   use LIS_logMod,        only : LIS_logunit, LIS_verify, &
                                 LIS_endrun
   use snowmodel_lsmMod
-!  use snowmodel_paramMod
   use snowmodel_vars 
 
   implicit none
@@ -45,8 +44,7 @@ subroutine snowmodel_f2t(n)
   integer            :: t,v,status
   integer            :: tid
   type(ESMF_Field)   :: tmpField,q2Field,uField,vField,swdField,lwdField
-  type(ESMF_Field)   :: psurfField,pcpField,snowfField,fhgtField,acondField
-  type(ESMF_Field)   :: gvfField, albField, z0Field
+  type(ESMF_Field)   :: psurfField,pcpField,snowfField,fhgtField
   real,pointer       :: tmp(:),q2(:),uwind(:),vwind(:),snowf(:)
   real,pointer       :: swd(:),lwd(:),psurf(:),pcp(:)
   real,pointer       :: fheight1(:,:),fheight(:)

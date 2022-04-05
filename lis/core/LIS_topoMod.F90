@@ -47,6 +47,7 @@ module LIS_topoMod
      real, allocatable :: aspect(:,:,:)
      real, allocatable :: aspectfgrd(:,:,:)
      real, allocatable :: curvature(:,:,:)
+     real, allocatable :: curvfgrd(:,:,:)
   end type topo_type_dec
   
   type(topo_type_dec), allocatable :: LIS_topo(:)
@@ -89,13 +90,14 @@ contains
        if(LIS_rc%useslopemap(n).ne."none") then 
           call read_slope(n)
        endif
+
        if(LIS_rc%useaspectmap(n).ne."none") then 
           call read_aspect(n)
        endif
 
-!       if(LIS_rc%usecurvaturemap(n).ne."none") then 
-!          call read_curvature(n)
-!       endif
+       if(LIS_rc%usecurvaturemap(n).ne."none") then 
+          call read_curvature(n)
+       endif
     enddo
  
   end subroutine LIS_topo_init
@@ -218,22 +220,22 @@ contains
        call LIS_verify(ios,'Error in nf90_open in read_elevation')
        
        ios = nf90_inq_dimid(nid,"east_west",ncId)
-       call LIS_verify(ios,'Error in nf90_inq_dimid in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inq_dimid of east_west in read_elevation')
        
        ios = nf90_inq_dimid(nid,"north_south",nrId)
-       call LIS_verify(ios,'Error in nf90_inq_dimid in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inq_dimid of north_south in read_elevation')
        
        ios = nf90_inq_dimid(nid,"elevbins",ntypesId)
-       call LIS_verify(ios,'Error in nf90_inq_dimid in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inq_dimid of elevbins in read_elevation')
        
        ios = nf90_inquire_dimension(nid,ncId, len=nc)
-       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inquire_dimension of ncId in read_elevation')
        
        ios = nf90_inquire_dimension(nid,nrId, len=nr)
-       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inquire_dimension of nrId in read_elevation')
        
        ios = nf90_inquire_dimension(nid,ntypesId, len=LIS_rc%nelevbands)
-       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_elevation')
+       call LIS_verify(ios,'Error in nf90_inquire_dimension of nelevbands in read_elevation')
 
        allocate(LIS_topo(n)%elevation(LIS_rc%lnc(n),LIS_rc%lnr(n), &
             LIS_rc%nelevbands))
@@ -445,7 +447,6 @@ contains
 !   \end{description}
 !
 !EOP      
-
     integer          :: ios1
     integer          :: ios,nid,ntypesId, aspectid,ncId, nrId
     integer          :: aspectfgrdId
@@ -453,8 +454,6 @@ contains
     integer          :: c,r,t
     real, allocatable    :: aspect(:,:,:)
     real, allocatable    :: aspectfgrd(:,:,:)
-    real, allocatable    :: aspect1(:,:,:)
-    real, allocatable    :: aspectfgrd1(:,:,:)
     logical          :: file_exists
 
 #if (defined USE_NETCDF3 || defined USE_NETCDF4)
@@ -525,16 +524,131 @@ contains
             LIS_nse_halo_ind(n,LIS_localPet+1),:)
        deallocate(aspectfgrd)
 
-
     else
        write(LIS_logunit,*) '[ERR] aspect map: ',LIS_rc%paramfile(n), &
             ' does not exist'
-       write(LIS_logunit,*) '[ERR] program stopping ...'
        call LIS_endrun
     endif
 #endif
 
   end subroutine read_aspect
 
+
+!BOP
+!
+! !ROUTINE: read_curvature
+!  \label{read_curvature}
+!
+! !REVISION HISTORY:
+!  03 Sept 2004: Sujay Kumar; Initial Specification
+!  23  Mar 2022: K.R. Arsenault;  Added curvature
+!
+! !INTERFACE:
+  subroutine read_curvature(n)
+! !USES:
+#if(defined USE_NETCDF3 || defined USE_NETCDF4)
+    use netcdf
+#endif
+    use LIS_coreMod,        only : LIS_rc, LIS_localPet,&
+         LIS_ews_ind, LIS_ewe_ind,&
+         LIS_nss_ind, LIS_nse_ind, LIS_ews_halo_ind,LIS_ewe_halo_ind, &
+         LIS_nss_halo_ind, LIS_nse_halo_ind
+    use LIS_logMod,         only : LIS_logunit, LIS_getNextUnitNumber, &
+         LIS_releaseUnitNumber, LIS_endrun, LIS_verify
+
+    implicit none
+! !ARGUMENTS: 
+    integer, intent(in) :: n
+
+! !DESCRIPTION:
+!  This subroutine reads the curvature data
+!
+!  The arguments are:
+!  \begin{description}
+!   \item[n]
+!    index of n
+!   \item[locallc]
+!    landlc for the region of interest
+!   \end{description}
+!
+!EOP      
+    integer          :: ios1
+    integer          :: ios,nid,ntypesId,curvid,ncId, nrId
+    integer          :: curvfgrdId
+    integer          :: nc,nr,c,r
+    real, allocatable    :: curvature(:,:,:)
+    real, allocatable    :: curvfgrd(:,:,:)
+    logical          :: file_exists
+
+#if (defined USE_NETCDF3 || defined USE_NETCDF4)
+
+    inquire(file=LIS_rc%paramfile(n), exist=file_exists)
+    if(file_exists) then
+
+       write(LIS_logunit,*)'[INFO] Reading curvature map from '&
+            //trim(LIS_rc%paramfile(n))
+
+       ios = nf90_open(path=LIS_rc%paramfile(n),&
+            mode=NF90_NOWRITE,ncid=nid)
+       call LIS_verify(ios,'Error in nf90_open in read_curvature')
+
+       ios = nf90_inq_dimid(nid,"east_west",ncId)
+       call LIS_verify(ios,'Error in nf90_inq_dimid in read_curvature')
+
+       ios = nf90_inq_dimid(nid,"north_south",nrId)
+       call LIS_verify(ios,'Error in nf90_inq_dimid in read_curvature')
+
+!       ios = nf90_inq_dimid(nid,"curvbins",ntypesId)
+!       call LIS_verify(ios,'Error in nf90_inq_dimid in read_curvature')
+
+       ios = nf90_inquire_dimension(nid,ncId, len=nc)
+       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_curvature')
+
+       ios = nf90_inquire_dimension(nid,nrId, len=nr)
+       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_curvature')
+
+!       ios = nf90_inquire_dimension(nid,ntypesId, len=LIS_rc%curvbands)
+!       call LIS_verify(ios,'Error in nf90_inquire_dimension in read_curvature')
+
+       allocate(LIS_topo(n)%curvature(LIS_rc%lnc(n),LIS_rc%lnr(n), &
+                1))
+       allocate(LIS_topo(n)%curvfgrd(LIS_rc%lnc(n),LIS_rc%lnr(n), &
+                1))
+
+       allocate(curvature(LIS_rc%gnc(n),LIS_rc%gnr(n),1))
+
+       ios = nf90_inq_varid(nid,'CURVATURE',curvid)
+       call LIS_verify(ios,'CURVATURE field not found in the LIS param file')
+
+       ios = nf90_get_var(nid,curvid,curvature)
+       call LIS_verify(ios,'Error in nf90_get_var in read_curvature')
+
+       LIS_topo(n)%curvature(:,:,:) = curvature(&
+            LIS_ews_halo_ind(n,LIS_localPet+1):&
+            LIS_ewe_halo_ind(n,LIS_localPet+1), &
+            LIS_nss_halo_ind(n,LIS_localPet+1): &
+            LIS_nse_halo_ind(n,LIS_localPet+1),:)
+       deallocate(curvature)
+
+       allocate(curvfgrd(LIS_rc%gnc(n),LIS_rc%gnr(n),1))
+       do r = 1,LIS_rc%lnr(n)
+          do c = 1,LIS_rc%lnc(n)
+             if( LIS_topo(n)%curvature(c,r,1) .ne. LIS_rc%udef ) then
+                LIS_topo(n)%curvfgrd(c,r,1) = 1.0
+             else
+                LIS_topo(n)%curvfgrd(c,r,1) = 0.0
+             endif
+          enddo
+       enddo
+       deallocate(curvfgrd)
+
+    else
+       write(LIS_logunit,*) '[ERR] curvature map in: ',LIS_rc%paramfile(n), &
+            ' does not exist.'
+       call LIS_endrun
+    endif
+#endif
+
+  end subroutine read_curvature
 
 end module LIS_topoMod

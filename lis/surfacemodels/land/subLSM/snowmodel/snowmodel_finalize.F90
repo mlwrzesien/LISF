@@ -16,7 +16,6 @@
 ! !INTERFACE:
 subroutine snowmodel_finalize()
 ! !USES:
-  use LIS_coreMod,  only : LIS_rc
   use LIS_logMod,   only : LIS_logunit
   use snowmodel_lsmMod
 !
@@ -27,7 +26,7 @@ subroutine snowmodel_finalize()
 !EOP
   implicit none
 
-  integer :: t,n
+  integer :: t
 
   ! Print a banner when the model run is finished.
   write(LIS_logunit,*)&

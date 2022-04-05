@@ -124,25 +124,6 @@ module snowmodel_lsmMod
      real                     :: curvemax_glb
      real                     :: bsflag_glb
 
-!     &        iyear_init,imonth_init,iday_init,xhour_init,dt,undef,
-!     &        ifill,iobsint,dn,iter,curve_len_scale,slopewt,curvewt,
-!     &        topo,curvature,terrain_slope,slope_az,Tair_grid,
-!     &        rh_grid,uwind_grid,vwind_grid,Qsi_grid,prec_grid,
-!     &        i_tair_flag,i_rh_flag,i_wind_flag,i_solar_flag,
-!     &        i_prec_flag,isingle_stn_flag,igrads_metfile,
-!     &        windspd_grid,winddir_grid,windspd_flag,winddir_flag,
-!     &        sprec,windspd_min,Qli_grid,i_longwave_flag,vegtype,
-!     &        forest_LAI,iyear,imonth,iday,xhour,corr_factor,
-!     &        icorr_factor_index,lapse_rate_user_flag,
-!     &        iprecip_lapse_rate_user_flag,use_shortwave_obs,
-!     &        use_longwave_obs,use_sfc_pressure_obs,sfc_pressure,
-!     &        run_enbal,run_snowpack,calc_subcanopy_met,vegsnowd_xy,
-!     &        gap_frac,cloud_frac_factor,barnes_lg_domain,n_stns_used,
-!     &        k_stn,xlat_grid,xlon_grid,UTC_flag,icorr_factor_loop,
-!     &        snowmodel_line_flag,xg_line,yg_line,irun_data_assim,
-!     &        wind_lapse_rate,iprecip_scheme,cf_precip_flag,cf_precip,
-!     &        cloud_frac_grid,snowfall_frac,seaice_run
-
      type(snowmodeldec), allocatable :: sm(:)
 
   end type snowmodel_type_dec
@@ -157,14 +138,15 @@ contains
 ! \label{snowmodel_ini}
 !
 ! !INTERFACE:
-  subroutine snowmodel_ini()
+  subroutine snowmodel_ini(eks)
 ! !USES:
+    use ESMF
     use LIS_coreMod
-    use LIS_surfaceModelDataMod, only : LIS_sfmodel_struc
+    use LIS_logMod
     use LIS_timeMgrMod,   only : LIS_clock, LIS_calendar, &
          LIS_update_timestep, LIS_registerAlarm
-    use LIS_logMod,       only : LIS_verify, LIS_logunit,&
-                                 LIS_endrun
+    use LIS_surfaceModelDataMod
+    use LIS_lsmMod
     use snowmodel_inc
     use snowmodel_vars
 !
@@ -182,10 +164,15 @@ contains
 !  \end{description}
 !EOP
     implicit none
+    integer, intent(in)  :: eks
 
-    integer               :: n,t
-    character(3)          :: fnest
-    integer               :: status
+    integer              :: n,t
+    character(3)         :: fnest
+    integer              :: status
+
+    type(ESMF_ArraySpec) :: arrspec1
+    type(ESMF_Field)     :: sweField, snwdField
+
 ! _____________________________________________________
 
     allocate(snowmodel_struc(LIS_rc%nnest))
@@ -196,11 +183,6 @@ contains
     do n=1,LIS_rc%nnest
 
       allocate(snowmodel_struc(n)%sm(LIS_rc%npatch(n,LIS_rc%lsm_index)))
-      allocate(glb_topoland(LIS_rc%gnc(n),LIS_rc%gnr(n)))
-      allocate(glb_vegtype(LIS_rc%gnc(n),LIS_rc%gnr(n)))
-
-      glb_topoland = 0.
-      glb_vegtype = 0.
 
       ! Call Snowmodel read parameter subroutine to read in
       !  primary parameter and input settings to run the model:
@@ -212,15 +194,13 @@ contains
       else
          snowmodel_masterproc = .false.
       endif
-!      print *, " snowmodel log proc :: ", snowmodel_masterproc, LIS_localPet
 
       call READPARAM_CODE(&
        dt,deltax,deltay,Utau_t_flag,&
        subgrid_flag,twolayer_flag,snowmodel_dot_par_fname,&
        bc_flag,curve_len_scale,slopewt,curvewt,ht_windobs,&
        ht_rhobs,ro_snow,snow_d_init_const,const_veg_flag,&
-!       vegsnowdepth,nx,ny,max_iter,met_input_fname,xmn,ymn,&
-       vegsnowdepth,LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,met_input_fname,xmn,ymn,&
+       vegsnowdepth,LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,met_input_fname,xmn,ymn,&  ! KRA: nx,ny
        iyear_init,imonth_init,iday_init,xhour_init,undef,ifill,&
        iobsint,dn,xlat,i_tair_flag,i_rh_flag,i_wind_flag,&
        i_solar_flag,i_prec_flag,isingle_stn_flag,igrads_metfile,&
@@ -539,15 +519,13 @@ contains
        ! calculations.
         if (irun_data_assim.eq.1 .and. icorr_factor_loop.eq.2) then
           write(LIS_logunit,*) "[WARN] No call to 'DATAASSIM_USER' at this time"    
-!          CALL DATAASSIM_USER(nx,ny,icorr_factor_index,&
-          CALL DATAASSIM_USER(LIS_rc%lnc(n),LIS_rc%lnr(n),icorr_factor_index,&
+          CALL DATAASSIM_USER(LIS_rc%lnc(n),LIS_rc%lnr(n),icorr_factor_index,&  ! KRA: nx,ny
             corr_factor,max_iter,deltax,deltay,xmn,ymn,nobs_dates,&
             print_inc,iday_init,imonth_init,iyear_init,dt,&
             output_path_wo_assim,xhour_init)
           if (ihrestart_flag.ge.-1) then
           write(LIS_logunit,*) "[WARN] No call to 'HRESTART_SAVE_DA' at this time"    
-!            CALL HRESTART_SAVE_DA(nx,ny,max_iter,corr_factor,&
-            CALL HRESTART_SAVE_DA(LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,corr_factor,&
+            CALL HRESTART_SAVE_DA(LIS_rc%lnc(n),LIS_rc%lnr(n),max_iter,corr_factor,& ! KRA: nx,ny
               icorr_factor_index,nobs_dates)
           endif
         endif
@@ -600,28 +578,42 @@ contains
             snowmodel_struc(n)%ts,&
             snowmodel_struc(n)%rstInterval)
 
-!       print *, snowmodel_struc(n)%ts, snowmodel_struc(n)%rstInterval
-
        LIS_sfmodel_struc(n)%ts = snowmodel_struc(n)%ts
 
-       ! Allocate number of soil layers:
-!       do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
-!          allocate(snowmodel_struc(n)%sm(t)%sh2o(snowmodel_struc(n)%nslay))
-!       enddo
 
-! Turning off the below for now as Snowmodel is in the subLSM layer (KRA; 7-28-2021)
-#if 0
-       ! Set soil layer number = not available currently in SnowModel:
-       allocate(LIS_sfmodel_struc(n)%lyrthk(snowmodel_struc(n)%nslay))
-       LIS_sfmodel_struc(n)%lyrthk(:) = 0.
+!------------------------------------------------------------------------
+!      Create fields for LSM2SUBLSM exchanges
+!------------------------------------------------------------------------
+       call ESMF_ArraySpecSet(arrspec1,&
+            rank=1,typekind=ESMF_TYPEKIND_R4,&
+            rc=status)
+       call LIS_verify(status, &
+            'ESMF_ArraySpecSet failed in snowmodel_ini')
 
-!       do t = 1,snowmodel_struc(n)%nslay
-!          LIS_sfmodel_struc(n)%lyrthk(t) = snowmodel_struc(n)%lyrthk(t)*10.0
-          ! Note: SnowModel's snow layer thickness are in units of meter
-!       enddo
-       LIS_sfmodel_struc(n)%nsm_layers = 1  ! Number of soil moisture layers (set to 1 for now)
-       LIS_sfmodel_struc(n)%nst_layers = 1  ! Number of soil temp layers (set to 1 for now)
-#endif
+       sweField = ESMF_FieldCreate(&
+            grid=LIS_vecPatch(n,LIS_rc%lsm_index),&
+            arrayspec=arrspec1, &
+            name="Total SWE",&
+            rc=status)
+       call LIS_verify(status,&
+            'ESMF_FieldCreate failed for SWE in snowmodel_ini')
+
+       snwdField = ESMF_FieldCreate(&
+            grid=LIS_vecPatch(n,LIS_rc%lsm_index),&
+            arrayspec=arrspec1, &
+            name="Total snowdepth",&
+            rc=status)
+       call LIS_verify(status,&
+            'ESMF_FieldCreate failed for snowdepth in snowmodel_ini')
+
+       call ESMF_StateAdd(LIS_SUBLSM2LSM_State(n,eks),&
+            (/sweField/),rc=status)
+       call LIS_verify(status,&
+            'ESMF_StateAdd failed for swe in snowmodel_ini')
+       call ESMF_StateAdd(LIS_SUBLSM2LSM_State(n,eks),&
+            (/snwdField/),rc=status)
+       call LIS_verify(status,&
+            'ESMF_StateAdd failed for snwd in snowmodel_ini')
 
     enddo
 
@@ -631,8 +623,6 @@ contains
     call snowmodel_coldstart(LIS_rc%lsm_index)
 #endif
 
-!    print *, " -- At end of snowmodel_ini in snowmodel_lsmMod --"
-!   stop
 
   end subroutine snowmodel_ini
 

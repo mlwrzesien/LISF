@@ -269,6 +269,7 @@ contains
     !
     do t=1,LIS_rc%ntiles(nest)
        if(swd(t).gt.0) then 
+
           index = LIS_domain(nest)%tile(t)%index
 
           call LIS_localtime(LIS_rc%gmt, LIS_domain(nest)%grid(index)%lon, &

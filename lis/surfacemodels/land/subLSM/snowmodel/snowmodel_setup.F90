@@ -92,7 +92,6 @@ subroutine snowmodel_setup()
          ! Assign LDT-version of SnowModel topo map to topo_land ...
           topo_land(col,row) = placeholder(col, row)
        enddo
-       call read_global_parms2d(n, "SMTOPO", glb_topoland)
 
        write(LIS_logunit,*) "SnowModel: Reading parameter SMVEG from: ",&
           trim(LIS_rc%paramfile(n))
@@ -104,7 +103,6 @@ subroutine snowmodel_setup()
          ! Assign LDT-version of SnowModel veg map to vegtype ...
           vegtype(col,row) = placeholder(col, row)
        enddo
-       call read_global_parms2d(n, "SMVEG", glb_vegtype)
 
      endif
 
@@ -153,15 +151,11 @@ subroutine snowmodel_setup()
          write(LIS_logunit,*) "[INFO] Calling original 'preprocess_code' routine "
 
          CALL PREPROCESS_CODE(topoveg_fname,const_veg_flag,&
-          vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&
-!          glb_vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&
+          vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&   ! KRA: glb_vegtype=vegtype
           wind_min,Up_const,dz_susp,ztop_susp,fall_vel,Ur_const,&
           ro_water,ro_air,gravity,vonKarman,pi,twopio360,snow_z0,&
-!          nx,ny,sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&
-!          LIS_rc%gnc(n),LIS_rc%gnr(n),sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&
-          LIS_rc%lnc(n),LIS_rc%lnr(n),sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&
-          topo_land,snow_d,topoflag,snow_d_init,snow_d_init_const,&
-!          glb_topoland,snow_d,topoflag,snow_d_init,snow_d_init_const,&
+          LIS_rc%lnc(n),LIS_rc%lnr(n),sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&  ! KRA: nx,ny
+          topo_land,snow_d,topoflag,snow_d_init,snow_d_init_const,&  ! KRA: glb_topoland
           soft_snow_d,met_input_fname,igrads_metfile,deltax,deltay,&
           snowtran_output_fname,micromet_output_fname,&
           enbal_output_fname,snowpack_output_fname,print_micromet,&
@@ -172,8 +166,7 @@ subroutine snowmodel_setup()
           veg_ascii_fname,undef,isingle_stn_flag,max_iter,&
           i_tair_flag,i_rh_flag,i_wind_flag,i_prec_flag,sum_glacmelt,&
           snow_depth,sum_d_canopy_int,corr_factor,icorr_factor_index,&
-!          sum_sfcsublim,barnes_lg_domain,n_stns_used,k_stn,xmn,ymn,&
-          sum_sfcsublim,barnes_lg_domain,n_stns_used,k_stn,xmn_part,ymn_part,&
+          sum_sfcsublim,barnes_lg_domain,n_stns_used,k_stn,xmn_part,ymn_part,& !KRA: xmn, ymn
           ro_soft_snow_old,sum_swemelt,xlat,lat_solar_flag,xlat_grid,&
           xlon_grid,UTC_flag,dt,swe_depth_old,canopy_int_old,&
           vegsnowd_xy,iveg_ht_flag,ihrestart_flag,i_dataassim_loop,&
@@ -292,91 +285,6 @@ subroutine snowmodel_setup()
 
    end do   ! Nest loop
 
-!   stop
  
 end subroutine snowmodel_setup
  
-
-subroutine read_global_parms2d(n, pname, array)
-!BOP
-! 
-! !ROUTINE: read_global_parms2d
-! \label{read_global_parms2d}
-!
-! !INTERFACE:
-#if(defined USE_NETCDF3 || defined USE_NETCDF4)
-  use netcdf
-#endif
-  use LIS_coreMod,    only : LIS_rc
-  use LIS_logMod,     only : LIS_logunit, LIS_getNextUnitNumber, &
-       LIS_releaseUnitNumber, LIS_endrun, LIS_verify
-
-  implicit none
-! !ARGUMENTS: 
-  integer, intent(in)    :: n
-  character(len=*)       :: pname
-  real,    intent(inout) :: array(LIS_rc%gnc(n),LIS_rc%gnr(n))
-! 
-! !DESCRIPTION:
-!  Reads a parameter field from the input LIS parameter file
-!  
-!  The arguments are:
-!  \begin{description}
-!   \item[n]
-!    index of n
-!   \item[pname]
-!    name of the parameter field
-!   \item[array]
-!    retrieved parameter value
-!   \end{description}
-!
-!EOP      
-
-  integer :: ios1
-  integer :: ios,nid,paramid,ncId, nrId
-  integer :: nc,nr,c,r
-  real    :: param(LIS_rc%gnc(n),LIS_rc%gnr(n))
-  logical :: file_exists
-
-#if (defined USE_NETCDF3 || defined USE_NETCDF4)
-  inquire(file=trim(LIS_rc%paramfile(n)), exist=file_exists)
-
-  if(file_exists) then
-
-     ios = nf90_open(path=trim(LIS_rc%paramfile(n)),&
-          mode=NF90_NOWRITE,ncid=nid)
-     call LIS_verify(ios,'Error in nf90_open in read_global_parms2d')
-
-     ios = nf90_inq_dimid(nid,"east_west",ncId)
-     call LIS_verify(ios,'Error in nf90_inq_dimid in read_global_parms2d')
-
-     ios = nf90_inq_dimid(nid,"north_south",nrId)
-     call LIS_verify(ios,'Error in nf90_inq_dimid in read_global_parms2d')
-
-     ios = nf90_inquire_dimension(nid,ncId, len=nc)
-     call LIS_verify(ios,'Error in nf90_inquire_dimension in read_global_parms2d')
-
-     ios = nf90_inquire_dimension(nid,nrId, len=nr)
-     call LIS_verify(ios,'Error in nf90_inquire_dimension in read_global_parms2d')
-
-     ios = nf90_inq_varid(nid,trim(pname),paramid)
-     call LIS_verify(ios,trim(pname)//' field not found in the LIS param file')
-
-     ios = nf90_get_var(nid,paramid,param)
-     call LIS_verify(ios,'Error in nf90_get_var in read_global_parms2d')
-
-     array = param
-
-     ios = nf90_close(nid)
-     call LIS_verify(ios,'Error in nf90_close in read_global_parms2d')
-
-  else
-     write(LIS_logunit,*) '[ERR] '//trim(pname)//' map: ',&
-          trim(LIS_rc%paramfile(n)), ' does not exist.'
-     call LIS_endrun
-  endif
-
-#endif
-
-end subroutine read_global_parms2d
-

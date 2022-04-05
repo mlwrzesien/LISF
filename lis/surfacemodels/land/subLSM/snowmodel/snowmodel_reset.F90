@@ -37,16 +37,13 @@ subroutine snowmodel_reset()
 !EOP
   implicit none
   integer          :: i,n
-  integer          :: status
 
 
     do n=1,LIS_rc%nnest
        write(LIS_logunit,*)  &
-            'SnowModel resetting'
-       write(*,*)  &
-            'SnowModel resetting'
-
-       write(*,*) "reset:", LIS_rc%mo, LIS_rc%da, LIS_rc%hr, snowmodel_struc(n)%forc_count
+            '[INFO] SnowModel resetting'
+       write(LIS_logunit,*) "[INFO] Reset on:", LIS_rc%mo, LIS_rc%da, &
+             LIS_rc%hr, snowmodel_struc(n)%forc_count
 
        snowmodel_struc(n)%forc_count = 0
        do i=1,LIS_rc%npatch(n,LIS_rc%lsm_index)

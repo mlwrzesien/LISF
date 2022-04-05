@@ -1136,10 +1136,14 @@ contains
           ! New MicroMet option:
           elseif(LIS_rc%met_ecor(m).eq."micromet") then
 
-             if( LIS_rc%useelevationmap(n)  == "none" ) then
+             if( LIS_rc%useelevationmap(n)  == "none" .or. &
+                 LIS_rc%useslopemap(n) == "none" .or. &
+                 LIS_rc%useaspectmap(n) == "none" .or. &
+                 LIS_rc%usecurvaturemap(n) == "none" ) then
+
                 write(LIS_logunit,*) "[ERR] 'micromet' turned on for"
                 write(LIS_logunit,*) "[ERR] the forcing dataset, ",trim(LIS_rc%metforc(m)),","
-                write(LIS_logunit,*) "[ERR] ... Though NO LDT-generated elev fields read in ... "
+                write(LIS_logunit,*) "[ERR] ... Though NO LDT-generated topo fields read in ... "
                 write(LIS_logunit,*) "[ERR] This LIS run is ending ..."
                 call LIS_endrun
              endif
@@ -1147,23 +1151,12 @@ contains
              call LIS_MicroMetCorrection(n, LIS_forc(n,m)%modelelev,&
                   LIS_FORC_Base_State(n,m))
 
-          ! Apply MicroMet with slope-aspect option:
-          elseif(LIS_rc%met_ecor(m).eq."micromet and slope-aspect") then
-
-             if( LIS_rc%useelevationmap(n)  == "none" .or. &
-                 LIS_rc%useslopemap(n)  == "none" .or. &
-                 LIS_rc%useaspectmap(n) == "none" ) then
-                write(LIS_logunit,*) "[ERR] 'micromet and slope-aspect' turned on for"
-                write(LIS_logunit,*) "[ERR] the forcing dataset, ",trim(LIS_rc%metforc(m)),","
-                write(LIS_logunit,*) "[ERR] ... Though NO LDT-generated elev/slope/aspect fields read in ... "
-                write(LIS_logunit,*) "[ERR] This LIS run is ending ..."
-                call LIS_endrun
-             endif
-
-             call LIS_MicroMetCorrection(n, LIS_forc(n,m)%modelelev,&
-                  LIS_FORC_Base_State(n,m))
-             call LIS_slopeAspectCorrection(n, LIS_FORC_Base_State(n,m))
-
+          elseif( LIS_rc%met_ecor(m) .eq. "micromet and slope-aspect" ) then
+             write(LIS_logunit,*) "[ERR] Slope-aspect correction option not supported "
+             write(LIS_logunit,*) "[ERR]  with micromet, since the micromet option accounts"
+             write(LIS_logunit,*) "[ERR]  for slope, aspect and curvature corrections."
+             write(LIS_logunit,*) "[ERR]  Please check lis.config.adoc for options."
+             call LIS_endrun
           end if
        enddo
        
@@ -1298,7 +1291,7 @@ contains
                    tid2 = tid1 + ( LIS_rc%met_nperforc(m)-1 )
                    do tid=tid1,tid2
                       if(forcdata_base(tid).ne.LIS_rc%udef) then 
-                         forcdata_mrg(tid)=forcdata_base(tid)	
+                         forcdata_mrg(tid)=forcdata_base(tid)
                       endif
                    enddo
                 enddo
@@ -1313,7 +1306,7 @@ contains
                    tid2 = tid1 + ( LIS_rc%nperforc-1 )
                    do tid=tid1,tid2
                       if(forcdata_base(tid).ne.LIS_rc%udef) then 
-                         forcdata_mrg(tid)=forcdata_base(tid)	
+                         forcdata_mrg(tid)=forcdata_base(tid)
                       endif
                    enddo
                 enddo

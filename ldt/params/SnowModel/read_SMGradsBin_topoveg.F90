@@ -15,7 +15,8 @@ subroutine read_SMGradsBin_topoveg(n, array1, array2)
 
 ! !USES:
   use LDT_coreMod
-  use LDT_logMod,         only : LDT_logunit, LDT_getNextUnitNumber, &
+  use LDT_paramDataMod
+  use LDT_logMod,   only : LDT_logunit, LDT_getNextUnitNumber, &
        LDT_releaseUnitNumber, LDT_endrun
   use SnowModel_parmsMod
 
@@ -96,6 +97,12 @@ subroutine read_SMGradsBin_topoveg(n, array1, array2)
   deallocate(read_vegmap)
  
   call LDT_releaseUnitNumber(ftn)
+
+  ! Set landmask all to "=1" since SnowModel expects to have a land/water type
+  !  at each point in the domain:
+  LDT_LSMparam_struc(n)%landmask%value = 1
+  LDT_LSMparam_struc(n)%dommask%value = 1
+
   write(LDT_logunit, *) "[INFO] Done reading Grads_binary topo-veg file"
 
 end subroutine read_SMGradsBin_topoveg

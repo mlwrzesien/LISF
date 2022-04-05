@@ -357,7 +357,7 @@
       bs_flag = 0.0
 
 ! If the wind speed is lower that some threshold, then don't
-!   need to to any of the snow transport computations.
+!   need to do any of the snow transport computations.
       if (windspd_flag.ge.4.0) then
 
 ! Get the wind direction indexing arrays for this particular

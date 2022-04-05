@@ -605,6 +605,7 @@
 !   latitude weighting when calculating incoming solar radiation.
       if (lat_solar_flag.eq.-1) then
 
+        write(*,*) "SM: Reading in gridded latitude binary file"
         open (91,file='extra_met/grid_lat.gdat', &
      &    form='unformatted',access='direct',recl=4*nx*ny)
         read (91,rec=1) ((xlat_grid(i,j),i=1,nx),j=1,ny)
@@ -648,6 +649,7 @@
 !   longitude influence when calculating incoming solar radiation.
       if (UTC_flag.eq.-1.0) then
 
+        write(*,*) "SM: Reading in gridded longitude binary file"
         open (91,file='extra_met/grid_lon.gdat', &
      &    form='unformatted',access='direct',recl=4*nx*ny)
         read (91,rec=1) ((xlon_grid(i,j),i=1,nx),j=1,ny)
