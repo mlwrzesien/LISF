@@ -120,9 +120,6 @@ subroutine snowmodel_setup()
 
      write(LIS_logunit,*) "[INFO] SnowModel 'main' calls for preprocessing inputs"
 
-     allocate( global_kstn(LIS_rc%gnc(n),LIS_rc%gnr(n),9) )
-     global_kstn = 0
-
      ! Using local parallel subdomain starting index values:
      ! LIS_ews_halo_ind(n,LIS_localPet+1) -- defined in LIS_coreMod.F90 ...
      xmn_part = xmn + deltax * ( real(LIS_ews_halo_ind(n,LIS_localPet+1)) - 1.0 )
@@ -142,20 +139,20 @@ subroutine snowmodel_setup()
 
      do icorr_factor_loop=i_corr_start,irun_data_assim+1
 
-        ! Perform a variety of preprocessing and model setup steps, like
-        !  read in topography and vegetation arrays, open input and output
-        !  files, etc.
+       ! Perform a variety of preprocessing and model setup steps, like
+       !  read in topography and vegetation arrays, open input and output
+       !  files, etc.
 
-        if( snowmodel_struc(n)%call_sm_preproc == 1 ) then
+       if( snowmodel_struc(n)%call_sm_preproc == 1 ) then
 
          write(LIS_logunit,*) "[INFO] Calling original 'preprocess_code' routine "
 
          CALL PREPROCESS_CODE(topoveg_fname,const_veg_flag,&
-          vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&   ! KRA: glb_vegtype=vegtype
+          vegtype,veg_z0,vegsnowdepth,fetch,xmu,C_z,h_const,&   
           wind_min,Up_const,dz_susp,ztop_susp,fall_vel,Ur_const,&
           ro_water,ro_air,gravity,vonKarman,pi,twopio360,snow_z0,&
           LIS_rc%lnc(n),LIS_rc%lnr(n),sum_sprec,sum_qsubl,sum_trans,sum_unload,topo,&  ! KRA: nx,ny
-          topo_land,snow_d,topoflag,snow_d_init,snow_d_init_const,&  ! KRA: glb_topoland
+          topo_land,snow_d,topoflag,snow_d_init,snow_d_init_const,&  
           soft_snow_d,met_input_fname,igrads_metfile,deltax,deltay,&
           snowtran_output_fname,micromet_output_fname,&
           enbal_output_fname,snowpack_output_fname,print_micromet,&
@@ -182,106 +179,41 @@ subroutine snowmodel_setup()
           tabler_sfc_path_name,print_outvars,diam_layer)
 
 
-! -- LIST OF PARAMETERS THAT ALESSANDRO HAS IN GLOBAL IN THE SUBSEQUENT PHYSICS ROUTINES --
+        ! Generate kstn arrays for MicroMet inputs (on SnowModel side):
+        if( snowmodel_struc(n)%sm_micromet_opt == "SnowModel" ) then
 
-        !v/ corr_factor ... 
-        ! THESE ALL ARE "1" FOR LOCAL DOMAINS, WHICH IS EXPECTED ...
-!        do j=1,LIS_rc%lnr(n)
-!          do i=1, LIS_rc%lnc(n)
-!              print *, LIS_localPet+1,i,j,corr_factor(i,j,1)
-!          enddo
-!        enddo
+          allocate( global_kstn(LIS_rc%gnc(n),LIS_rc%gnr(n),9) )
+          global_kstn = 0
 
-        !v/ xlon_grid ... 
-        ! Since this field is not read in or used, we see expected 0's ... 
-!        do j=1,LIS_rc%lnr(n)
-!          do i=1, LIS_rc%lnc(n)
-!              print *, LIS_localPet+1,i,j,xlon_grid(i,j)
-!          enddo
-!        enddo
-
-        !v/ xlat_grid ... 
-        ! Since this field is set to constant value, we see expected value ... 
-        !  read in from snowmodel.par file.
-!        do j=1,LIS_rc%lnr(n)
-!          do i=1, LIS_rc%lnc(n)
-!              print *, LIS_localPet+1,i,j,xlat_grid(i,j)
-!          enddo
-!        enddo
-
-#if 0
-        !v/ topo ...
-        ! Local subdomains match original domain points ... 
-        if( LIS_localPet+1 == 1 ) then
-          do j=1,LIS_rc%lnr(n)
-            do i=1, LIS_rc%lnc(n)
-              write(100,*) i,j,topo(i,j)
-            enddo
-          enddo
-        elseif( LIS_localPet+1 == 2 ) then
-          do j=1,LIS_rc%lnr(n)
-            do i=1, LIS_rc%lnc(n)
-!               write(101,*) LIS_localPet+1, i+LIS_rc%lnc(n),j,topo(i,j)
-               write(101,*) i+LIS_rc%lnc(n),j,topo(i,j)
-            enddo
-          enddo
-        endif
-#endif
-
-        ! If the large-domain barnes oi scheme is used, generate the
-        !   nearest-station indexing array.
-        if (barnes_lg_domain.eq.1.0) then
-          if (n_stns_used.gt.9 .or. n_stns_used.lt.1) then
-            print *,'invalid n_stns_used value'
-            stop
-          endif
+          ! If the large-domain barnes oi scheme is used, generate the
+          !   nearest-station indexing array.
+          if (barnes_lg_domain.eq.1.0) then
+            if (n_stns_used.gt.9 .or. n_stns_used.lt.1) then
+              print *,'invalid n_stns_used value'
+              stop
+            endif
 ! Original call from preprocess.f (which is commented now in that routine):
 !          call get_nearest_stns_1(nx,ny,xmn,ymn,deltax,deltay, &
 !                n_stns_used,k_stn,snowmodel_line_flag,xg_line,yg_line)
 ! Updated here to represent entire SnowModel run domain:
-          call get_nearest_stns_1( LIS_rc%gnc(n),LIS_rc%gnr(n),&
-                 xmn, ymn, deltax, deltay,&
-                 n_stns_used, global_kstn, &
-                 snowmodel_line_flag, xg_line, yg_line)
+            call get_nearest_stns_1( LIS_rc%gnc(n),LIS_rc%gnr(n),&
+                  xmn, ymn, deltax, deltay,&
+                  n_stns_used, global_kstn, &
+                  snowmodel_line_flag, xg_line, yg_line)
 
-          k_stn(:,:,:) = global_kstn(ews:ewe,nss:nse,:)
-
-#if 0 
-        !v/ k_stn ...
-        ! Local subdomains match original domain points ... 
-          if( LIS_localPet+1 == 1 ) then
-           do j=1,LIS_rc%gnr(n)
-             do i=1,LIS_rc%gnc(n)
-                do k=1,n_stns_used
-                   write(350,*) k, i, j, global_kstn(i,j,k)
-                enddo
-             enddo
-           enddo
+            k_stn(:,:,:) = global_kstn(ews:ewe,nss:nse,:)
           endif
-          if( LIS_localPet+1 == 1 ) then
-           do j=1,LIS_rc%lnr(n)
-            do i=1, LIS_rc%lnc(n)
-               do k=1,n_stns_used
-                  write(360,*) k, i, j, k_stn(i,j,k) !, LIS_localPet+1
-               enddo
-            enddo
-          enddo
-!          elseif( LIS_localPet+1 == 2 ) then
-!            do j=1,LIS_rc%lnr(n)
-!             do i=1, LIS_rc%lnc(n)
-!              do k=1,n_stns_used
-!               write(361,*) k, i+LIS_rc%lnc(n), j, k_stn(i,j,k) !, LIS_localPet+1
-!              enddo
-!            enddo
-!          enddo
-        endif
-#endif
+          deallocate(global_kstn)
 
-        endif
+        elseif( snowmodel_struc(n)%sm_micromet_opt == "LIS" ) then
+            call get_nearest_stns_1( LIS_rc%lnc(n),LIS_rc%lnr(n),&
+                  xmn_part, ymn_part, deltax, deltay,&
+                  n_stns_used, k_stn, &
+                  snowmodel_line_flag, xg_line, yg_line)
 
+        endif  ! MM option: Snowmodel or LIS
        endif
      end do
-     deallocate(global_kstn)
 
    end do   ! Nest loop
 

@@ -442,10 +442,10 @@ subroutine snowmodel_main(n)
       ! Write out SnowModel metforcing file fields ("native" text file fields):
       if( snowmodel_struc(n)%write_sm_metfields == 1 ) then
 
-!        call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_TAIRFORC_SM, &
-!             value=snowmodel_struc(n)%sm(t)%tair,&
-!             unit="K",vlevel=1,direction="-",&
-!             surface_type=LIS_rc%lsm_index)
+        call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_TAIRFORC, &
+             value=snowmodel_struc(n)%sm(t)%tair,&
+             unit="K",vlevel=1,direction="-",&
+             surface_type=LIS_rc%lsm_index)
 
         call LIS_diagnoseSurfaceOutputVar(n,t,LIS_MOC_SWDOWNFORC_SM,&
              value=snowmodel_struc(n)%sm(t)%swdown,&
@@ -542,14 +542,44 @@ subroutine snowmodel_main(n)
 !           unit="kg m-2", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
 
-     ! Liquid precipitation portion (units: m/time_step, for SnowModel)
-     snowmodel_struc(n)%sm(t)%rainf = &
+      snowmodel_struc(n)%sm(t)%totprecip = &
+            prec_grid(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_TOTALPRECIP_SM, &
+           value=snowmodel_struc(n)%sm(t)%totprecip*1000., &
+           unit="kg m-2", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
+      snowmodel_struc(n)%sm(t)%totprecip = &
+            prec_grid(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_TOTALPRECIP_SM, &
+           value=snowmodel_struc(n)%sm(t)%totprecip*1000./dt, &
+           unit="kg m-2 s-1", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
+
+      ! Liquid precipitation portion (units: m/time_step, for SnowModel)
+      snowmodel_struc(n)%sm(t)%rainf = &
             rain(col,row)
       call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RAINF_SM, &
            value=snowmodel_struc(n)%sm(t)%rainf, &
            unit="m", vlevel=1, direction="DN", &
 !           unit="kg m-2", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
+
+      snowmodel_struc(n)%sm(t)%rainf = &
+            rain(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RAINF_SM, &
+           value=snowmodel_struc(n)%sm(t)%rainf*1000., &
+           unit="kg m-2", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
+      snowmodel_struc(n)%sm(t)%rainf = &
+            rain(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_RAINF_SM, &
+           value=snowmodel_struc(n)%sm(t)%rainf*1000./dt, &
+           unit="kg m-2 s-1", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
 
      ! Solid precipitation portion (units: m/time_step, for SnowModel)
      snowmodel_struc(n)%sm(t)%snowf = &
@@ -559,6 +589,21 @@ subroutine snowmodel_main(n)
            unit="m", vlevel=1, direction="DN", &
 !           unit="kg m-2", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
+
+      snowmodel_struc(n)%sm(t)%snowf = &
+            sprec(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWF_SM, &
+           value=snowmodel_struc(n)%sm(t)%snowf*1000., &
+           unit="kg m-2", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
+      snowmodel_struc(n)%sm(t)%snowf = &
+            sprec(col,row)
+      call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWF_SM, &
+           value=snowmodel_struc(n)%sm(t)%snowf*1000./dt, &
+           unit="kg m-2 s-1", vlevel=1, direction="DN", &
+           surface_type=LIS_rc%lsm_index)
+
 
      ! Albedo (units: -)
      snowmodel_struc(n)%sm(t)%albedo = &
