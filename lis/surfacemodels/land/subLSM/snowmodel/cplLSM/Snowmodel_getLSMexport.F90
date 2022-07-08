@@ -52,8 +52,8 @@ subroutine snowmodel_getLSMexport(n, SubLSM2LSM_State)
 
   do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
    ! SnowModel states
-     swe(t)  = snowmodel_struc(n)%sm(t)%swe_depth 
-     snwd(t) = snowmodel_struc(n)%sm(t)%snow_depth
+     swe(t)  = snowmodel_struc(n)%sm(t)%swe_depth   ! SWE:  meters
+     snwd(t) = snowmodel_struc(n)%sm(t)%snow_depth  ! Snow depth:  meters
      ! If values are very small -- set to 0.
      if( swe(t) < 0.0001 ) then 
        swe(t) = 0.
