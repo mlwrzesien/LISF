@@ -393,6 +393,7 @@ contains
     external read_SACHTET356_lc
     external read_CLM45_lc
     external read_NALCMS_SM_lc
+    external read_NALCMS_SM_IGBPNCEP_lc
 
     external read_regmask_gis
     external read_regmask_wrsi
@@ -449,6 +450,8 @@ contains
     call registerreadlc(trim(LDT_clm45lcId)//char(0), read_CLM45_lc)
   ! SnowModel-based NALCMS Landcover:
     call registerreadlc(trim(LDT_nalcmsSMlcId)//char(0), read_NALCMS_SM_lc)
+  ! NALCMS/SnowModel-mapped to IGBP/NCEP Landcover:
+    call registerreadlc(trim(LDT_nalcmsSMIGBPlcId)//char(0), read_NALCMS_SM_IGBPNCEP_lc)
 
   ! Constant Landcover:
     call registerreadlc(trim(LDT_constId)//char(0), read_CONSTANT_lc)

@@ -228,6 +228,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_vic412lcId     = "VIC412"
    character*50, public,  parameter :: LDT_clm45lcId      = "CLM45"
    character*50, public,  parameter :: LDT_nalcmsSMlcId   = "NALCMS_SM"
+   character*50, public,  parameter :: LDT_nalcmsSMIGBPlcId  = "NALCMS_SM_IGBPNCEP"
    character*50, public,  parameter :: LDT_constId        = "CONSTANT"
 
 !-------------------------------------------------------------------------

@@ -1470,7 +1470,9 @@ ENDIF   ! CROPTYPE == 0
            print *,'EDIR = ',EDIR*DT
            print *,'RUNSRF = ',RUNSRF*DT
            print *,'RUNSUB = ',RUNSUB*DT
-           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
+!!KRA -- Commented out the water balance error check for now ...
+!           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
+!!KRA
         END IF
 #endif
    ELSE                 !KWM

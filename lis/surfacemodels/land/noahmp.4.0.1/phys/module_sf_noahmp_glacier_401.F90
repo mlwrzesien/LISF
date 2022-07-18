@@ -3048,7 +3048,10 @@ END IF   ! OPT_GLA == 1
            WRITE(message,'(i6,1x,i6,1x,2f15.3,4f11.5)')ILOC,JLOC,END_WB,BEG_WB,PRCP*DT,&
                 EDIR*DT,RUNSRF*DT,RUNSUB*DT
            call wrf_message(trim(message))
-           call wrf_error_fatal("Water budget problem in NOAHMP GLACIER")
+
+!!KRA - Temporary comment out for SnowModel coupling ...
+!           call wrf_error_fatal("Water budget problem in NOAHMP GLACIER")
+!!KRA
         END IF
 #endif
 
