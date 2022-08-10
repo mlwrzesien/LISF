@@ -61,6 +61,27 @@ subroutine snowmodel_readconfig()
      call LIS_parseTimeString(time, snowmodel_struc(n)%rstInterval)
   enddo
 
+  ! set default restart format to netcdf
+  do n=1,LIS_rc%nnest
+     snowmodel_struc(n)%rformat = "netcdf"
+  enddo
+  ! restart run, read restart file
+  if( trim(LIS_rc%startcode) == "restart" ) then
+     Call ESMF_ConfigFindLabel(LIS_config, "SnowModel restart file:", rc=rc)
+        do n=1,LIS_rc%nnest
+            call ESMF_ConfigGetAttribute(LIS_config, snowmodel_struc(n)%rfile, rc=rc)
+            call LIS_verify(rc, "SnowModel restart file: not defined")
+        enddo
+
+        Call ESMF_ConfigFindLabel(LIS_config, "SnowModel restart file format:", rc=rc)
+        do n=1,LIS_rc%nnest
+            call ESMF_ConfigGetAttribute(LIS_config, snowmodel_struc(n)%rformat, rc=rc)
+            call LIS_verify(rc, "SnowModel restart file format: not defined")
+        enddo
+
+  ! cold start run, read initial state variables
+!  else
+  endif
 
   ! SnowModel-specific parameters:
 
@@ -97,10 +118,10 @@ subroutine snowmodel_readconfig()
 
   call ESMF_ConfigFindLabel(LIS_config,"SnowModel number of snow layers:",rc=rc)
   do n=1,LIS_rc%nnest
-     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%nslay,rc=rc)
+     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%nsnow,rc=rc)
      call LIS_verify(rc,'SnowModel number of snow layers: not defined')
      ! May move this allocate statement later ....
-     allocate(snowmodel_struc(n)%lyrthk(snowmodel_struc(n)%nslay))
+     allocate(snowmodel_struc(n)%lyrthk(snowmodel_struc(n)%nsnow))
   enddo
 
   ! Initial values:
@@ -114,8 +135,8 @@ subroutine snowmodel_readconfig()
 !  Below is an example from soil layer thicknesses ...
 !  call ESMF_ConfigFindLabel(LIS_config,"SnowModel layer thicknesses: ",rc=rc)
 !  do n=1,LIS_rc%nnest
-!     allocate(snowmodel_struc(n)%lyrthk(snowmodel_struc(n)%nslay))
-!     do i = 1,snowmodel_struc(n)%nslay
+!     allocate(snowmodel_struc(n)%lyrthk(snowmodel_struc(n)%nsnow))
+!     do i = 1,snowmodel_struc(n)%nsnow
 !        call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%lyrthk(i),rc=rc)
 !     enddo
 !     call LIS_verify(rc,'SnowModel layer thicknesses: not defined')

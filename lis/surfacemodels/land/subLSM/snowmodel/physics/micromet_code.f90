@@ -372,7 +372,7 @@
       real elev_orig(nstns_max) ! station elevation
       real prec_orig(nstns_max) ! input values
 
-      real dn                           ! average observation spacing
+      real dn                   ! average observation spacing
       real topo(nx,ny)          ! grid topography
       real prec_grid(nx,ny)     ! output values
       real Tair_grid(nx,ny)     ! input values

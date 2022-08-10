@@ -114,7 +114,7 @@ subroutine snowmodel_setup()
 
   ! SnowModel Main code calls and options for reading in and 
   !  preprocessing necessary inputs to the submodel components:
-  ! All below from the original snomodel_main.f ...
+  ! All below from the original snowmodel_main.f ...
 
   do n=1,LIS_rc%nnest
 

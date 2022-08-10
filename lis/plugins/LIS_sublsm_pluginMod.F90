@@ -77,7 +77,7 @@ contains
 !  is invoked later by the following calls
 !
 !  \begin{verbatim}
-!    call registersublsminit(1,noah_lsm_ini)
+!    call registersublsminit(1,noah_lsm_init)
 !    call registersublsmsetup(1,noah_setup)
 !    call registersublsmf2t(1,noah_f2t)
 !    call registersublsmrun(1,noah_main)
@@ -91,7 +91,7 @@ contains
 !   follows:
 !
 !  \begin{verbatim}
-!    call sublsminit(1)     - calls noah_lsm_ini
+!    call sublsminit(1)     - calls noah_lsm_init
 !    call sublsmsetup(1)    - calls noah_setup
 !    call sublsmf2t(1)      - calls noah_f2t
 !    call sublsmrun(1)      - calls noah_main
@@ -124,7 +124,7 @@ contains
 #endif
 
 #if ( defined SM_SNOWMODEL )
-   use snowmodel_lsmMod, only : snowmodel_ini
+   use snowmodel_lsmMod, only : snowmodel_init
 #endif
 
    implicit none
@@ -203,7 +203,7 @@ contains
 
 
 #if ( defined SM_SNOWMODEL )
-   call registersublsminit(trim(LIS_snowmodelId)//char(0),snowmodel_ini)
+   call registersublsminit(trim(LIS_snowmodelId)//char(0),snowmodel_init)
    call registersublsmsetup(trim(LIS_snowmodelId)//char(0),snowmodel_setup)
    call registersublsmf2t(trim(LIS_snowmodelId)//"+"&
         //trim(LIS_retroId)//char(0),snowmodel_f2t)
