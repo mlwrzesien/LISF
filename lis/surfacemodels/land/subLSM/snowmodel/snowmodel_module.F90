@@ -24,6 +24,7 @@ module snowmodel_module
 !
 ! !REVISION HISTORY:
 !  14 Apr 2020: K. Arsenault; Added G. Liston's SnowModel 
+!  08 Aug 2022: K. Arsenault; Updated for implementing restart files
 ! 
 !EOP
   implicit none
@@ -37,14 +38,22 @@ module snowmodel_module
      real, allocatable :: lyrthk(:) !used only if distributed depths are defined
 
 !-------------------------------------------------------------------------
-! SnowModel State Variables
+! SnowModel State Variables (HRESTART_READ; HRESTART_SAVE)
 !-------------------------------------------------------------------------
      ! States that can be 0'd out at the start of the next water year
-     real :: swe_depth      ! swe_depth, swed: Snow water equivalent depth (m)
-     real :: snow_depth     ! snod: snow depth (m)  
-     real :: ro_snow_grid   ! gets initialized as ro_snow
-     real :: canopy_int_old
-     real :: swe_depth_old
+     real :: swe_depth          ! swed: Snow water equivalent depth (m)
+     real :: snow_depth         ! snod: snow depth (m)
+     real :: ro_snow_grid       ! Snow grid density (kg/m3); initialized as ro_snow
+     real :: canopy_int         ! Canopy interception store (m)
+     real :: canopy_int_old     ! Former canopy interception store (m)
+     real :: swe_depth_old      ! Former SWE depth (m) step
+
+     ! Additional Restart file state list:
+     real :: soft_snow_d        ! Soft snow layer depth (m)
+     real :: ro_soft_snow_old   ! Density of former soft snow layer (kg/m3)
+     real :: snow_d_init        ! Initial snow depth (m), density-layer and subgrid scale snow
+     real :: topo               ! Snow-depth changing grid topography level (m)
+     real :: sum_sprec          ! Summed snowfall (m)
 
      ! Multilayer states
      real :: tslsnowfall    ! Initialized with tsls_threshold
@@ -53,20 +62,6 @@ module snowmodel_module
      real :: ro_layer       ! (i,j,k) = ro_snow, initialized
      real :: T_old_layer    ! (i,j,k) = 273.15, initialized
      real :: KK             ! (i,j) = 0; this is the total number of layers set to
-
-!       1) ((snow_d(i,j),i=1,nx),j=1,ny)
-!       2) ((snow_depth(i,j),i=1,nx),j=1,ny)
-!       3) ((canopy_int(i,j),i=1,nx),j=1,ny)
-!       4) ((soft_snow_d(i,j),i=1,nx),j=1,ny)
-!       5) ((ro_snow_grid(i,j),i=1,nx),j=1,ny)
-!       6) ((swe_depth(i,j),i=1,nx),j=1,ny)
-!       7) ((ro_soft_snow_old(i,j),i=1,nx),j=1,ny)
-!       8) ((snow_d_init(i,j),i=1,nx),j=1,ny)
-!       9) ((swe_depth_old(i,j),i=1,nx),j=1,ny)
-!       10) ((canopy_int_old(i,j),i=1,nx),j=1,ny)
-!       11) ((topo(i,j),i=1,nx),j=1,ny)
-!       12) ((sum_sprec(i,j),i=1,nx),j=1,ny)
-
 
 !-------------------------------------------------------------------------
 ! SnowModel Forcing Variables
@@ -114,7 +109,6 @@ module snowmodel_module
      real :: runoff      ! runoff, roff: runoff from snowpack base (m/dt)
      real :: glmt        ! glacier_melt, glmt: SWE melt from glacier ice (m)
      real :: qcs         ! qcs: Canopy sublimation (m/dt)
-     real :: canopint    ! canopy_int:  Canopy interception store (m)
      real :: snowcover   
 
      real :: sublim      ! swesublim, ssub: static-surface sublimation (m)
@@ -130,7 +124,7 @@ module snowmodel_module
      real :: w_balance   ! wbal: Summed water balance error durign year (m)
 
 ! SnowTran:
-     real :: snow_d
+     real :: snow_d      ! Snow depth (m), density-adjusted and used in subgrid-scale snow (HRESTART_READ)
      real :: wbal_qsubl
      real :: wbal_salt
      real :: wbal_susp

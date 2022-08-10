@@ -1522,7 +1522,7 @@
 !   on the ground (or captured within the vegetation) to be
 !   eroded.  Since Qsubl is blowing snow sublimation, don't let
 !   this sublimation reach down into the hard snow layer or into
-!   the vegsnowd, because that snow is not availble to be blown
+!   the vegsnowd, because that snow is not available to be blown
 !   around.  I don't think it matters much whether this is done
 !   before or after the Tabler subgrid redistribution.
         do i=1,nx
@@ -1631,7 +1631,7 @@
 ! Calculate the snow depth using the spatially-distributed snow density
 !   from the snowpack model.
           snow_depth(i,j) = swe_depth(i,j) * &
-     &      ro_water / ro_snow_grid(i,j)
+                            ro_water / ro_snow_grid(i,j)
 
         enddo
       enddo

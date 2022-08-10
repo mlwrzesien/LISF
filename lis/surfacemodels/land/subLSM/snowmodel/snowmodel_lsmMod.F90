@@ -23,18 +23,18 @@ module snowmodel_lsmMod
 ! \begin{description}
 !  \item[rfile]
 !    name of the SnowModel restart file
+!  \item[rformat]
+!    format of restart file (binary or netcdf) for SnowModel
 !  \item[vfile]
 !    name of the static vegetation parameter table
 !  \item[parfile]
 !    name of the main input parameter for SnowModel
 !  \item[count]
 !    variable to keep track of the number of timesteps before an output
-!  \item[nslay]
-!    number of soil layers
+!  \item[nsnow]
+!    number of snow layers
 !  \item[nvegp]
 !    number of static vegetation parameters in the table
-!  \item[varid]
-!    NETCDF ids for variables (used for netcdf output)
 !  \item[inittemp]
 !    initial soil temperatures for a cold start run
 !  \item[rstInterval]
@@ -61,7 +61,7 @@ module snowmodel_lsmMod
 !-----------------------------------------------------------------------------
 ! !PUBLIC MEMBER FUNCTIONS:
 !-----------------------------------------------------------------------------
-  public :: snowmodel_ini
+  public :: snowmodel_init
 !-----------------------------------------------------------------------------
 ! !PUBLIC TYPES:
 !-----------------------------------------------------------------------------
@@ -70,14 +70,13 @@ module snowmodel_lsmMod
   type, public ::  snowmodel_type_dec
 
      ! LIS related parameters:
-     character(100)           :: rfile
      real                     :: rstInterval
-     integer                  :: varid(21)
+     character(256)           :: rfile
+     character(256)           :: rformat
 
      ! LIS-SnowModel related parameters:
-     character(100)           :: parfile
-     character(100)           :: vfile
-     integer                  :: nslay
+     character(256)           :: parfile
+     character(256)           :: vfile
      real                     :: ht_windobs
      real                     :: ht_rhobs
      integer                  :: call_sm_preproc
@@ -85,6 +84,7 @@ module snowmodel_lsmMod
      character(10)            :: sm_params_opt
      character(10)            :: sm_micromet_opt
 
+     integer                  :: nsnow
      real, allocatable        :: lyrthk(:)
      real, allocatable        :: inittemp(:)
      real                     :: initsnowdepth
@@ -134,11 +134,11 @@ module snowmodel_lsmMod
 contains
 !BOP
 !
-! !ROUTINE: snowmodel_ini
-! \label{snowmodel_ini}
+! !ROUTINE: snowmodel_init
+! \label{snowmodel_init}
 !
 ! !INTERFACE:
-  subroutine snowmodel_ini(eks)
+  subroutine snowmodel_init(eks)
 ! !USES:
     use ESMF
     use LIS_coreMod
@@ -183,6 +183,9 @@ contains
     do n=1,LIS_rc%nnest
 
       allocate(snowmodel_struc(n)%sm(LIS_rc%npatch(n,LIS_rc%lsm_index)))
+
+      ! Number of snow layers (e.g., 2, 25)
+      snowmodel_struc(n)%nsnow = 1   ! Set to 1 for now, can be high as 25
 
       ! Call Snowmodel read parameter subroutine to read in
       !  primary parameter and input settings to run the model:
@@ -549,20 +552,7 @@ contains
           snowmodel_struc(n)%sm(t)%psurf = 0
           snowmodel_struc(n)%sm(t)%rainf = 0
           snowmodel_struc(n)%sm(t)%snowf = 0
-!          snowmodel_struc(n)%sm(t)%z0 = 0
-          snowmodel_struc(n)%sm(t)%uwind = 0
-          snowmodel_struc(n)%sm(t)%vwind = 0
        enddo
-
-       ! Initialize snow fields (for now here; will be added as 
-       !  user-options later for 'coldstart/restart' for states
-       snowmodel_struc(n)%sm(:)%swe_depth = 0.
-       snowmodel_struc(n)%sm(:)%snow_depth = 0.
-       snowmodel_struc(n)%sm(:)%sden = 0.
-       snowmodel_struc(n)%sm(:)%sublim = 0.
-       snowmodel_struc(n)%sm(:)%swemelt = 0.
-       snowmodel_struc(n)%sm(:)%runoff = 0.
-
 
 !------------------------------------------------------------------------
 !      Model timestep Alarm
@@ -588,7 +578,7 @@ contains
             rank=1,typekind=ESMF_TYPEKIND_R4,&
             rc=status)
        call LIS_verify(status, &
-            'ESMF_ArraySpecSet failed in snowmodel_ini')
+            'ESMF_ArraySpecSet failed in snowmodel_init')
 
        sweField = ESMF_FieldCreate(&
             grid=LIS_vecPatch(n,LIS_rc%lsm_index),&
@@ -596,7 +586,7 @@ contains
             name="Total SWE",&
             rc=status)
        call LIS_verify(status,&
-            'ESMF_FieldCreate failed for SWE in snowmodel_ini')
+            'ESMF_FieldCreate failed for SWE in snowmodel_init')
 
        snwdField = ESMF_FieldCreate(&
             grid=LIS_vecPatch(n,LIS_rc%lsm_index),&
@@ -604,27 +594,20 @@ contains
             name="Total snowdepth",&
             rc=status)
        call LIS_verify(status,&
-            'ESMF_FieldCreate failed for snowdepth in snowmodel_ini')
+            'ESMF_FieldCreate failed for snowdepth in snowmodel_init')
 
        call ESMF_StateAdd(LIS_SUBLSM2LSM_State(n,eks),&
             (/sweField/),rc=status)
        call LIS_verify(status,&
-            'ESMF_StateAdd failed for swe in snowmodel_ini')
+            'ESMF_StateAdd failed for swe in snowmodel_init')
        call ESMF_StateAdd(LIS_SUBLSM2LSM_State(n,eks),&
             (/snwdField/),rc=status)
        call LIS_verify(status,&
-            'ESMF_StateAdd failed for snwd in snowmodel_ini')
+            'ESMF_StateAdd failed for snwd in snowmodel_init')
 
     enddo
 
-#if 0 
-    ! Coldstart model generation placed here for 
-    !  helping for OPT case initial conditions
-    call snowmodel_coldstart(LIS_rc%lsm_index)
-#endif
-
-
-  end subroutine snowmodel_ini
+  end subroutine snowmodel_init
 
 end module snowmodel_lsmMod
 

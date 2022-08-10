@@ -409,15 +409,12 @@ subroutine snowmodel_main(n)
 #endif
 
 !- Write out final 1D variables to LIS output files:
-
    do t = 1,LIS_rc%npatch(n,LIS_rc%lsm_index)
 
       ! Need to convert the SnowModel nx,ny grids to 
       !  local LIS npatch array ...
       col = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%col
       row = LIS_surface(n,LIS_rc%lsm_index)%tile(t)%row
-!      lat = LIS_domain(n)%grid(LIS_domain(n)%gindex(col,row))%lat
-!      lon = LIS_domain(n)%grid(LIS_domain(n)%gindex(col,row))%lon
 
       !-- Meteorological forcing fields --
 
@@ -633,6 +630,30 @@ subroutine snowmodel_main(n)
            surface_type=LIS_rc%lsm_index)
 
 ! ..............................................................
+! 
+! Writing state values for writing out to restart files:
+
+     snowmodel_struc(n)%sm(t)%snow_d = &
+              snow_d(col,row)
+     snowmodel_struc(n)%sm(t)%canopy_int = &
+              canopy_int(col,row)
+     snowmodel_struc(n)%sm(t)%soft_snow_d = &
+              soft_snow_d(col,row)
+     snowmodel_struc(n)%sm(t)%ro_snow_grid = &
+              ro_snow_grid(col,row)
+     snowmodel_struc(n)%sm(t)%ro_soft_snow_old = &
+              ro_soft_snow_old(col,row)
+     snowmodel_struc(n)%sm(t)%snow_d_init = &
+              snow_d_init(col,row)
+     snowmodel_struc(n)%sm(t)%swe_depth_old = &
+              swe_depth_old(col,row)
+     snowmodel_struc(n)%sm(t)%canopy_int_old = &
+              canopy_int_old(col,row)
+     snowmodel_struc(n)%sm(t)%topo = &
+              topo(col,row)
+     snowmodel_struc(n)%sm(t)%sum_sprec = &
+              sum_sprec(col,row)
+
 !
 ! FIELDS THAT LIS CAN SUPPORT AND MAYBE AVAILABLE BY SNOWMODEL
 !  BUT ARE NOT WRITTEN OUT ...
@@ -723,6 +744,5 @@ subroutine snowmodel_main(n)
    if( iter == max_iter ) then
      write(LIS_logunit,*) "[INFO] Reached max iteration count: ",iter
    endif
-
 
 end subroutine snowmodel_main
