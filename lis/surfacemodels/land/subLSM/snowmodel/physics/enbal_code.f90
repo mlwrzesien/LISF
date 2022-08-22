@@ -507,11 +507,12 @@
       real tol,old,A,B,C,other1,other2,es0,dother1,dother2,xnew,&
      &  Tair,ea,AAA,CCC,DDD,EEE,FFF,B1,B2,Tf,B3,stability,&
      &  dstability,fprime1,fprime2,fprime3,fprime4,B8,funct,&
-     &  fprime,count_Tsfc_not_converged
+     &  fprime,count_Tsfc_not_converged,relax
 
       tol = 1.0e-2
       maxiter = 20
       old = Tair
+      relax = 0.0
 
 ! Because I am interested in sublimation over snow during the
 !   winter, do these calculations over ice.
@@ -571,7 +572,8 @@
      &    0.0
         fprime = fprime1 + fprime2 + fprime3 + fprime4
 
-        xnew = old - funct/fprime
+!        xnew = old - funct/fprime
+        xnew = old - relax*funct/fprime
 
         if (abs(xnew - old).lt.tol) return
         old = xnew
