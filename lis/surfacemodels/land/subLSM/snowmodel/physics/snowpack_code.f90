@@ -659,6 +659,14 @@
         snow_depth = snow_depth - snow_d_melt
         snow_depth = max(0.0,snow_depth)
 
+! Clip snow depth values that are within machine precision of
+!   zero.  Add the clipped moisture to the swe_melt value to
+!   satisfy the moisture budget.
+        if (snow_depth.lt.1.0e-6) then
+          swemelt = swemelt + snow_depth
+          snow_depth = 0.0
+        endif
+
 ! Compute the changes in snow density resulting from the melt.
 !   Assume that the melted snow is redistributed through the new
 !   snow depth up to a maximum density.  Any additional melt water
