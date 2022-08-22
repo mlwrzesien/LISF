@@ -773,7 +773,8 @@
       implicit none
 
       real snow_depth,Tsg,Tf,Tsnow,Tsfc,ro_snow_grid,dt,A1,A2,&
-     &  swe_depth_star,ro_snowmax,ro_water,swe_depth,ro_adjust
+     &  swe_depth_star,ro_snowmax,ro_water,swe_depth,ro_adjust,&
+     & ro_snowmin
 
 ! ro_adjust is a snow density rate adjustment factor that can be
 !   used to make the snow density increase faster (ro_adjust > 1.0)
@@ -794,8 +795,12 @@
         ro_snow_grid = ro_snow_grid + ro_adjust * dt * &
      &    (A1 * swe_depth_star * ro_snow_grid * &
      &    exp((- 0.08)*(Tf-Tsnow)) * exp((- A2)*ro_snow_grid))
+!        print *, "ro_snow_gridAFTER= ", ro_snow_grid
+
+!        ro_snowmin = 10. ! ?? or maybe 50?
+!        ro_snow_grid = max(ro_snowmin,ro_snow_grid)
         ro_snow_grid = min(ro_snowmax,ro_snow_grid)
-        print *, "ro_snow_gridAFTER= ", ro_snow_grid
+!        print *, "ro_snow_gridAFTER= ", ro_snow_grid
         snow_depth = ro_water * swe_depth / ro_snow_grid
 !        print *, "snow_depth= ", snow_depth 
 

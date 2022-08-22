@@ -1493,7 +1493,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWF,&
             LIS_histData(n)%head_lsm_list,&
 !            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1507,7 +1507,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_RAINF,&
             LIS_histData(n)%head_lsm_list,&
 !            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1547,7 +1547,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QS,&
             LIS_histData(n)%head_lsm_list,&
 !            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&  ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&  ! KRA
             2,(/"IN ","OUT"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -1592,7 +1592,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QSM,&
             LIS_histData(n)%head_lsm_list,&
 !            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"S2L","L2S"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -2152,7 +2152,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SUBSNOW,&
             LIS_histData(n)%head_lsm_list,n,&
 !            5,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 "/),&
-            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m    "/),&  ! KRA
+            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m     "/),&  ! KRA
             1,(/"-"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -4133,7 +4133,7 @@ contains
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_TOTALPRECIP,&
             LIS_histData(n)%head_lsm_list,&
 !            n,2,ntiles,(/"kg/m2s","kg/m2 "/),&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&    ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&    ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5222,7 +5222,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QSM_SM,&
             LIS_histData(n)%head_lsm_list,&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"S2L","L2S"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5236,7 +5236,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_QS_SM,&
             LIS_histData(n)%head_lsm_list,&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&  ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&  ! KRA
             2,(/"IN ","OUT"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5250,7 +5250,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SUBSNOW,&
             LIS_histData(n)%head_lsm_list,n,&
-            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m    "/),&  ! KRA
+            6,ntiles,(/"kg/m2s","mm/hr ","W/m2  ","mm    ", "kg/m2 ","m     "/),&  ! KRA
             1,(/"-"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5264,7 +5264,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_TOTALPRECIP_SM,&
             LIS_histData(n)%head_lsm_list,&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&    ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&    ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5278,7 +5278,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_RAINF_SM,&
             LIS_histData(n)%head_lsm_list,&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
@@ -5292,7 +5292,7 @@ contains
     if ( rc == 1 ) then
        call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWF_SM,&
             LIS_histData(n)%head_lsm_list,&
-            n,3,ntiles,(/"kg/m2s","kg/m2 ","m    "/),&   ! KRA
+            n,3,ntiles,(/"kg/m2s","kg/m2 ","m     "/),&   ! KRA
             2,(/"UP","DN"/),2,1,1,&
             model_patch=.true.)
     endif
