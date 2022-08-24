@@ -512,7 +512,7 @@
       tol = 1.0e-2
       maxiter = 20
       old = Tair
-      relax = 0.0
+      relax = 0.8
 
 ! Because I am interested in sublimation over snow during the
 !   winter, do these calculations over ice.
