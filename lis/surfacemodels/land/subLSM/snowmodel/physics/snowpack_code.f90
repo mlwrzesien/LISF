@@ -795,22 +795,11 @@
         Tsg = Tf - 1.0
         Tsnow = 0.5 * (Tsg + Tsfc)
         swe_depth_star= 0.5 * swe_depth
-!        print *, "swe_depth_star= ", swe_depth_star
-!        print *, "ro_snow_gridBEFORE= ", ro_snow_grid
-!        print *, "swe_depth= ", swe_depth
-!        print *, "Tsnow= ", Tsnow
-!        print *, "Tf= ", Tf
         ro_snow_grid = ro_snow_grid + ro_adjust * dt * &
      &    (A1 * swe_depth_star * ro_snow_grid * &
      &    exp((- 0.08)*(Tf-Tsnow)) * exp((- A2)*ro_snow_grid))
-!        print *, "ro_snow_gridAFTER= ", ro_snow_grid
-
-!        ro_snowmin = 10. ! ?? or maybe 50?
-!        ro_snow_grid = max(ro_snowmin,ro_snow_grid)
         ro_snow_grid = min(ro_snowmax,ro_snow_grid)
-!        print *, "ro_snow_gridAFTER= ", ro_snow_grid
         snow_depth = ro_water * swe_depth / ro_snow_grid
-!        print *, "snow_depth= ", snow_depth 
 
       endif
 
