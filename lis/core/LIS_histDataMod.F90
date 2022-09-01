@@ -866,7 +866,7 @@ module LIS_histDataMod
     integer ::  LIS_MOC_SOIL_LBDFSS   = -9999
     integer ::  LIS_MOC_SNOWICE   = -9999
     integer ::  LIS_MOC_SNOWLIQ   = -9999
-    integer ::  LIS_MOS_SNOWLIQTOT  = -9999
+    integer ::  LIS_MOC_SNOWLIQTOT  = -9999
     integer ::  LIS_MOC_WT_AQUI_SATSOIL    = -9999
     integer ::  LIS_MOC_LAKEWATER   = -9999
     integer ::  LIS_MOC_LEAFMASS    = -9999
