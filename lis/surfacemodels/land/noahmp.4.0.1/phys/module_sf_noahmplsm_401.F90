@@ -741,6 +741,14 @@ contains
                      PAHV   ,PAHG   ,PAHB   ,QRAIN  ,QSNOW  ,SNOWHIN, & !out
 	             FWET   ,CMC                                    )   !out
 
+    ! KRA ADDED HERE THIS CHECK FOR VALUES BEFORE CALL TO ENERGY ...
+    IF(SNOWH <= 1.E-6 .OR. SNEQV <= 1.E-3) THEN  
+      SNOWH = 0.0
+      SNEQV = 0.0
+    END IF
+    ! KRA
+
+
 ! compute energy budget (momentum & energy fluxes and phase changes) 
 
     CALL ENERGY (parameters,ICE    ,VEGTYP ,IST    ,NSNOW  ,NSOIL  , & !in
@@ -1481,7 +1489,8 @@ ENDIF   ! CROPTYPE == 0
            print *,'EDIR = ',EDIR*DT
            print *,'RUNSRF = ',RUNSRF*DT
            print *,'RUNSUB = ',RUNSUB*DT
-           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
+! MLW comment out for now
+!           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
         END IF
 #endif
    ELSE                 !KWM
@@ -1821,7 +1830,8 @@ ENDIF   ! CROPTYPE == 0
 ! ground snow cover fraction [Niu and Yang, 2007, JGR]
 
      FSNO = 0.
-     IF(SNOWH.GT.0.)  THEN       
+!     IF(SNOWH.GT.0.)  THEN       
+     IF(SNOWH.GT.(0.001))  THEN  ! Update by KRA when have very small snowdepth values
          BDSNO    = SNEQV / SNOWH
          FMELT    = (BDSNO/100.)**parameters%MFSNO
          FSNO     = TANH( SNOWH /(2.5* Z0 * FMELT))
