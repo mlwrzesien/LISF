@@ -1434,7 +1434,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1468,7 +1470,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1499,7 +1503,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1531,7 +1537,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(dname)//'.DAT'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.DAT'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1626,7 +1634,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1660,7 +1670,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1691,7 +1703,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(out_fname)//'.gs4r'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.gs4r'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")
@@ -1723,7 +1737,9 @@ subroutine create_dapert_filename_withtime(n, fname, yr, mo, da, hr, mn, ss)
 !            out_fname = trim(dname)//'.DAT'
 !         elseif(LIS_rc%wopt.eq."1d gridspace") then 
 !            out_fname = trim(out_fname)//'.DAT'
-!         endif
+         !         endif
+      case ("distributed binary")
+         out_fname = trim(out_fname)//'.bin'         
       case ("grib1")
          out_fname = trim(out_fname)//'.GR1'
       case ("netcdf")

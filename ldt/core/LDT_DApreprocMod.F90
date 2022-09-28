@@ -86,7 +86,15 @@ contains
     call LDT_verify(rc,'Name of the preprocessed DA file: not defined')
 
     if(LDT_rc%comp_cdf.gt.0) then 
-       
+
+       call ESMF_ConfigGetAttribute(LDT_config,LDT_rc%cdf_wstyle,&
+            label="CDF output style:",rc=rc)
+       if(rc.ne.0) then
+          write(LDT_logunit,*) "'CDF output style:' not defined"
+          write(LDT_logunit,*) "Options are  - '1d', '2d'"
+          call LDT_endrun()
+       endif
+
        call ESMF_ConfigGetAttribute(LDT_config,LDT_rc%cdf_nbins,&
             label="Number of bins to use in the CDF:",rc=rc)
        call LDT_verify(rc,'Number of bins to use in the CDF: not defined')

@@ -1508,7 +1508,7 @@ contains
 ! 
 ! !INTERFACE:
 ! Private name: call LDT_writevar_gridded
-  subroutine writevar_gridded_real_3d(n,ftn,  var, l1, l2, varid )
+  subroutine writevar_gridded_real_3d(n,ftn,  var, l1, l2, varid, wstyle )
 ! !USES:
     use LDT_coreMod, only : LDT_rc,LDT_domain, & 
          LDT_localPet, LDT_masterproc, LDT_npes, &
@@ -1524,6 +1524,8 @@ contains
     integer                         :: l2
     real                            :: var(LDT_rc%ngrid(n),l1,l2)
     integer                         :: varid
+    character(len=*)                :: wstyle
+
 
 ! !DESCRIPTION:
 !  Writes a real variable to a binary 
@@ -1542,14 +1544,36 @@ contains
 !     variables being written, dimensioned in the tile space
 !  \end{description}
 !EOP
-    integer       :: iret
-
-#if(defined USE_NETCDF3 || defined USE_NETCDF4) 
+    integer           :: iret
+    integer           :: c,r,l,m
+    real, allocatable :: var2d(:,:,:,:)
     
-    iret = nf90_put_var(ftn,varid,var,(/1,1,1/),&
-         (/LDT_rc%glbngrid(n),l1,l2/))
-    call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_3d')
+#if(defined USE_NETCDF3 || defined USE_NETCDF4)
+    if(wstyle.eq."1d") then 
+       iret = nf90_put_var(ftn,varid,var,(/1,1,1/),&
+            (/LDT_rc%glbngrid(n),l1,l2/))
+       call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_3d')
+    else
+       allocate(var2d(LDT_rc%gnc(n),LDT_rc%gnr(n),l1,l2))
+       var2d = LDT_rc%udef
+       
+       do r=1,LDT_rc%gnr(n)
+          do c=1,LDT_rc%gnc(n)
+             do l=1,l1
+                do m=1,l2
+                   if(LDT_domain(n)%gindex(c,r).ne.-1) then
+                      var2d(c,r,l,m)  = var(LDT_domain(n)%gindex(c,r),l,m)
+                   endif
+                enddo
+             enddo
+          enddo
+       enddo
 
+       iret = nf90_put_var(ftn,varid,var2d,(/1,1,1,1/),&
+            (/LDT_rc%gnc(n),LDT_rc%gnr(n),l1,l2/))
+       call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_3d')
+       deallocate(var2d)
+    endif
 #endif
 
 
@@ -1561,7 +1585,7 @@ contains
 ! 
 ! !INTERFACE:
 ! Private name: call LDT_writevar_gridded
-  subroutine writevar_gridded_real_4d(n,ftn,  var, l1, l2, l3, varid )
+  subroutine writevar_gridded_real_4d(n,ftn,  var, l1, l2, l3, varid, wstyle)
 ! !USES:
     use LDT_coreMod, only : LDT_rc,LDT_domain, & 
          LDT_localPet, LDT_masterproc, LDT_npes, &
@@ -1578,7 +1602,8 @@ contains
     integer                         :: l3
     real                            :: var(LDT_rc%ngrid(n),l1,l2,l3)
     integer                         :: varid
-
+    character(len=*)                :: wstyle
+    
 ! !DESCRIPTION:
 !  Writes a real variable to a binary 
 !  sequential access, gridded file as either 2-dimensional/1-dimensional gridded field. 
@@ -1596,13 +1621,39 @@ contains
 !     variables being written, dimensioned in the tile space
 !  \end{description}
 !EOP
+
+    integer       :: c,r,l,m
     integer       :: iret
+    real, allocatable :: var2d(:,:,:,:)
 
 #if(defined USE_NETCDF3 || defined USE_NETCDF4) 
-    
-    iret = nf90_put_var(ftn,varid,var,(/1,1,1,1/),&
-         (/LDT_rc%glbngrid(n),l1,l2,l3/))
-    call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_4d')
+
+    if(wstyle.eq."1d") then 
+       iret = nf90_put_var(ftn,varid,var,(/1,1,1,1/),&
+            (/LDT_rc%glbngrid(n),l1,l2,l3/))
+       call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_4d')
+
+    else
+ 
+       allocate(var2d(LDT_rc%gnc(n),LDT_rc%gnr(n),l1,l3))
+       var2d = LDT_rc%udef
+       do r=1,LDT_rc%gnr(n)
+          do c=1,LDT_rc%gnc(n)
+             do l=1,l1
+                do m=1,l3
+                   if(LDT_domain(n)%gindex(c,r).ne.-1) then
+                      var2d(c,r,l,m)  = var(LDT_domain(n)%gindex(c,r),l,1,m)
+                   endif
+                enddo
+             enddo
+          enddo
+       enddo
+       
+       iret = nf90_put_var(ftn,varid,var2d,(/1,1,1,1/),&
+            (/LDT_rc%gnc(n),LDT_rc%gnr(n),l1,l3/))
+       call LDT_verify(iret, 'nf90_put_var failed in writevar_gridded_real_3d')
+       deallocate(var2d)
+    endif
 
 #endif
 

@@ -46,7 +46,7 @@ module LDT_logMod
 !EOP  
 
   integer :: LDT_logunit 
-  logical :: IOU(99)  = .false. ! I/O file unit numbers
+  logical :: IOU(1000)  = .false. ! I/O file unit numbers
   
 !BOP 
 ! 
@@ -400,7 +400,7 @@ contains
 !EOP
       integer :: i 
 ! starting with 13 because 12 is reserved for grib
-      do i = 13, 99
+      do i = 13, 1000
          if(.not.IOU(i)) then 
             LDT_getNextUnitNumber = i
             IOU(i) = .true.

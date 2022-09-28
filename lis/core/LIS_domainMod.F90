@@ -2927,7 +2927,12 @@ end subroutine LIS_quilt_b_domain
           write(unit=LIS_logunit,fmt=*) '[INFO] (',k,',',LIS_rc%gridDesc(n,k),')'
        enddo
        write(LIS_logunit,*)'[INFO] --------------------------------------------------------------'
-       
+
+!  For output of the grid-processor layout
+!       print*, LIS_localPet, LIS_ews_halo_ind(n,LIS_localPet+1),&
+!            LIS_ewe_halo_ind(n,LIS_localPet+1),&
+!            LIS_nss_halo_ind(n,LIS_localPet+1),&
+!            LIS_nse_halo_ind(n,LIS_localPet+1)
     enddo
 #endif
 

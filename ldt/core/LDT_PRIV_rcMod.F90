@@ -355,6 +355,7 @@ module LDT_PRIV_rcMod
      integer                :: comp_obsGrid
      integer                :: cdf_nbins
      integer                :: cdf_ntimes
+     character*50           :: cdf_wstyle
      integer                :: group_cdfs
      character*50           :: group_cdfs_attrib_file
      character*50           :: group_cdfs_strat_file
@@ -396,7 +397,12 @@ module LDT_PRIV_rcMod
      character*140          :: outputrst
      integer                :: nens_in
      integer                :: nens_out
-
+     character*50           :: ensrstfmt
+     integer                :: ensrst_npes
+     integer, allocatable   :: ensrst_ews_ind(:)
+     integer, allocatable   :: ensrst_ewe_ind(:)
+     integer, allocatable   :: ensrst_nss_ind(:)
+     integer, allocatable   :: ensrst_nse_ind(:)         
      !ag (1Nov2017)
      integer                :: routing_grid_count
 

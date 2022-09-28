@@ -147,7 +147,7 @@ contains
             LDT_rc%gnc_buf(n),bdimID(1)))
        call LDT_verify(nf90_def_dim(LDT_rc%ftn_DAobs_domain,'north_south_b',&
             LDT_rc%gnr_buf(n),bdimID(2)))
-       
+
        if(trim(LDT_rc%lis_map_proj(n)).eq."latlon") then !latlon
           call LDT_verify(nf90_put_att(LDT_rc%ftn_DAobs_domain, &
                NF90_GLOBAL, "MAP_PROJECTION", "EQUIDISTANT CYLINDRICAL"))
@@ -775,7 +775,7 @@ contains
 !EOP
     integer               :: index
     integer               :: c,r
-    integer               :: dimID(4)
+    integer               :: dimID(5)
     integer               :: bdimID(3)
     character(len=8)      :: date
     character(len=10)     :: time
@@ -797,13 +797,27 @@ contains
     deflate_level =NETCDF_deflate_level
 
     call date_and_time(date,time,zone,values)
-    call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'ngrid',&
-         LDT_rc%glbngrid(n),dimID(1)),'nf90_def_dim failed for ngrid')
-    call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'ntimes',&
-         LDT_rc%cdf_ntimes,dimID(2)),'nf90_def_dim failed for ntimes')
-    call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'nbins',&
-         LDT_rc%cdf_nbins,dimID(4)),'nf90_def_dim failed for nbins')
 
+    if(LDT_rc%cdf_wstyle.eq."1d") then 
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'ngrid',&
+            LDT_rc%glbngrid(n),dimID(1)),'nf90_def_dim failed for ngrid')
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'ntimes',&
+            LDT_rc%cdf_ntimes,dimID(3)),'nf90_def_dim failed for ntimes')
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'nbins',&
+            LDT_rc%cdf_nbins,dimID(5)),'nf90_def_dim failed for nbins')
+    else
+
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'nc',&
+            LDT_rc%gnc(n),dimID(1)),'nf90_def_dim failed for nc')
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'nr',&
+            LDT_rc%gnr(n),dimID(2)),'nf90_def_dim failed for nr')
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'ntimes',&
+            LDT_rc%cdf_ntimes,dimID(3)),'nf90_def_dim failed for ntimes')
+       call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,'nbins',&
+            LDT_rc%cdf_nbins,dimID(5)),'nf90_def_dim failed for nbins')
+
+    endif
+       
     call LDT_verify(nf90_put_att(LDT_rc%ftn_cdf,NF90_GLOBAL,&
          "missing_value", -9999.0))          
     call LDT_verify(nf90_put_att(LDT_rc%ftn_cdf,NF90_GLOBAL,&
@@ -811,6 +825,9 @@ contains
     call LDT_verify(nf90_put_att(LDT_rc%ftn_cdf,NF90_GLOBAL,&
          "title", &
          "Land Data Toolkit (LDT) output"))
+    call LDT_verify(nf90_put_att(LDT_rc%ftn_cdf,NF90_GLOBAL,&
+         "style", &
+         trim(LDT_rc%cdf_wstyle)))
     call LDT_verify(nf90_put_att(LDT_rc%ftn_cdf,NF90_GLOBAL,&
          "institution", &
          "NASA GSFC Hydrological Sciences Laboratory"))
@@ -1226,7 +1243,7 @@ contains
 ! !ARGUMENTS: 
     type(DAmetricsEntry)      :: metrics
     type(LDT_DAmetadataEntry) :: obs
-    integer                 :: dimID(4)
+    integer                 :: dimID(5)
 !
 ! !DESCRIPTION: 
 !  This routine writes the specified set of statistics for a 
@@ -1238,6 +1255,7 @@ contains
     integer    :: i,c,r
     integer    :: n 
     character*100 :: vname
+    integer :: tdimID(4)
     integer :: shuffle, deflate, deflate_level
 
 #if (defined USE_NETCDF3 || defined USE_NETCDF4)
@@ -1246,26 +1264,39 @@ contains
     deflate = NETCDF_deflate
     deflate_level =NETCDF_deflate_level
 
+
     if(obs%selectOpt.eq.1.and.metrics%selectOpt.eq.1) then 
        vname = trim(obs%standard_name)//'_levels'
        call LDT_verify(nf90_def_dim(LDT_rc%ftn_cdf,trim(vname),&
-            obs%vlevels,dimID(3)))
+            obs%vlevels,dimID(4)))
        
+       if(LDT_rc%cdf_wstyle.eq."1d") then
+          tdimId(1) = dimID(1)
+          tdimId(2) = dimID(3)
+          tdimId(3) = dimID(4)
+          tdimId(4) = dimId(5)
 
+       else
+          tdimId(1) = dimID(1)
+          tdimId(2) = dimID(2)
+          tdimId(3) = dimID(3)
+          tdimId(4) = dimId(5)
+       endif
+       
        call LDT_verify(nf90_def_var(LDT_rc%ftn_cdf,&
             trim(obs%standard_name)//'_xrange',&
-            nf90_float, dimids = dimID, varid=obs%varID(1)))
-
+            nf90_float, dimids = tdimID, varid=obs%varID(1)))
+       
 #if (defined USE_NETCDF4) 
        call LDT_verify(nf90_def_var_deflate(LDT_rc%ftn_cdf,&
             obs%varID(1), shuffle, deflate, deflate_level),&
             'nf90_def_var_deflate failed in LDT_DAmetricsMod')
 #endif
-
+       
        call LDT_verify(nf90_def_var(LDT_rc%ftn_cdf,&
             trim(obs%standard_name)//'_mu',&
-            nf90_float, dimids = dimID(1:3), varid=obs%varID(2)))
-
+            nf90_float, dimids = tdimID(1:3), varid=obs%varID(2)))
+       
 #if (defined USE_NETCDF4) 
        call LDT_verify(nf90_def_var_deflate(LDT_rc%ftn_cdf,&
             obs%varID(2), shuffle, deflate, deflate_level),&
@@ -1273,8 +1304,8 @@ contains
 #endif
        call LDT_verify(nf90_def_var(LDT_rc%ftn_cdf,&
             trim(obs%standard_name)//'_sigma',&
-            nf90_float, dimids = dimID(1:3), varid=obs%varID(3)))
-
+            nf90_float, dimids = tdimID(1:3), varid=obs%varID(3)))
+       
 #if (defined USE_NETCDF4) 
        call LDT_verify(nf90_def_var_deflate(LDT_rc%ftn_cdf,&
             obs%varID(3), shuffle, deflate, deflate_level),&
@@ -1282,24 +1313,13 @@ contains
 #endif
        call LDT_verify(nf90_def_var(LDT_rc%ftn_cdf,&
             trim(obs%standard_name)//'_CDF',&
-            nf90_float, dimids = dimID, varid=obs%varID(4)))
-
+            nf90_float, dimids = tdimID, varid=obs%varID(4)))
+       
 #if (defined USE_NETCDF4) 
        call LDT_verify(nf90_def_var_deflate(LDT_rc%ftn_cdf,&
             obs%varID(4), shuffle, deflate, deflate_level),&
             'nf90_def_var_deflate failed in LDT_DAmetricsMod')
 #endif
-
-!       call LDT_verify(nf90_def_var(LDT_rc%ftn_cdf,&
-!            trim(obs%standard_name)//'_COUNTS',&
-!            nf90_float, dimids = dimID, varid=obs%varID(5)))
-
-!#if (defined USE_NETCDF4) 
-!       call LDT_verify(nf90_def_var_deflate(LDT_rc%ftn_cdf,&
-!            obs%varID(5), shuffle, deflate, deflate_level),&
-!            'nf90_def_var_deflate failed in LDT_DAmetricsMod')
-!#endif
-
     endif
 #endif
     
@@ -1339,17 +1359,17 @@ contains
           call LDT_writevar_gridded(n,LDT_rc%ftn_cdf,&
                metrics%xrange, LDT_rc%cdf_ntimes, &
                obs%vlevels, LDT_rc%cdf_nbins,&
-               obs%varID(1))
+               obs%varID(1), LDT_rc%cdf_wstyle)
           call LDT_writevar_gridded(n,LDT_rc%ftn_cdf,&
                metrics%mu, LDT_rc%cdf_ntimes, obs%vlevels, &
-               obs%varID(2))
+               obs%varID(2),LDT_rc%cdf_wstyle)
           call LDT_writevar_gridded(n,LDT_rc%ftn_cdf,&
                metrics%sigma, LDT_rc%cdf_ntimes,obs%vlevels,  &
-               obs%varID(3))
+               obs%varID(3),LDT_rc%cdf_wstyle)
           call LDT_writevar_gridded(n,LDT_rc%ftn_cdf,&
                metrics%cdf, LDT_rc%cdf_ntimes, &
                obs%vlevels, LDT_rc%cdf_nbins,&
-               obs%varID(4))
+               obs%varID(4),LDT_rc%cdf_wstyle)
 !          call LDT_writevar_gridded(n,LDT_rc%ftn_cdf,&
 !               float(metrics%cdf_bincounts), LDT_rc%cdf_ntimes, &
 !               obs%vlevels, LDT_rc%cdf_nbins,&
