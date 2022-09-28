@@ -246,6 +246,9 @@ subroutine NoahMP401_main(n)
     real                 :: tmp_infxs1rt           ! extra output for WRF-HYDRO [m]
     real                 :: tmp_soldrain1rt        ! extra output for WRF-HYDRO [m]
 
+    ! Code added by Melissa Wrzsien 09/1/2022
+    real                 :: snowliqtot             ! total liquid in snow [mm]
+
         !ag (05Jan2021)
     real                 :: tmp_rivsto
     real                 :: tmp_fldsto
@@ -1036,6 +1039,14 @@ subroutine NoahMP401_main(n)
                 call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWLIQ, value = NOAHMP401_struc(n)%noahmp401(t)%snowliq(i), &
                                                   vlevel=i, unit="mm", direction="-", surface_type = LIS_rc%lsm_index)
             end do
+
+            ! Melissa Wrzesien: snowliqtot (unit=mm)  ** total snow liquid water
+            snowliqtot = 0;
+            do i=1, NOAHMP401_struc(n)%nsnow
+                snowliqtot = snowliqtot + NOAHMP401_struc(n)%noahmp401(t)%snowliq(i)
+            end do    
+            call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWLIQTOT, value = snowliqtot, &
+                                                  vlevel=1, unit="mm", direction="-", surface_type = LIS_rc%lsm_index)
 
             ! Yeosang Yoon, for snow DA
             ! output variable: z_snow (unit=m). ***  snow layer-bottom depth from snow surface

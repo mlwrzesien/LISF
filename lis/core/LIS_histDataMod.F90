@@ -376,6 +376,7 @@ module LIS_histDataMod
   public ::   LIS_MOC_SOIL_LBDFSS   
   public ::   LIS_MOC_SNOWICE   
   public ::   LIS_MOC_SNOWLIQ   
+  public ::   LIS_MOC_SNOWLIQTOT
   public ::   LIS_MOC_WT_AQUI_SATSOIL
   public ::   LIS_MOC_LAKEWATER   
   public ::   LIS_MOC_LEAFMASS    
@@ -882,6 +883,7 @@ module LIS_histDataMod
     integer ::  LIS_MOC_SOIL_LBDFSS   = -9999
     integer ::  LIS_MOC_SNOWICE   = -9999
     integer ::  LIS_MOC_SNOWLIQ   = -9999
+    integer ::  LIS_MOC_SNOWLIQTOT = -9999    
     integer ::  LIS_MOC_WT_AQUI_SATSOIL    = -9999
     integer ::  LIS_MOC_LAKEWATER   = -9999
     integer ::  LIS_MOC_LEAFMASS    = -9999
@@ -4456,6 +4458,18 @@ contains
         call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_SNOWLIQ, &
             LIS_histData(n)%head_lsm_list,&
             n, 2, ntiles,(/"kg/m2","mm   "/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+    Call ESMF_ConfigFindLabel(modelSpecConfig, "SnowLiqTot:", rc = rc)
+    Call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SnowLiqTot", &
+         "snow_liquid_water",  &
+         "snow liquid water",rc)
+    if ( rc == 1 ) then
+        call register_dataEntry(LIS_MOC_LSM_COUNT, LIS_MOC_SNOWLIQTOT, &
+            LIS_histData(n)%head_lsm_list,&
+            n, 1, ntiles,(/"mm   "/),1,(/"-"/),1,1,1,&
             model_patch=.true.)
     endif
 
