@@ -267,15 +267,15 @@ contains
       merra2_struc(n)%startFlag = .true.
       merra2_struc(n)%dayFlag = .true.
 
-      allocate(merra2_struc(n)%merraforc1(&
-           LDT_rc%met_nf(findex), 24, &
-           LDT_rc%lnc(n)*LDT_rc%lnr(n)))
-      allocate(merra2_struc(n)%merraforc2(&
-           LDT_rc%met_nf(findex), 24, &
-           LDT_rc%lnc(n)*LDT_rc%lnr(n)))
-
-      merra2_struc(n)%merraforc1 = LDT_rc%udef
-      merra2_struc(n)%merraforc2 = LDT_rc%udef
+!      allocate(merra2_struc(n)%merraforc1(&  !MLW comment out for nldas3
+!           LDT_rc%met_nf(findex), 24, &
+!           LDT_rc%lnc(n)*LDT_rc%lnr(n)))
+!      allocate(merra2_struc(n)%merraforc2(&
+!           LDT_rc%met_nf(findex), 24, &
+!           LDT_rc%lnc(n)*LDT_rc%lnr(n)))
+!
+!      merra2_struc(n)%merraforc1 = LDT_rc%udef
+!      merra2_struc(n)%merraforc2 = LDT_rc%udef
     enddo
 
     write(LDT_logunit,*)"[INFO] MERRA-2 time interp option :: ",&
