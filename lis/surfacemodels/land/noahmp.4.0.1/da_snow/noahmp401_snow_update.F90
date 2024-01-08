@@ -226,19 +226,31 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
            isnow = -2
            dzsnso(-nsnow+1:isnow) = 0 
            dzsnso(isnow+1) = snowh -dzsnso(0)
-           ! scale swe in layers by ratio of depth to pack
-           do snl_idx=-nsnow+1,0
-              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
-           enddo
+!           ! scale swe in layers by ratio of depth to pack
+!           do snl_idx=-nsnow+1,0
+!              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
+!           enddo
+           if(snice(isnow+1).gt.dsneqv) then
+              snice(isnow+1) = snice(isnow+1)+dsneqv
+           else
+              snice(isnow+1) = 1.0
+              snice(0) = sneqv-1.0
+           endif
            snliq(-nsnow+1:isnow) = 0
 ! all other cases
         elseif(snowh.le.(dzsnso(0)+dzsnso(-1)+dzsnso(-2))) then 
            isnow = -3
            dzsnso(isnow+1) = snowh -dzsnso(-1) -dzsnso(0)
-           ! scale swe in layers by ratio of depth to pack
-           do snl_idx=-nsnow+1,0
-              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
-           enddo
+!           ! scale swe in layers by ratio of depth to pack
+!           do snl_idx=-nsnow+1,0
+!              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
+!           enddo
+           if(snice(isnow+1).gt.dsneqv) then
+              snice(isnow+1) = snice(isnow+1)+dsneqv
+           else
+              snice(isnow+1) = 1.0
+              snice(-1) = sneqv-1.0-snice(0)
+           endif
            snliq(-nsnow+1:isnow) = 0
         endif           
      endif
