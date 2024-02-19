@@ -173,6 +173,7 @@ contains
     use ASOSWE_obsMod,          only : ASOSWE_obsinit
     use IMERG_dataMod,          only : IMERG_datainit
     use UASNOW_obsMod,          only : UASNOW_obsinit
+    use AMSRcnnSnow_obsMod,     only : AMSRcnnSnow_obsinit
     use OzFlux_obsMod,          only : OzFlux_obsinit
     use JASMINsm_obsMod,        only : JASMINsm_obsInit
     use MCD15A2H_obsMod,        only : MCD15A2H_obsinit
@@ -285,6 +286,7 @@ contains
     external readASOSWEObs
     external readIMERGdata
     external readUASNOWObs
+    external readAMSRcnnSnowObs
     external readOzFluxObs
     external readJASMINsmobs
     external readMCD15A2Hobs
@@ -704,6 +706,11 @@ contains
 
     call registerobssetup(trim(LVT_UASNOWdataId)//char(0), UASNOW_obsinit)
     call registerobsread(trim(LVT_UASNOWdataId)//char(0) , readUASNOWObs)
+
+    call registerobssetup(trim(LVT_AMSRcnnSnowdataId)//char(0), &
+         AMSRcnnSnow_obsinit)
+    call registerobsread(trim(LVT_AMSRcnnSnowdataId)//char(0) , &
+         readAMSRcnnSnowObs)
 
     call registerobssetup(trim(LVT_OzFluxdataId)//char(0), OzFlux_obsinit)
     call registerobsread(trim(LVT_OzFluxdataId)//char(0) , readOzFluxObs)
