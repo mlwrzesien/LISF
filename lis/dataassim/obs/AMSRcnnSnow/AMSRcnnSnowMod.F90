@@ -58,6 +58,7 @@ module AMSRcnnSnowMod
      real,    allocatable :: w12(:)
      real,    allocatable :: w21(:)
      real,    allocatable :: w22(:)
+     logical              :: validDomain
   end type AMSRcnnSnow_dec
   
   type(AMSRcnnSnow_dec),allocatable :: AMSRcnnSnow_struc(:)
@@ -329,58 +330,65 @@ contains
                AMSRcnnSnow_struc(n)%n21, AMSRcnnSnow_struc(n)%n22, &
                AMSRcnnSnow_struc(n)%w11, AMSRcnnSnow_struc(n)%w12, &
                AMSRcnnSnow_struc(n)%w21, AMSRcnnSnow_struc(n)%w22)
-          
+
+          AMSRcnnSnow_struc(n)%validDomain = .true.           
        elseif(AMSRcnnSnow_struc(n)%datares.eq.5) then 
 
           cornerlat1 = max(0.0, nint((LIS_rc%obs_gridDesc(k,4)+0.0)/0.05)*0.05-5*0.05)
           cornerlon1 = max(-179.95, nint((LIS_rc%obs_gridDesc(k,5)+179.95)/0.05)*0.05-179.95-5*0.05)
           cornerlat2 = min(69.95, nint((LIS_rc%obs_gridDesc(k,7)+0.0)/0.05)*0.05+5*0.05)
           cornerlon2 = min(179.85, nint((LIS_rc%obs_gridDesc(k,8)+179.95)/0.05)*0.05-179.95+5*0.05)
-       
-          
-          AMSRcnnSnow_struc(n)%nc = nint((cornerlon2-cornerlon1)/0.05)+1 
-          AMSRcnnSnow_struc(n)%nr = nint((cornerlat2-cornerlat1)/0.05)+1 
-          
-          AMSRcnnSnow_struc(n)%gridDesci(1) = 0 
-          AMSRcnnSnow_struc(n)%gridDesci(2) = AMSRcnnSnow_struc(n)%nc
-          AMSRcnnSnow_struc(n)%gridDesci(3) = AMSRcnnSnow_struc(n)%nr
-          AMSRcnnSnow_struc(n)%gridDesci(4) = cornerlat1
-          AMSRcnnSnow_struc(n)%gridDesci(5) = cornerlon1
-          AMSRcnnSnow_struc(n)%gridDesci(6) = 128
-          AMSRcnnSnow_struc(n)%gridDesci(7) = cornerlat2
-          AMSRcnnSnow_struc(n)%gridDesci(8) = cornerlon2
-          AMSRcnnSnow_struc(n)%gridDesci(9) = 0.05
-          AMSRcnnSnow_struc(n)%gridDesci(10) = 0.05
-          AMSRcnnSnow_struc(n)%gridDesci(20) = 64
-          
-          AMSRcnnSnow_struc(n)%mi = AMSRcnnSnow_struc(n)%nc*AMSRcnnSnow_struc(n)%nr
+
+          AMSRcnnSnow_struc(n)%validDomain = .true. 
+          if(cornerlat2.le.cornerlat1) then
+             !subdomain out of bounds - nothing to be done
+             AMSRcnnSnow_struc(n)%validDomain = .false.
+          endif
+
+          if(AMSRcnnSnow_struc(n)%validDomain) then 
+             AMSRcnnSnow_struc(n)%nc = nint((cornerlon2-cornerlon1)/0.05)+1 
+             AMSRcnnSnow_struc(n)%nr = nint((cornerlat2-cornerlat1)/0.05)+1 
+             
+             AMSRcnnSnow_struc(n)%gridDesci(1) = 0 
+             AMSRcnnSnow_struc(n)%gridDesci(2) = AMSRcnnSnow_struc(n)%nc
+             AMSRcnnSnow_struc(n)%gridDesci(3) = AMSRcnnSnow_struc(n)%nr
+             AMSRcnnSnow_struc(n)%gridDesci(4) = cornerlat1
+             AMSRcnnSnow_struc(n)%gridDesci(5) = cornerlon1
+             AMSRcnnSnow_struc(n)%gridDesci(6) = 128
+             AMSRcnnSnow_struc(n)%gridDesci(7) = cornerlat2
+             AMSRcnnSnow_struc(n)%gridDesci(8) = cornerlon2
+             AMSRcnnSnow_struc(n)%gridDesci(9) = 0.05
+             AMSRcnnSnow_struc(n)%gridDesci(10) = 0.05
+             AMSRcnnSnow_struc(n)%gridDesci(20) = 64
+             
+             AMSRcnnSnow_struc(n)%mi = AMSRcnnSnow_struc(n)%nc*AMSRcnnSnow_struc(n)%nr
 
 !-----------------------------------------------------------------------------
 !   Use interpolation if LIS is running finer than 500 m. 
 !-----------------------------------------------------------------------------
        
-          allocate(AMSRcnnSnow_struc(n)%rlat(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%rlon(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%n11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%n12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%n21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%n22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%w11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%w12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%w21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
-          allocate(AMSRcnnSnow_struc(n)%w22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%rlat(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%rlon(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%n11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%n12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%n21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%n22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%w11(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%w12(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%w21(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
+             allocate(AMSRcnnSnow_struc(n)%w22(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k)))
           
-          call bilinear_interp_input_withgrid(&
-               AMSRcnnSnow_struc(n)%gridDesci(:), &
-               LIS_rc%obs_gridDesc(k,:),&
-               LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
-               AMSRcnnSnow_struc(n)%rlat, AMSRcnnSnow_struc(n)%rlon,&
-               AMSRcnnSnow_struc(n)%n11, AMSRcnnSnow_struc(n)%n12, &
-               AMSRcnnSnow_struc(n)%n21, AMSRcnnSnow_struc(n)%n22, &
-               AMSRcnnSnow_struc(n)%w11, AMSRcnnSnow_struc(n)%w12, &
-               AMSRcnnSnow_struc(n)%w21, AMSRcnnSnow_struc(n)%w22)
+             call bilinear_interp_input_withgrid(&
+                  AMSRcnnSnow_struc(n)%gridDesci(:), &
+                  LIS_rc%obs_gridDesc(k,:),&
+                  LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+                  AMSRcnnSnow_struc(n)%rlat, AMSRcnnSnow_struc(n)%rlon,&
+                  AMSRcnnSnow_struc(n)%n11, AMSRcnnSnow_struc(n)%n12, &
+                  AMSRcnnSnow_struc(n)%n21, AMSRcnnSnow_struc(n)%n22, &
+                  AMSRcnnSnow_struc(n)%w11, AMSRcnnSnow_struc(n)%w12, &
+                  AMSRcnnSnow_struc(n)%w21, AMSRcnnSnow_struc(n)%w22)
 
-
+          endif
        endif
        
        call LIS_registerAlarm("AMSRcnnSnow read alarm",&
