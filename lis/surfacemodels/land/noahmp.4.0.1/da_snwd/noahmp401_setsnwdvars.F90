@@ -73,9 +73,13 @@ subroutine noahmp401_setsnwdvars(n, LSM_State)
            dsnowh = 0
            dsneqv = 0
         endif
-        ! update
-        call noahmp401_snow_update(n, t, dsneqv, dsnowh)
+
+        if(abs(dsnowh).ge.0.010) then           
+           ! update
+           call noahmp401_snow_update(n, t, dsneqv, dsnowh)
+        endif
      endif
+     
   enddo
 end subroutine noahmp401_setsnwdvars
 

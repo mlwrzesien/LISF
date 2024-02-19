@@ -290,6 +290,8 @@ module LIS_pluginIndices
         "MCD15A2H LAI"
    character*50, public,  parameter :: LIS_MCD15A3HlaiobsId      = &
         "MCD15A3H LAI"
+   character*50, public,  parameter :: LIS_MOD10A1scfobsId      = &
+        "MOD10A1 SCF"
    character*50, public,  parameter :: LIS_VIIRSgvfobsId         = &
         "VIIRS GVF"                                                  !YK
    character*50, public,  parameter :: LIS_CDFSgvfobsId          = &

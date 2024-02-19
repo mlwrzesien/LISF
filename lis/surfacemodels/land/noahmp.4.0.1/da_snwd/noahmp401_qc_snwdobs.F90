@@ -59,8 +59,9 @@ subroutine noahmp401_qc_snwdobs(n,k,OBS_State)
   integer                  :: gid
   integer                  :: status
   real                     :: stc1(LIS_rc%npatch(n,LIS_rc%lsm_index))
+  real                     :: tsk(LIS_rc%npatch(n,LIS_rc%lsm_index))
   real                     :: vegt(LIS_rc%npatch(n,LIS_rc%lsm_index))
-  real                     :: tv_obs(LIS_rc%obs_ngrid(k))
+  real                     :: tsk_obs(LIS_rc%obs_ngrid(k))
   real                     :: stc1_obs(LIS_rc%obs_ngrid(k))
   real                     :: vegt_obs(LIS_rc%obs_ngrid(k))
 
@@ -74,14 +75,19 @@ subroutine noahmp401_qc_snwdobs(n,k,OBS_State)
   do t=1, LIS_rc%npatch(n,LIS_rc%lsm_index)
      !stc1(t) = noahmp401_struc(n)%noahmp401(t)%sstc(1) ! get snwd/veg temp.
      stc1(t) = noahmp401_struc(n)%noahmp401(t)%tslb(1) ! get snwd/veg temp.
+     tsk(t) = noahmp401_struc(n)%noahmp401(t)%tsk
      vegt(t) = LIS_surface(n,1)%tile(t)%vegt
   enddo
 
-  call LIS_convertPatchSpaceToObsSpace(n,k,&       
-       LIS_rc%lsm_index, noahmp401_struc(n)%noahmp401(:)%tv,tv_obs) !tv: vegetation temperature. unit: K 
+!  call LIS_convertPatchSpaceToObsSpace(n,k,&       
+!       LIS_rc%lsm_index, noahmp401_struc(n)%noahmp401(:)%tv,tv_obs) !tv: vegetation temperature. unit: K 
 
   call LIS_convertPatchSpaceToObsSpace(n,k,&
        LIS_rc%lsm_index,stc1,stc1_obs)
+
+  call LIS_convertPatchSpaceToObsSpace(n,k,&
+       LIS_rc%lsm_index,tsk,tsk_obs)
+  
   call LIS_convertPatchSpaceToObsSpace(n,k,&
        LIS_rc%lsm_index,vegt,vegt_obs)
 
@@ -89,10 +95,10 @@ subroutine noahmp401_qc_snwdobs(n,k,OBS_State)
      if(snwdobs(t).ne.LIS_rc%udef) then
         if(vegt_obs(t).eq.LIS_rc%glacierclass) then !TML: Eliminate Glaciers
            snwdobs(t) = LIS_rc%udef
-!assume that snwd will not form at 5 deg. celcius or higher ground temp. 
-       elseif(tv_obs(t).ge.278.15) then
+           !assume that snwd will not form at 5 deg. celcius or higher ground temp.
+        elseif(tsk_obs(t).ge.278.15) then
            snwdobs(t) = LIS_rc%udef
-       elseif(stc1_obs(t).ge.278.15) then
+        elseif(stc1_obs(t).ge.278.15) then
            snwdobs(t) = LIS_rc%udef
         endif
      endif

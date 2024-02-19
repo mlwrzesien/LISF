@@ -1,0 +1,419 @@
+!-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
+! NASA Goddard Space Flight Center
+! Land Information System Framework (LISF)
+! Version 7.4
+!
+! Copyright (c) 2022 United States Government as represented by the
+! Administrator of the National Aeronautics and Space Administration.
+! All Rights Reserved.
+!-------------------------END NOTICE -- DO NOT EDIT-----------------------
+#include "LIS_misc.h"
+!BOP
+! !ROUTINE: read_MOD10A1scf
+! \label{read_MOD10A1scf}
+!
+! !REVISION HISTORY:
+!  16 Jun 2020    Wanshu Nie; initial specification
+!
+! !INTERFACE: 
+subroutine read_MOD10A1scf(n, k, OBS_State, OBS_Pert_State)
+! !USES: 
+  use ESMF
+  use LIS_mpiMod
+  use LIS_coreMod
+  use LIS_logMod
+  use LIS_timeMgrMod
+  use LIS_dataAssimMod
+  use LIS_DAobservationsMod
+  use map_utils
+  use LIS_pluginIndices
+  use LIS_constantsMod, only: LIS_CONST_PATH_LEN
+  use MOD10A1scf_Mod, only : MOD10A1scf_struc
+
+  implicit none
+! !ARGUMENTS: 
+  integer, intent(in) :: n 
+  integer, intent(in) :: k
+  type(ESMF_State)    :: OBS_State
+  type(ESMF_State)    :: OBS_Pert_State
+!
+! !DESCRIPTION:
+!  
+!  reads the MOD10A1 SCF observations from NETCDF files.
+
+! 
+!  The arguments are: 
+!  \begin{description}
+!  \item[n] index of the nest
+!  \item[k] number of observation state
+!  \item[OBS\_State] observations state
+!  \item[OBS\_Pert\_State] observation perturbations state
+!  \end{description}
+!
+!EOP
+  integer                :: status
+  integer                :: grid_index
+  character(len=LIS_CONST_PATH_LEN) :: scfobsdir
+  character(len=LIS_CONST_PATH_LEN) :: fname1,fname2, climofile1, climofile2
+  integer                :: cyr, cmo, cda, chr,cmn,css,cdoy
+  real                   :: wt1, wt2,ts
+  integer                :: count
+  real                   :: cgmt
+  real*8                 :: time
+  logical                :: alarmCheck, file_exists,dataCheck
+  integer                :: t,c,r,i,j,p,jj
+  real,          pointer :: obsl(:)
+  type(ESMF_Field)       :: scffield, pertField
+  integer                :: gid(LIS_rc%obs_ngrid(k))
+  integer                :: assimflag(LIS_rc%obs_ngrid(k))
+  logical                :: data_update
+  logical                :: data_upd_flag(LIS_npes)
+  logical                :: data_upd_flag_local
+  logical                :: data_upd
+  real                   :: scfobs(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+  integer                :: fnd
+  real                   :: timenow
+
+  
+  call ESMF_AttributeGet(OBS_State,"Data Directory",&
+       scfobsdir, rc=status)
+  call LIS_verify(status)
+  call ESMF_AttributeGet(OBS_State,"Data Update Status",&
+       data_update, rc=status)
+  call LIS_verify(status)
+
+  data_upd = .false. 
+
+  alarmCheck = LIS_isAlarmRinging(LIS_rc, "MOD10A1 SCF read alarm")
+
+
+  if(alarmCheck.or.MOD10A1scf_struc(n)%startMode) then 
+     MOD10A1scf_struc(n)%startMode = .false.
+     
+     call create_MOD10A1scf_filename(scfobsdir, &
+          MOD10A1scf_struc(n)%version, LIS_rc%yr, LIS_rc%doy, &
+          fname1, climofile1)
+     
+     inquire(file=fname1,exist=file_exists)          
+     if(file_exists) then 
+        write(LIS_logunit,*) '[INFO] Reading ',trim(fname1)
+        call read_MOD10A1_SCF_data(n,k, fname1,climofile1,scfobs)
+        fnd = 1
+     else
+        fnd = 0 
+        write(LIS_logunit,*) '[WARN] Missing SCF file: ',trim(fname1)
+     endif
+  else
+     fnd = 0 
+     scfobs = LIS_rc%udef
+  endif
+  
+  dataCheck = .false.
+  if(alarmCheck) then 
+     if(fnd.eq.1) then 
+        dataCheck = .true. 
+     endif
+  else
+     fnd = 0 
+     dataCheck = .false.
+  endif
+
+  if(dataCheck) then 
+        
+     call ESMF_StateGet(OBS_State,"Observation01",scffield,&
+          rc=status)
+     call LIS_verify(status, 'Error: StateGet Observation01')
+     
+     call ESMF_FieldGet(scffield,localDE=0,farrayPtr=obsl,rc=status)
+     call LIS_verify(status, 'Error: FieldGet')
+     
+     obsl = LIS_rc%udef 
+     do r=1, LIS_rc%obs_lnr(k)
+        do c=1, LIS_rc%obs_lnc(k)
+           if(LIS_obs_domain(n,k)%gindex(c,r).ne.-1) then 
+              obsl(LIS_obs_domain(n,k)%gindex(c,r))=&
+                   scfobs(c+(r-1)*LIS_rc%obs_lnc(k))
+           endif
+        enddo
+     enddo
+     
+     if(fnd.eq.0) then 
+        data_upd_flag_local = .false. 
+     else
+        data_upd_flag_local = .true. 
+     endif
+     
+#if (defined SPMD)
+     call MPI_ALLGATHER(data_upd_flag_local,1, &
+          MPI_LOGICAL, data_upd_flag(:),&
+          1, MPI_LOGICAL, LIS_mpi_comm, status)
+#endif
+     data_upd = .false.
+     do p=1,LIS_npes
+        data_upd = data_upd.or.data_upd_flag(p)
+     enddo
+     
+     if(data_upd) then 
+        
+        do t=1,LIS_rc%obs_ngrid(k)
+           gid(t) = t
+           if(obsl(t).ne.-9999.0) then 
+              assimflag(t) = 1
+           else
+              assimflag(t) = 0
+           endif
+        enddo
+        
+        call ESMF_AttributeSet(OBS_State,"Data Update Status",&
+             .true. , rc=status)
+        call LIS_verify(status)
+        
+        if(LIS_rc%obs_ngrid(k).gt.0) then 
+           call ESMF_AttributeSet(scffield,"Grid Number",&
+                gid,itemCount=LIS_rc%obs_ngrid(k),rc=status)
+           call LIS_verify(status)
+           
+           call ESMF_AttributeSet(scffield,"Assimilation Flag",&
+                assimflag,itemCount=LIS_rc%obs_ngrid(k),rc=status)
+           call LIS_verify(status)
+           
+        endif
+        
+     else
+        call ESMF_AttributeSet(OBS_State,"Data Update Status",&
+             .false., rc=status)
+        call LIS_verify(status)     
+     endif
+  else
+     call ESMF_AttributeSet(OBS_State,"Data Update Status",&
+          .false., rc=status)
+     call LIS_verify(status)     
+  endif
+end subroutine read_MOD10A1scf
+
+!BOP
+! 
+! !ROUTINE: read_MOD10A1_SCF_data
+! \label{read_MOD10A1_SCF_data}
+!
+! !INTERFACE:
+subroutine read_MOD10A1_SCF_data(n, k, fname, climofile, scfobs_ip)
+! 
+! !USES:   
+#if(defined USE_NETCDF3 || defined USE_NETCDF4)
+  use netcdf
+#endif
+  use LIS_coreMod,  only : LIS_rc, LIS_domain
+  use LIS_logMod
+  use LIS_timeMgrMod
+  use MOD10A1scf_Mod, only : MOD10A1scf_struc
+
+  implicit none
+!
+! !INPUT PARAMETERS: 
+! 
+  integer                       :: n 
+  integer                       :: k
+  character (len=*)             :: fname
+  character (len=*)             :: climofile
+  real                          :: scfobs_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+  real*8                        :: cornerlat(2), cornerlon(2)
+  character*3                   :: fdoy
+
+! !OUTPUT PARAMETERS:
+!
+!
+! !DESCRIPTION: 
+!  This subroutine reads the MOD10A1 SCF file and applies the data
+!  quality flags to filter the data. 
+!
+!  The arguments are: 
+!  \begin{description}
+!  \item[n]            index of the nest
+!  \item[k]            number of observation state
+!  \item[k]            number of observation state
+!  \item[fname]        name of the MOD10A1 SCF file
+!  \item[climofile]    Generated MCD152AH SCF climatology file
+!  \item[scfobs\_ip]   MOD10A1 SCF data processed to the LIS domain
+!  \end{description}
+!
+!
+!EOP
+
+!--------------Wanshu -----------------------
+  integer,  parameter     :: nc=86400, nr=43200
+  integer                 :: lat_off, lon_off
+  integer                 :: scf(MOD10A1scf_struc(n)%nc,MOD10A1scf_struc(n)%nr)
+  integer                 :: flag(MOD10A1scf_struc(n)%nc,MOD10A1scf_struc(n)%nr)
+  real                    :: scf_flagged(MOD10A1scf_struc(n)%nc,MOD10A1scf_struc(n)%nr)
+  real                    :: scf_in(MOD10A1scf_struc(n)%nc*MOD10A1scf_struc(n)%nr)
+  logical*1               :: scf_data_b(MOD10A1scf_struc(n)%nc*MOD10A1scf_struc(n)%nr)
+  logical*1               :: scfobs_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+  real                    :: scfobs_climo_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
+  integer                 :: c,r,t
+  integer                 :: nid
+  integer                 :: scfid, flagid
+  integer                 :: ios
+  
+  integer, dimension(nf90_max_var_dims) :: dimIDs
+  integer                                :: numLons, numLats
+  
+#if(defined USE_NETCDF3 || defined USE_NETCDF4)
+  ios = nf90_open(path=trim(fname),mode=NF90_NOWRITE,ncid=nid)
+  call LIS_verify(ios,'Error opening file '//trim(fname))
+  
+  ios = nf90_inq_varid(nid, 'NDSI_Snow_Cover',scfid)
+  call LIS_verify(ios, 'Error nf90_inq_varid: NDSI_Snow_Cover')
+  
+  ios = nf90_inq_varid(nid, 'NDSI_Snow_Cover_Basic_QA',flagid)
+  call LIS_verify(ios, 'Error nf90_inq_varid: flag')
+
+  !values
+  
+  cornerlat(1)=MOD10A1scf_struc(n)%gridDesci(4)
+  cornerlon(1)=MOD10A1scf_struc(n)%gridDesci(5)
+  cornerlat(2)=MOD10A1scf_struc(n)%gridDesci(7)
+  cornerlon(2)=MOD10A1scf_struc(n)%gridDesci(8)
+  
+  scf_data_b = .false.
+  
+  lat_off = nint((cornerlat(1)+89.9979167)/0.00416667)+1
+  lon_off = nint((cornerlon(1)+179.9979167)/0.00416667)+1
+
+
+  ios = nf90_get_var(nid, scfid, scf, &
+       start=(/lon_off,lat_off/), &
+       count=(/MOD10A1scf_struc(n)%nc,MOD10A1scf_struc(n)%nr/)) 
+  
+  call LIS_verify(ios, 'Error nf90_get_var: Scf_500m')
+  
+  ios = nf90_get_var(nid, flagid, flag, &
+       start=(/lon_off,lat_off/), &
+       count=(/MOD10A1scf_struc(n)%nc,MOD10A1scf_struc(n)%nr/))
+  
+  call LIS_verify(ios, 'Error nf90_get_var: flag')
+  
+  ios = nf90_close(ncid=nid)
+  call LIS_verify(ios,'Error closing file '//trim(fname))
+  
+  do r=1, MOD10A1scf_struc(n)%nr
+     do c=1, MOD10A1scf_struc(n)%nc
+
+        if(MOD10A1scf_struc(n)%qcflag.eq.1) then !apply QC flag
+
+          if(scf(c,r).ge.0.and.scf(c,r).le.100) then
+             if (flag(c,r).le.2) then 
+                scf_flagged(c,r) =&
+                   scf(c,r)*0.01
+             else
+               scf_flagged(c,r) = LIS_rc%udef
+             endif
+          else
+            scf_flagged(c,r) = LIS_rc%udef
+          endif
+
+        else  ! no QC flag applied                
+
+           if(scf(c,r).ge.0.and.scf(c,r).le.100) then
+              scf_flagged(c,r) =&
+                   scf(c,r)*0.01
+           else
+              scf_flagged(c,r) = LIS_rc%udef
+           endif
+        endif
+     end do
+  end do
+
+
+  do r=1, MOD10A1scf_struc(n)%nr
+     do c=1, MOD10A1scf_struc(n)%nc
+        scf_in(c+(r-1)*MOD10A1scf_struc(n)%nc) = scf_flagged(c,r)
+        if(scf_flagged(c,r).ne.LIS_rc%udef) then
+           scf_data_b(c+(r-1)*MOD10A1scf_struc(n)%nc) = .true.
+        else
+           scf_data_b(c+(r-1)*MOD10A1scf_struc(n)%nc) = .false.
+        endif
+     enddo
+  enddo
+
+  if(LIS_rc%obs_gridDesc(k,10).le.0.00416667) then 
+!--------------------------------------------------------------------------
+! Interpolate to the LIS running domain
+!-------------------------------------------------------------------------- 
+     call bilinear_interp(LIS_rc%obs_gridDesc(k,:),&
+          scf_data_b, scf_in, scfobs_b_ip, scfobs_ip, &
+          MOD10A1scf_struc(n)%nc*MOD10A1scf_struc(n)%nr, &
+          LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
+          MOD10A1scf_struc(n)%rlat,MOD10A1scf_struc(n)%rlon,&
+          MOD10A1scf_struc(n)%w11,MOD10A1scf_struc(n)%w12,&
+          MOD10A1scf_struc(n)%w21,MOD10A1scf_struc(n)%w22,&
+          MOD10A1scf_struc(n)%n11,MOD10A1scf_struc(n)%n12,&
+          MOD10A1scf_struc(n)%n21,MOD10A1scf_struc(n)%n22,LIS_rc%udef,ios)
+  else
+     call upscaleByAveraging(MOD10A1scf_struc(n)%nc*MOD10A1scf_struc(n)%nr,&
+          LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k), &
+          LIS_rc%udef, MOD10A1scf_struc(n)%n11,&
+          scf_data_b,scf_in, scfobs_b_ip, scfobs_ip)
+
+  endif
+!  open(100,file='test.bin',form='unformatted')
+!  write(100) scfobs_ip
+!  close(100)
+!  stop
+  
+#endif
+
+end subroutine read_MOD10A1_SCF_data
+
+
+!BOP
+! !ROUTINE: create_MOD10A1scf_filename
+! \label{create_MOD10A1scf_filename}
+! 
+! !INTERFACE: 
+subroutine create_MOD10A1scf_filename(ndir, version, yr, doy, filename, climofile)
+! !USES:   
+
+  implicit none
+! !ARGUMENTS: 
+  character(len=*)  :: filename
+  character(len=*)  :: climofile
+  character(len=*)  :: version
+  integer           :: yr, doy
+  character (len=*) :: ndir
+! 
+! !DESCRIPTION: 
+!  This subroutine creates the MOD10A1 SCF filename
+!  based on the time and date 
+! 
+!  The arguments are: 
+!  \begin{description}
+!  \item[ndir] name of the MOD10A1 SCF data directory
+!  \item[version] version of the MOD10A1 SCF data
+!  \item[yr]  current year
+!  \item[doy]  current day of the year
+!  \item[filename] Generated MOD10A1 SCF filename
+!  \item[climofile] Generated MCD152AH SCF climatology file
+!  \end{description}
+!EOP
+
+  character (len=4) :: fyr
+  character (len=3) :: fdoy
+  
+  write(unit=fyr, fmt='(i4.4)') yr
+  write(unit=fdoy, fmt='(i3.3)') doy
+
+  if(version.eq."061") then
+     filename = trim(ndir)//'/'//trim(fyr)//'/MOD10A1.061_'//&
+          trim(fyr)//trim(fdoy)//'.nc4'
+  endif
+
+  climofile = trim(ndir)//'/MOD10A1.006_SCF_YYYY'//&
+       trim(fdoy)//'.nc4'
+
+end subroutine create_MOD10A1scf_filename
+
+
+
+
+

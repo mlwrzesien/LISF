@@ -73,6 +73,8 @@ subroutine read_AMSRcnnSnow(n, k, OBS_State, OBS_Pert_State)
   real, allocatable      :: snd1d(:)
   real                   :: snd_current(LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k))
   integer                :: fnd
+  real                   :: cornerlat1, cornerlon1
+  integer                :: lat_off, lon_off
   logical                :: file_exists
     
   call ESMF_AttributeGet(OBS_State,"Data Directory",&
@@ -100,46 +102,94 @@ subroutine read_AMSRcnnSnow(n, k, OBS_State, OBS_Pert_State)
           LIS_rc%da, fname)
      
      inquire(file=fname,exist=file_exists)
-     
-     if(file_exists) then
+
+     if(file_exists.and.AMSRcnnSnow_struc(n)%validDomain) then
         
         write(LIS_logunit,*) '[INFO] Reading ',trim(fname)
+
+        
         allocate(snd_data_b(AMSRcnnSnow_struc(n)%nc*AMSRcnnSnow_struc(n)%nr))
         allocate(var(AMSRcnnSnow_struc(n)%nc,AMSRcnnSnow_struc(n)%nr))
         allocate(snd1d(AMSRcnnSnow_struc(n)%nc*AMSRcnnSnow_struc(n)%nr))
-        
-#if ( defined USE_NETCDF3 || defined USE_NETCDF4 )
-        ierr = nf90_open(path=fname,mode=NF90_NOWRITE,ncid=ftn)
-        call LIS_verify(ierr,'error opening AMSR CNN file')
-        
-        ierr = nf90_inq_varid(ftn,'SD',sndId)
-        call LIS_verify(ierr, 'nf90_inq_varid failed for SDin read_AMSRcnnSnow')
-        
-        ierr = nf90_get_var(ftn,sndId, var)
-        call LIS_verify(ierr, 'nf90_get_var failed for SD')
-        
-        ierr = nf90_close(ftn)
-        call LIS_verify(ierr)
-#endif
-        
-        snd1d = LIS_rc%udef
-        snd_data_b = .false.
-        
-        do r=1, AMSRcnnSnow_struc(n)%nr
-           do c=1, AMSRcnnSnow_struc(n)%nc
-              if(var(c,r).lt.0.or.var(c,r).gt.1000) then 
-                 snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
-                      AMSRcnnSnow_struc(n)%nc) = -9999.0
-              else
-                 snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
-                      AMSRcnnSnow_struc(n)%nc) = var(c,r)/100.0 !to meters
-                 snd_data_b(c+(AMSRcnnSnow_struc(n)%nr-r)*&
-                      AMSRcnnSnow_struc(n)%nc) = .true. 
-              endif
-           enddo
-        enddo
-        deallocate(var)
 
+        if(AMSRcnnSnow_struc(n)%datares.eq.10) then         
+#if ( defined USE_NETCDF3 || defined USE_NETCDF4 )
+           ierr = nf90_open(path=fname,mode=NF90_NOWRITE,ncid=ftn)
+           call LIS_verify(ierr,'error opening AMSR CNN file')
+           
+           ierr = nf90_inq_varid(ftn,'SD',sndId)
+           call LIS_verify(ierr, 'nf90_inq_varid failed for SDin read_AMSRcnnSnow')
+           
+           ierr = nf90_get_var(ftn,sndId, var)
+           call LIS_verify(ierr, 'nf90_get_var failed for SD')
+           
+           ierr = nf90_close(ftn)
+           call LIS_verify(ierr)
+#endif
+           
+           snd1d = LIS_rc%udef
+           snd_data_b = .false.
+           
+           do r=1, AMSRcnnSnow_struc(n)%nr
+              do c=1, AMSRcnnSnow_struc(n)%nc
+                 !not trusting zero values from this product
+                 if(var(c,r).le.0.or.var(c,r).gt.1000) then 
+                    snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = -9999.0
+                 else
+                    snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = var(c,r)/100.0 !to meters
+                    snd_data_b(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = .true. 
+                 endif
+              enddo
+           enddo
+           deallocate(var)
+        elseif(AMSRcnnSnow_struc(n)%datares.eq.5) then
+#if ( defined USE_NETCDF3 || defined USE_NETCDF4 )
+
+           cornerlat1=AMSRcnnSnow_struc(n)%gridDesci(7)
+           cornerlon1=AMSRcnnSnow_struc(n)%gridDesci(5)           
+           
+           lat_off = nint((cornerlat1+0.0)/0.05)+1
+           lon_off = nint((cornerlon1+179.95)/0.05)+1
+
+           lat_off = 1400 - lat_off + 1
+           ierr = nf90_open(path=fname,mode=NF90_NOWRITE,ncid=ftn)
+           call LIS_verify(ierr,'error opening AMSR CNN file')
+           
+           ierr = nf90_inq_varid(ftn,'SD',sndId)
+           call LIS_verify(ierr, 'nf90_inq_varid failed for SDin read_AMSRcnnSnow')
+           
+           ierr = nf90_get_var(ftn,sndId, var,&
+                start=(/lon_off,lat_off/),&
+                count=(/AMSRcnnSnow_struc(n)%nc,AMSRcnnSnow_struc(n)%nr/))
+           call LIS_verify(ierr, 'nf90_get_var failed for SD')
+           
+           ierr = nf90_close(ftn)
+           call LIS_verify(ierr)
+           
+#endif
+           snd1d = LIS_rc%udef
+           snd_data_b = .false.
+           
+           do r=1, AMSRcnnSnow_struc(n)%nr
+              do c=1, AMSRcnnSnow_struc(n)%nc
+                 !not trusting zero values from this product
+                 if(var(c,r).le.0.or.var(c,r).gt.1000) then 
+                    snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = -9999.0
+                 else
+                    snd1d(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = var(c,r)/100.0 !to meters
+                    snd_data_b(c+(AMSRcnnSnow_struc(n)%nr-r)*&
+                         AMSRcnnSnow_struc(n)%nc) = .true. 
+                 endif
+              enddo
+           enddo
+           deallocate(var)
+        endif
+        
 !--------------------------------------------------------------------------
 ! Interpolate to the observation grid
 !-------------------------------------------------------------------------- 
@@ -159,7 +209,14 @@ subroutine read_AMSRcnnSnow(n, k, OBS_State, OBS_Pert_State)
              AMSRcnnSnow_struc(n)%n21,&                
              AMSRcnnSnow_struc(n)%n22,&
              LIS_rc%udef,status)
-        
+
+
+!        print*, 'here'
+!        open(100,file='test.bin',form='unformatted')
+!        write(100) sndobs
+!        close(100)
+!        stop
+           
         deallocate(snd1d)
         deallocate(snd_data_b)
 
@@ -201,13 +258,21 @@ subroutine read_AMSRcnnSnow(n, k, OBS_State, OBS_Pert_State)
      
 !-------------------------------------------------------------------------
 !  Apply LSM based quality control and screening of observations
-!-------------------------------------------------------------------------     
+!-------------------------------------------------------------------------
+ 
      call lsmdaqcobsstate(trim(LIS_rc%lsm)//"+"&
           //trim(LIS_AMSRcnnSnowobsId)//char(0),n, k, OBS_state)
      
      snd_current = LIS_rc%udef
      call LIS_checkForValidObs(n,k,obsl,fnd,sndobs)
 
+!     if(LIS_localPet.eq.3) then 
+!        print*, 'here', LIS_rc%obs_lnc(k),LIS_rc%obs_lnr(k)
+!        open(100,file='test.bin',form='unformatted')
+!        write(100) sndobs
+!        close(100)
+!        stop
+!     endif
      
      if(fnd.eq.0) then 
         data_upd_flag_local = .false. 
