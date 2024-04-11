@@ -65,6 +65,8 @@ subroutine SnowModel_coldstart(mtype)
           snowmodel_struc(n)%sm(:)%canopy_int_old = 0.
           snowmodel_struc(n)%sm(:)%topo = 0.
           snowmodel_struc(n)%sm(:)%sum_sprec = 0.
+          snowmodel_struc(n)%sm(:)%snowt = 273.
+          snowmodel_struc(n)%sm(:)%grainsize = 0.
 
           ! SnowModel "initialize" routine code (from preprocess_code.f90)
           do i=1,nx

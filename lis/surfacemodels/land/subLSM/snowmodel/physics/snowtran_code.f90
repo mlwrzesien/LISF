@@ -522,6 +522,10 @@
               swed_layer(i,j,KK(i,j)) = swed_layer(i,j,KK(i,j)) + &
      &          swe_change
 !             ro_layer(i,j,k) = ro_layer(i,j,k)
+!            print *,'ro_layer1=',ro_layer(i,j,1),i,j
+!            print *,'ro_layer2=',ro_layer(i,j,2),i,j
+!            print *,'ro_layer3=',ro_layer(i,j,3),i,j
+
               snod_layer(i,j,KK(i,j)) = swed_layer(i,j,KK(i,j)) * &
      &          ro_water / ro_layer(i,j,KK(i,j))
 

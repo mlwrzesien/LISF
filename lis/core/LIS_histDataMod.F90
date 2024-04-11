@@ -499,6 +499,9 @@ module LIS_histDataMod
   public ::   LIS_MOC_RAINF_SM
   public ::   LIS_MOC_SNOWF_SM
   public ::   LIS_MOC_ALBEDO_SM
+  public ::   LIS_MOC_SNOWT_SM  !MLW
+  public ::   LIS_MOC_GRAINSIZE_SM  !MLW
+  public ::   LIS_MOC_SLIQFRAC_SM  !MLW
   public ::   LIS_MOC_ELEVATION_SM
   public ::   LIS_MOC_LANDCOVER_SM
 
@@ -1006,6 +1009,9 @@ module LIS_histDataMod
     integer :: LIS_MOC_RAINF_SM = -9999
     integer :: LIS_MOC_SNOWF_SM = -9999
     integer :: LIS_MOC_ALBEDO_SM = -9999
+    integer :: LIS_MOC_SNOWT_SM = -9999  !MLW
+    integer :: LIS_MOC_GRAINSIZE_SM = -9999  !MLW
+    integer :: LIS_MOC_SLIQFRAC_SM = -9999 !MLW
     integer :: LIS_MOC_ELEVATION_SM = -9999
     integer :: LIS_MOC_LANDCOVER_SM = -9999
     integer :: LIS_MOC_SWDOWNFORC_SM = -9999
@@ -5272,6 +5278,48 @@ contains
             n,2,ntiles,(/"kg/m2","m    "/),1,(/"-"/),1,1,1,&
             model_patch=.true.)
     endif
+
+!    integer :: LIS_MOC_SNOWT_SM = -9999    !MLW
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SnowT:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SnowT",&
+         "temperature_in_surface_snow",&
+         "surface snow temperature",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SNOWT_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"K"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_SLIQFRAC_SM = -9999    !MLW
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SLiqFrac:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_SLiqFrac",&
+         "fraction_SWE_as_liquid",&
+         "fraction of SWE in liquid phase",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_SLIQFRAC_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"-"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+!    integer :: LIS_MOC_GRAINSIZE_SM = -9999    !MLW
+    call ESMF_ConfigFindLabel(modelSpecConfig,"SM_GrainSize:",rc=rc)
+    call get_moc_attributes(modelSpecConfig, LIS_histData(n)%head_lsm_list, &
+         "SM_GrainSize",&
+         "snow_grain_size",&
+         "snow grain size",rc)
+    if ( rc == 1 ) then
+       call register_dataEntry(LIS_MOC_LSM_COUNT,LIS_MOC_GRAINSIZE_SM,&
+            LIS_histData(n)%head_lsm_list,&
+            n,1,ntiles,(/"m"/),1,(/"-"/),1,1,1,&
+            model_patch=.true.)
+    endif
+
+
+
 
 !    integer :: LIS_MOC_SNOWDEPTH_SM = -9999
     call ESMF_ConfigFindLabel(modelSpecConfig,"SM_SnowDepth:",rc=rc)

@@ -19,7 +19,7 @@ module snowmodel_inc
   !   If you want to run a longer time domain, then you have to
   !   change this number and recompile the code.
   
-  integer, parameter :: max_time_steps=8784
+  integer, parameter :: max_time_steps=130000
   
   ! nstns_max is the maximum number of stations that can be used
   !   in the data assimilation routines.
@@ -46,7 +46,7 @@ module snowmodel_inc
   !   nz_max=2 it will avoid a warning message if you are compiling
   !   the code with gfortran).
   !     parameter (nz_max=25)
-  integer, parameter :: nz_max=2
+  integer, parameter :: nz_max=4
 
   ! This is the number of print variables that are controlled by
   !   the variable list in snowmodel.par.

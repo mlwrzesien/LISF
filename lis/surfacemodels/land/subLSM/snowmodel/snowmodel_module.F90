@@ -115,6 +115,10 @@ module snowmodel_module
 
      real :: sublim      ! swesublim, ssub: static-surface sublimation (m)
      real :: swemelt     ! swemelt, smlt: SWE melt (m)
+     
+     real :: snowt      ! MLW
+     real :: grainsize  ! MLW
+     real :: sliqfrac   ! MLW -- multilayer!
 
      real :: sumsublim   ! Summed static-surface sublimation (m)
      real :: sumqcs      ! Summed canopy sublim during year (m)

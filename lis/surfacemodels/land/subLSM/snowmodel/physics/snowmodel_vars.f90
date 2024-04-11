@@ -196,6 +196,7 @@ module snowmodel_vars
   real, allocatable ::  gamma(:,:,:)
   real, allocatable ::  diam_layer(:,:,:)
   real, allocatable ::  flux_layer(:,:,:)
+  real, allocatable ::  frac_liq(:,:,:)
 
   integer iclear_mn,iclear_dy,izero_snow_date
   real xclear_hr
@@ -383,6 +384,8 @@ contains
     flux_layer = 0.0
     allocate(seaice_conc(nx,ny,nz_max))
     seaice_conc = 0.0
+    allocate( frac_liq(nx,ny,nz_max))
+    frac_liq = 0.0
 
 !KRA
     snowmodel_masterproc = .true.

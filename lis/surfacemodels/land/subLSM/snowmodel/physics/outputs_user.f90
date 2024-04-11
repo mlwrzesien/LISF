@@ -17,7 +17,7 @@
      &  icorr_factor_loop,swesublim,vegtype,iter_start,&
      &  seaice_run,print_inc,cloud_frac_grid,&
      &  output_path_wo_assim,output_path_wi_assim,print_var,&
-     &  print_outvars,Qsubl_depth,Qsalt,Qsusp)
+     &  print_outvars,Qsubl_depth,Qsalt,Qsusp,T_old,diam_layer)
 
 ! This subroutine is available to provide user-defined outputs.
 !   These might be special-case situations, like just writing out
@@ -56,7 +56,8 @@
      &  sum_swemelt(nx,ny),swesublim(nx,ny),&
      &  vegtype(nx,ny),albedo(nx,ny),&
      &  cloud_frac_grid(nx,ny),Qsubl_depth(nx,ny),&
-     &  Qsalt(nx,ny),Qsusp(nx,ny)
+     &  Qsalt(nx,ny),Qsusp(nx,ny),T_old(nx,ny),&
+     &  diam_layer(nx,ny)
 
       real undef,xhour,deltax,pi,rad2deg,seaice_run,print_inc
       double precision xmn,ymn
@@ -377,7 +378,11 @@
             vars(i,j,23) = sum_trans(i,j)
             vars(i,j,24) = vars(i,j,24) + Qsalt(i,j)
             vars(i,j,25) = vars(i,j,25) + Qsusp(i,j)
-
+! MLW add vars - for now, both saved at end of day
+            print *,"T_old=",T_old(i,j)
+            vars(i,j,26) = (T_old(i,j) - 273.15)
+            print *,"var 26=",vars(i,j,26)
+            vars(i,j,27) = diam_layer(i,j)
           enddo
         enddo
 

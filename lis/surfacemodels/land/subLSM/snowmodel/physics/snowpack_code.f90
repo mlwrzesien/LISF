@@ -17,7 +17,7 @@
      &  ro_snowmax,tsls_threshold,dz_snow_min,tslsnowfall,&
      &  change_layer,snod_layer,swed_layer,ro_layer,T_old,gamma,&
      &  multilayer_snowpack,seaice_run,seaice_conc,ht_windobs,&
-     &  windspd_2m_grid,diam_layer,flux_layer,sum_trans)
+     &  windspd_2m_grid,diam_layer,flux_layer,sum_trans,frac_liq)
 
       use snowmodel_inc
       implicit none
@@ -38,6 +38,7 @@
       real gamma(nx,ny,nz_max)
       real diam_layer(nx,ny,nz_max)
       real flux_layer(nx,ny,nz_max)
+      real frac_liq(nx,ny,nz_max)  !MLW
 
       integer melt_flag_z(nz_max)
       real snod_layer_z(nz_max)
@@ -47,6 +48,7 @@
       real gamma_z(nz_max)
       real diam_z(nz_max)
       real flux_z(nz_max)
+      real frac_liq_z(nz_max)   !MLW
 
       real Tair_grid(nx,ny)
       real rh_grid(nx,ny)
@@ -115,6 +117,7 @@
               T_old_z(k) = T_old(i,j,k)
               gamma_z(k) = gamma(i,j,k)
               diam_z(k) = diam_layer(i,j,k)
+              frac_liq_z(k) = frac_liq(i,j,k)  !MLW
             enddo
           endif
 
@@ -148,7 +151,8 @@
      &      dz_snow_min,tslsnowfall(i,j),change_layer(i,j),snod_layer_z,&
      &      swed_layer_z,ro_layer_z,T_old_z,gamma_z,multilayer_snowpack,&
      &      Cp_snow,seaice_run,ht_windobs,windspd_2m_grid(i,j),&
-     &      diam_z,flux_z)
+     &      diam_z,flux_z,frac_liq_z)
+
 
 ! Re-build the 3-D arrays.  See note above about using f95 to avoid this.
           if (multilayer_snowpack.eq.1) then
@@ -161,6 +165,8 @@
               gamma(i,j,k) = gamma_z(k)
               diam_layer(i,j,k) = diam_z(k)
               flux_layer(i,j,k) = flux_z(k)
+              frac_liq(i,j,k) = frac_liq_z(k)  !MLW
+              print *,'ro_layer=',ro_layer(i,j,k),i,j,k
             enddo
           endif
 
@@ -228,7 +234,7 @@
      &  dz_snow_min,tslsnowfall,change_layer,snod_layer,&
      &  swed_layer,ro_layer,T_old,gamma,multilayer_snowpack,&
      &  Cp_snow,seaice_run,ht_windobs,windspd_2m,&
-     &  diam_layer,flux_layer)
+     &  diam_layer,flux_layer,frac_liq)
 
       use snowmodel_inc
       implicit none
@@ -248,6 +254,7 @@
       real gamma(nz_max)
       real diam_layer(nz_max)
       real flux_layer(nz_max)
+      real frac_liq(nz_max)  !MLW
 
       real Twb,Tf,Tair,rh,xLs,Cp,ro_nsnow,dt,ro_snow,swe_depth,&
      &  Tsfc,A1,A2,snow_d,ro_water,ro_ice,prec,runoff,Qm,xLf,rain,&
@@ -314,7 +321,7 @@
      &    sum_sprec,sprec_grnd_ml,sum_prec,prec,sum_runoff,&
      &    ro_snow_grid,xro_snow,swesublim,A1,A2,windspd_2m,&
      &    sfc_pressure,diam_layer,flux_layer,corr_factor,&
-     &    icorr_factor_index)
+     &    icorr_factor_index,frac_liq)
 
 ! Call the original single-layer snowpack model.
       else
@@ -949,7 +956,7 @@
      &  sum_sprec,sprec_grnd_ml,sum_prec,prec,sum_runoff,&
      &  ro_snow_grid,xro_snow,swesublim,A1,A2,windspd_2m,&
      &  sfc_pressure,diam_layer,flux_layer,corr_factor,&
-     &  icorr_factor_index)
+     &  icorr_factor_index,frac_liq)
 
       use snowmodel_inc
       implicit none

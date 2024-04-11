@@ -68,6 +68,9 @@ subroutine snowmodel_main(n)
   real              :: forcelev
   real              :: forest_frac, trans_veg
 
+  real, allocatable :: tsnow_temp(:,:)
+  real, allocatable :: tsnow_avg(:,:) ! MLW
+
   ! Vegetation impact on winds:
   real              :: beta, a
   real              :: veg_ht, canopy_windwt
@@ -335,7 +338,6 @@ subroutine snowmodel_main(n)
          albedo_snow_clearing,albedo_glacier,snod_layer,T_old,&
          gamma,KK)
    endif
-
    ! Evolve the snowpack according to the defined melt and
    !   precipitation inputs.
    if (run_snowpack.eq.1.0) then
@@ -353,7 +355,7 @@ subroutine snowmodel_main(n)
          ro_snowmax,tsls_threshold,dz_snow_min,tslsnowfall,&
          change_layer,snod_layer,swed_layer,ro_layer,T_old,gamma,&
          multilayer_snowpack,seaice_run,seaice_conc,ht_windobs,&
-         windspd_2m_grid,diam_layer,flux_layer)
+         windspd_2m_grid,diam_layer,flux_layer,frac_liq) !MLW
    endif
 
    ! Run the blowing-snow model.
@@ -406,7 +408,7 @@ subroutine snowmodel_main(n)
          icorr_factor_loop,swesublim,vegtype,iter_start,&
          seaice_run,print_inc,cloud_frac_grid,&
          output_path_wo_assim,output_path_wi_assim,print_var,&
-         print_outvars,Qsubl_depth)
+         print_outvars,Qsubl_depth,T_old)  !MLW
    endif
 #endif
 
@@ -471,9 +473,13 @@ subroutine snowmodel_main(n)
       ! -----------------------------------------
 
       ! SWE depth (units: m, SnowModel)
-      snowmodel_struc(n)%sm(t)%swe_depth = &
-            swe_depth(col,row)    
-
+      if(multilayer_snowpack.eq.1) then
+        snowmodel_struc(n)%sm(t)%swe_depth = &
+             swed_layer(col,row,1)
+      else
+        snowmodel_struc(n)%sm(t)%swe_depth = &
+             swe_depth(col,row) 
+      endif 
       call LIS_diagnoseSurfaceOutputVar(n,t,LIS_MOC_SWE_SM, &
            value=snowmodel_struc(n)%sm(t)%swe_depth, &
            unit="m", vlevel=1, direction="-", &
@@ -486,16 +492,26 @@ subroutine snowmodel_main(n)
 !           surface_type=LIS_rc%lsm_index)
 
       ! Snow depth (units: m) 
-      snowmodel_struc(n)%sm(t)%snow_depth = &
-            snow_depth(col,row)    
+      if(multilayer_snowpack.eq.1) then
+         snowmodel_struc(n)%sm(t)%snow_depth = &
+             snod_layer(col,row,1)    
+      else
+         snowmodel_struc(n)%sm(t)%snow_depth = &
+             snow_depth(col,row)
+      endif
       call LIS_diagnoseSurfaceOutputVar(n,t,LIS_MOC_SNOWDEPTH_SM, &
            value=snowmodel_struc(n)%sm(t)%snow_depth, &
            unit="m", vlevel=1, direction="-", &
            surface_type = LIS_rc%lsm_index)
 
       ! Snow density (units: kg m-3):
-      snowmodel_struc(n)%sm(t)%sden = &
-            xro_snow(col,row)
+      if(multilayer_snowpack.eq.1) then
+         snowmodel_struc(n)%sm(t)%sden = &
+             ro_layer(col,row,1)
+      else
+         snowmodel_struc(n)%sm(t)%sden = &
+             xro_snow(col,row)
+      endif
       call LIS_diagnoseSurfaceOutputVar(n, t, LIS_MOC_SNOWDENSITY_SM, &
            value = snowmodel_struc(n)%sm(t)%sden, &
            unit="kg m-3", vlevel=1, direction="-", &
@@ -603,6 +619,48 @@ subroutine snowmodel_main(n)
            unit="kg m-2 s-1", vlevel=1, direction="DN", &
            surface_type=LIS_rc%lsm_index)
 
+
+     ! Snow temperature (units: K; SnowT)  !MLW  
+     !  Snowmodel units: degrees C (t_old);
+     tsnow_temp = 0.0
+!     tsnow_avg = 0.0
+     if(multilayer_snowpack.eq.1) then
+        snowmodel_struc(n)%sm(t)%snowt = T_old(col,row,1)
+     elseif(max_layers.eq.1) then
+         tsnow_temp = 0.5 * (272.15 + Tsfc)
+         snowmodel_struc(n)%sm(t)%snowt = tsnow_temp(col,row)
+     endif
+     call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_SNOWT_SM, &
+            value=snowmodel_struc(n)%sm(t)%snowt,&
+            unit="K", vlevel=1, direction="-",&
+            surface_type=LIS_rc%lsm_index)
+    
+
+     ! SLiqFrac (unit=-) fraction of SWE in liquid phase !MLW
+     if(multilayer_snowpack.eq.1 .and. &
+        snowmodel_struc(n)%nsnow.eq.1) then
+              snowmodel_struc(n)%sm(t)%sliqfrac = &
+               frac_liq(col,row,1)
+     else
+        snowmodel_struc(n)%sm(t)%sliqfrac = undef
+     endif
+     call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_SLIQFRAC_SM, &
+            value=snowmodel_struc(n)%sm(t)%sliqfrac,&
+            unit="-",vlevel=1,direction="-",&
+            surface_type=LIS_rc%lsm_index)
+
+     ! Snow grain size (units: m)   !MLW
+     if(multilayer_snowpack.eq.1 .and. &
+        snowmodel_struc(n)%nsnow.eq.1) then
+         snowmodel_struc(n)%sm(t)%grainsize = &
+               diam_layer(col,row,1)
+     else
+         snowmodel_struc(n)%sm(t)%grainsize = undef
+     endif
+     call LIS_diagnoseSurfaceOutputVar(n, t,LIS_MOC_GRAINSIZE_SM, &
+            value=snowmodel_struc(n)%sm(t)%grainsize,&
+            unit="m",vlevel=1,direction="-",&
+            surface_type=LIS_rc%lsm_index)
 
      ! Albedo (units: -)
      snowmodel_struc(n)%sm(t)%albedo = &
@@ -717,6 +775,7 @@ subroutine snowmodel_main(n)
        snowmodel_struc(n)%sm(t)%psurf = 0
        snowmodel_struc(n)%sm(t)%rainf = 0
        snowmodel_struc(n)%sm(t)%snowf = 0
+       snowmodel_struc(n)%sm(t)%snowt = 0
 
    enddo   ! End 1-d tile space loop
 
