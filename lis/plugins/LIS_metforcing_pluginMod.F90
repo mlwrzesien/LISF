@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -306,6 +306,10 @@ subroutine LIS_metforcing_plugin
 
 #if ( defined MF_GALWEM_GE_FORECAST )
    use galwemge_forcingMod
+#endif
+
+#if ( defined MF_MOGREPS_G_FORECAST )
+   use mogrepsg_forcingMod
 #endif
 
 #if ( defined MF_MET_TEMPLATE )
@@ -667,8 +671,19 @@ subroutine LIS_metforcing_plugin
    external reset_galwemge
 #endif
 
+#if ( defined MF_MOGREPS_G_FORECAST )
+   external get_mogrepsg
+   external timeinterp_mogrepsg
+   external finalize_mogrepsg
+   external reset_mogrepsg
+#endif
 
-   
+   external :: registerinitmetforc
+   external :: registerretrievemetforc
+   external :: registertimeinterpmetforc
+   external :: registerfinalmetforc
+   external :: registerresetmetforc
+
 #if ( defined MF_MET_TEMPLATE )
 ! - Meteorological Forcing Template:
    call registerinitmetforc(trim(LIS_metForcTemplateId)//char(0), &
@@ -1200,6 +1215,15 @@ subroutine LIS_metforcing_plugin
                                   timeinterp_galwemge)
    call registerfinalmetforc(trim(LIS_galwemgeId)//char(0),finalize_galwemge)
    call registerresetmetforc(trim(LIS_galwemgeId)//char(0),reset_galwemge)
+#endif
+
+#if ( defined MF_MOGREPS_G_FORECAST)
+   call registerinitmetforc(trim(LIS_mogrepsgId)//char(0),init_mogrepsg)
+   call registerretrievemetforc(trim(LIS_mogrepsgId)//char(0),get_mogrepsg)
+   call registertimeinterpmetforc(trim(LIS_mogrepsgId)//char(0), &
+                                  timeinterp_mogrepsg)
+   call registerfinalmetforc(trim(LIS_mogrepsgId)//char(0),finalize_mogrepsg)
+   call registerresetmetforc(trim(LIS_mogrepsgId)//char(0),reset_mogrepsg)
 #endif
 
 end subroutine LIS_metforcing_plugin

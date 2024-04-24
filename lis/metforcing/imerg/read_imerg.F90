@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -165,7 +165,7 @@ subroutine read_imerghdf(n, filename, xsize, ysize, precipout, istatus)
 
   ! Variable names changed in IMERG V07
   vlname = trim(imerg_struc(n)%imergver)
-  read( vlname(3:3), '(I)') vnum
+  read( vlname(2:3), '(I2)') vnum
   if (vnum .ge. 7) then
      dsetname='/Grid/precipitation'
   else

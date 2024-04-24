@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -177,6 +177,7 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_gddpId            = "GDDP"
    character*50, public,  parameter :: LIS_galwemId          = "GALWEM forecast"
    character*50, public,  parameter :: LIS_galwemgeId        = "GALWEM-GE forecast"
+   character*50, public,  parameter :: LIS_mogrepsgId        = "MOGREPS-G forecast"
 
 !-------------------------------------------------------------------------
 ! land surface parameters
@@ -272,6 +273,8 @@ module LIS_pluginIndices
         "SMOS(NESDIS) soil moisture"
    character*50, public,  parameter :: LIS_NASASMAPsmobsId       = &
         "SMAP(NASA) soil moisture"
+   character*50, public,  parameter :: LIS_CDFTRANSFERNASASMAPsmobsId = &
+        "SMAP(NASA) soil moisture with CDF Transfer"                 !MN 
    character*50, public,  parameter :: LIS_SMOSNRTNNL2smobsId    = &
         "SMOS NRT NN soil moisture"                                  !YK
    character*50, public,  parameter :: LIS_SMAPEOPLsmobsId       = &

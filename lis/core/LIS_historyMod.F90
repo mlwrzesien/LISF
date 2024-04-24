@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -7466,7 +7466,7 @@ subroutine writevar_grib1_withstats_real(ftn, ftn_stats, n,   &
 !    call to compute diagnostic statistics of a variable
 !  \end{description}
 !EOP
-  character*100        :: message(20)
+  character*255        :: message(20)
   integer              :: igrib
   character*8          :: date
   integer              :: idate,idate1
@@ -7821,7 +7821,7 @@ subroutine writevar_grib2_withstats_real(ftn, ftn_stats, n,   &
 !    call to compute diagnostic statistics of a variable
 !  \end{description}
 !EOP
-  character*100        :: message(20)
+  character*255        :: message(20)
   integer              :: igrib
   character*8          :: date
   integer              :: idate,idate1
