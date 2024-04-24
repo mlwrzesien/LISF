@@ -316,7 +316,7 @@ subroutine timeinterp_merra2(n,findex)
         kk = LIS_get_iteration_index(n, k, index1, mfactor)
      ! Total precip, convective precip, and snowfall are a constant rate
      !  based on the first/current time and not on the latter time - dmm
-        pcp(t) = merra2_struc(n)%metdata1(kk,8,index1) !*0.75  ! MLW scale precip
+        pcp(t) = merra2_struc(n)%metdata1(kk,8,index1)
 
         !rand is sampled from a normal distribution with zero mean and 
         !variance of 1. Then scale it by stdev * x + mean 

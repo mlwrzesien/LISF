@@ -171,7 +171,7 @@ subroutine read_ASO_SWE(n, k, OBS_State, OBS_Pert_State)
                    stn_col.gt.0.and.stn_col.le.LIS_rc%obs_lnc(k).and.&
                    stn_row.gt.0.and.stn_row.le.LIS_rc%obs_lnr(k)) then 
                  swe_ip(stn_col,stn_row) = swe_ip(stn_col,stn_row) + & 
-                      var(i,j) *1000.0 !to mm
+                      var(i,j)*1000.0 !to mm
                  nswe_ip(stn_col,stn_row) = nswe_ip(stn_col,stn_row) + 1
               endif
            enddo

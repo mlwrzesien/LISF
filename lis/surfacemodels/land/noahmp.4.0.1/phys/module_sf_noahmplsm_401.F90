@@ -1486,7 +1486,7 @@ ENDIF   ! CROPTYPE == 0
            print *,'EDIR = ',EDIR*DT
            print *,'RUNSRF = ',RUNSRF*DT
            print *,'RUNSUB = ',RUNSUB*DT
-           !call wrf_error_fatal("Water budget problem in NOAHMP LSM")
+           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
         END IF
 #endif
    ELSE                 !KWM
@@ -6819,9 +6819,9 @@ ENDIF   ! CROPTYPE == 0
 
 !to obtain equilibrium state of snow in glacier region
        
-   IF(SNEQV > 10000.) THEN   ! 2000 mm -> maximum water depth
+   IF(SNEQV > 2000.) THEN   ! 2000 mm -> maximum water depth
       BDSNOW      = SNICE(0) / DZSNSO(0)
-      SNOFLOW     = (SNEQV - 10000.)
+      SNOFLOW     = (SNEQV - 2000.)
       SNICE(0)    = SNICE(0)  - SNOFLOW 
       DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
       SNOFLOW     = SNOFLOW / DT
@@ -7352,7 +7352,6 @@ ENDIF   ! CROPTYPE == 0
 
         WX      = SNICE(J) + SNLIQ(J)
         FICE(J) = SNICE(J) / WX
-        print *,'DZSNSO(J),J = ',DZSNSO(J),J
         VOID    = 1. - (SNICE(J)/DENICE + SNLIQ(J)/DENH2O) / DZSNSO(J)
 
         ! Allow compaction only for non-saturated node and higher ice lens node.
