@@ -225,6 +225,10 @@ subroutine LIS_DAobs_plugin
    use GCOMW_AMSR2L3SND_Mod,    only : GCOMW_AMSR2L3SND_setup
 #endif
 
+#if ( defined DA_OBS_AMSRCNNSND )
+   use AMSRcnnSnowMod,    only : AMSRcnnSnow_setup
+#endif
+
 #if ( defined DA_OBS_SMOS_NESDIS )
    use SMOSNESDISsm_Mod,        only : SMOSNESDISsm_setup
 #endif
@@ -274,6 +278,10 @@ subroutine LIS_DAobs_plugin
 #endif
 #if ( defined DA_OBS_MCD15A2H_LAI )
     use MCD15A2HLAI_Mod,       only : MCD15A2Hlai_setup
+#endif
+
+#if ( defined DA_OBS_MOD10A1_SCF )
+    use MOD10A1scf_Mod,       only : MOD10A1scf_setup
 #endif
 
 !Y.Kwon
@@ -419,6 +427,10 @@ subroutine LIS_DAobs_plugin
    external read_GCOMW_AMSR2L3SND,  write_GCOMW_AMSR2L3sndobs
 #endif
 
+#if ( defined DA_OBS_AMSRCNNSND )
+   external read_AMSRcnnSnow,  write_AMSRcnnSnow
+#endif  
+
 #if ( defined DA_OBS_HYDROWEBWL )
     external read_hydrowebWLobs, write_hydrowebWLobs
 #endif
@@ -479,6 +491,10 @@ subroutine LIS_DAobs_plugin
 
 #if ( defined DA_OBS_MCD15A2H_LAI)
     external read_MCD15A2Hlai, write_MCD15A2Hlai
+#endif
+
+#if ( defined DA_OBS_MOD10A1_SCF)
+    external read_MOD10A1scf, write_MOD10A1scf
 #endif
 
 #if ( defined DA_OBS_GLASS_Albedo)
@@ -654,6 +670,16 @@ subroutine LIS_DAobs_plugin
         read_GCOMW_AMSR2L3snd)
    call registerwritedaobs(trim(LIS_GCOMW_AMSR2L3sndobsId)//char(0), &
         write_GCOMW_AMSR2L3sndobs)
+#endif
+
+#if ( defined DA_OBS_AMSRCNNSND )
+   call registerdaobsclass(trim(LIS_AMSRcnnSnowobsId),"LSM")
+   call registerdaobssetup(trim(LIS_AMSRcnnSnowobsId)//char(0), &
+        AMSRcnnSnow_setup)
+   call registerreaddaobs(trim(LIS_AMSRcnnSnowobsId)//char(0),  &
+        read_AMSRcnnSnow)
+   call registerwritedaobs(trim(LIS_AMSRcnnSnowobsId)//char(0), &
+        write_AMSRcnnSnow)
 #endif
 
 #if ( defined DA_OBS_ANSA_SNWD )
@@ -906,6 +932,16 @@ subroutine LIS_DAobs_plugin
         read_MCD15A2Hlai)
    call registerwritedaobs(trim(LIS_MCD15A2HlaiobsId)//char(0),&
         write_MCD15A2Hlai)
+#endif
+
+#if ( defined DA_OBS_MOD10A1_SCF)
+   call registerdaobsclass(trim(LIS_MOD10A1scfobsId),"LSM")
+   call registerdaobssetup(trim(LIS_MOD10A1scfobsId)//char(0),&
+        MOD10A1scf_setup)
+   call registerreaddaobs(trim(LIS_MOD10A1scfobsId)//char(0),&
+        read_MOD10A1scf)
+   call registerwritedaobs(trim(LIS_MOD10A1scfobsId)//char(0),&
+        write_MOD10A1scf)
 #endif
 
 !Y.Kwon

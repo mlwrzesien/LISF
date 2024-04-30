@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.5
+! Version 7.4
 !
-! Copyright (c) 2024 United States Government as represented by the
+! Copyright (c) 2022 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -226,22 +226,39 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
            isnow = -2
            dzsnso(-nsnow+1:isnow) = 0 
            dzsnso(isnow+1) = snowh -dzsnso(0)
-           ! scale swe in layers by ratio of depth to pack
-           do snl_idx=-nsnow+1,0
-              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
-           enddo
+!           ! scale swe in layers by ratio of depth to pack
+!           do snl_idx=-nsnow+1,0
+!              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
+!           enddo
+           if(snice(isnow+1).gt.dsneqv) then
+              snice(isnow+1) = snice(isnow+1)+dsneqv
+           else
+              snice(isnow+1) = 1.0
+              snice(0) = sneqv-1.0
+           endif
            snliq(-nsnow+1:isnow) = 0
 ! all other cases
         elseif(snowh.le.(dzsnso(0)+dzsnso(-1)+dzsnso(-2))) then 
            isnow = -3
            dzsnso(isnow+1) = snowh -dzsnso(-1) -dzsnso(0)
-           ! scale swe in layers by ratio of depth to pack
-           do snl_idx=-nsnow+1,0
-              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
-           enddo
+!           ! scale swe in layers by ratio of depth to pack
+!           do snl_idx=-nsnow+1,0
+!              snice(snl_idx) = sneqv*(dzsnso(snl_idx)/snowh)
+!           enddo
+           if(snice(isnow+1).gt.dsneqv) then
+              snice(isnow+1) = snice(isnow+1)+dsneqv
+           else
+              snice(isnow+1) = 1.0
+              snice(-1) = sneqv-1.0-snice(0)
+           endif
            snliq(-nsnow+1:isnow) = 0
         endif           
      endif
+  endif
+
+! check and correct layer number in instances when dzsnso of the top layer is zero
+  if(dzsnso(isnow+1).eq.0.) then
+    isnow = isnow + 1
   endif
 
   ! ice fraction at the last timestep, add check for both snice and snliq are 0.0
