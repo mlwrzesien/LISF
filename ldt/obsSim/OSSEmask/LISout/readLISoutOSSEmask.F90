@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.5
+! Version 7.4
 !
-! Copyright (c) 2024 United States Government as represented by the
+! Copyright (c) 2022 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -87,12 +87,12 @@ subroutine readLISoutOSSEmask(n)
 
      elseif(LISoutOSSEmaskData%format.eq."netcdf") then 
 #if(defined USE_NETCDF3 || defined USE_NETCDF4) 
-        
-        iret = nf90_open(path=trim(fname),mode=nf90_nowrite, ncid=ftn)
-        call LDT_verify(iret, 'Error opening file '//trim(fname))
-        
+                
         if(LISoutOSSEmaskData%type.eq."PMW soil moisture") then 
 
+           iret = nf90_open(path=trim(fname),mode=nf90_nowrite, ncid=ftn)
+           call LDT_verify(iret, 'Error opening file '//trim(fname))
+           
 !------------------------------------------------------------------------------------------
 ! To simulate the limitations of passive microwave instruments (for soil moisture), screen 
 ! out data when rain is high, vegetation is thick, soil is frozen or when snow is present
@@ -160,38 +160,40 @@ subroutine readLISoutOSSEmask(n)
               call LDT_endrun()
 
            endif
+           
+           iret = nf90_close(ftn)
+           call LDT_verify(iret,'Error in nf90_close')
+
+           mask1d(:) = 1.0
+           
+           do r=1,LISoutOSSEmaskData%nr
+              do c=1, LISoutOSSEmaskData%nc
+                 if(iret1.eq.0) then 
+                    if(pcp(c,r,1).gt.2E-6) then
+                       mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
+                    endif
+                 endif
+                 if(iret2.eq.0) then 
+                    if(gvf(c,r,1).gt.0.7) then
+                       mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
+                    endif
+                 endif
+                 if(iret3.eq.0) then 
+                    if(st(c,r,1).le.274) then
+                       mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
+                    endif
+                 endif
+                 if(iret4.eq.0) then 
+                    if(snd(c,r,1).gt.0.00001) then
+                       mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
+                    endif
+                 endif
+              enddo
+           enddo
+        elseif(LISoutOSSEmaskData%type.eq."SnowGlobe") then 
+           mask1d(:) = 1.0
         end if
 
-        iret = nf90_close(ftn)
-        call LDT_verify(iret,'Error in nf90_close')
- 
-        mask1d(:) = 1.0
-
-        do r=1,LISoutOSSEmaskData%nr
-           do c=1, LISoutOSSEmaskData%nc
-              if(iret1.eq.0) then 
-                 if(pcp(c,r,1).gt.2E-6) then
-                    mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
-                 endif
-              endif
-              if(iret2.eq.0) then 
-                 if(gvf(c,r,1).gt.0.7) then
-                    mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
-                 endif
-              endif
-              if(iret3.eq.0) then 
-                 if(st(c,r,1).le.274) then
-                    mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
-                 endif
-              endif
-              if(iret4.eq.0) then 
-                 if(snd(c,r,1).gt.0.00001) then
-                    mask1d(c+(r-1)*LISoutOSSEmaskData%nc) = 0.0
-                 endif
-              endif
-           enddo
-        enddo
-        
         call convertOSSEmaskToLDTgrid(n,mask1d(:),mask_2d(:,:))
 #endif
      endif

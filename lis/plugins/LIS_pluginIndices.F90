@@ -227,6 +227,7 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_noobsId             = "none"
    character*50, public,  parameter :: LIS_synsmId             = "Synthetic SM"
    character*50, public,  parameter :: LIS_synsweId            = "Synthetic SWE"
+   character*50, public,  parameter :: LIS_SnowGlobeSWEId      = "SnowGlobe SWE"
    character*50, public,  parameter :: LIS_synlstId            = "Synthetic LST"
    character*50, public,  parameter :: LIS_synsndId            = "Synthetic SND"
    character*50, public,  parameter :: LIS_synSnowTbID         = "Synthetic Snow TB"              
