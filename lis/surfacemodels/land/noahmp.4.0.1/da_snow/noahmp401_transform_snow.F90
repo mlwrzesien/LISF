@@ -8,8 +8,8 @@
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
-! !ROUTINE: noahmp401_mod10a1scf
-! \label{noahmp401_mod10a1scf}
+! !ROUTINE: noahmp401_transform_snow
+! \label{noahmp401_transform_snow}
 !
 ! !REVISION HISTORY:
 ! 25Jun2006: Sujay Kumar: Initial Specification

@@ -8,8 +8,8 @@
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
-! !ROUTINE: noahmp401_qc_snowobs
-! \label{noahmp401_qc_snowobs}
+! !ROUTINE: noahmp401_qc_withforest_snowobs
+! \label{noahmp401_qc_withforest_snowobs}
 !
 ! !REVISION HISTORY:
 ! 27Feb2005: Sujay Kumar; Initial Specification

@@ -13,10 +13,10 @@
 ! 
 ! !DESCRIPTION: 
 !   This module contains interfaces and subroutines to
-!   handle the MODIS MCD15A2H LAI data.
+!   handle the MODIS MOD10A1 snow cover fraction data.
 ! 
 ! !REVISION HISTORY: 
-!  16 Jun 2020    Wanshu Nie; initial specification
+!  19 Feb 2024    Sujay V. Kumar; initial specification
 ! 
 module MOD10A1scf_Mod
 ! !USES: 

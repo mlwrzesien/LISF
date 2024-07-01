@@ -13,7 +13,7 @@
 ! \label{read_MOD10A1scf}
 !
 ! !REVISION HISTORY:
-!  16 Jun 2020    Wanshu Nie; initial specification
+!  19 Feb 2024    Sujay V. Kumar; initial specification
 !
 ! !INTERFACE: 
 subroutine read_MOD10A1scf(n, k, OBS_State, OBS_Pert_State)

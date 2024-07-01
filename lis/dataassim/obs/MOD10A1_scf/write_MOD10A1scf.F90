@@ -13,7 +13,7 @@
 ! \label{write_MOD10A1scf}
 ! 
 ! !REVISION HISTORY: 
-!  17 Jun 2020    Wanshu Nie; initial specification
+!  19 Feb 2024    Sujay V. Kumar; initial specification
 ! 
 ! !INTERFACE: 
 subroutine write_MOD10A1scf(n, k, OBS_State)
@@ -36,8 +36,7 @@ subroutine write_MOD10A1scf(n, k, OBS_State)
 !
 ! !DESCRIPTION: 
 ! 
-! writes the transformed (interpolated/upscaled/reprojected)  
-! MCD15A2H LAI observations to a file
+! writes the MODIS MOD10A1 SCF observations to a file
 ! 
 !EOP
   type(ESMF_Field)         :: laiField
