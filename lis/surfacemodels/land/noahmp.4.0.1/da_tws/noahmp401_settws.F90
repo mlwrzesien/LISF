@@ -332,19 +332,19 @@ subroutine noahmp401_settws(n, LSM_State)
 
      else
 
-        TWS2 =(soilm1(t)*NOAHMP401_struc(n)%sldpth(1)*&
-             soilm2(t)*NOAHMP401_struc(n)%sldpth(2)*&
-             soilm3(t)*NOAHMP401_struc(n)%sldpth(3)*&
+        TWS2 =(soilm1(t)*NOAHMP401_struc(n)%sldpth(1)+&
+             soilm2(t)*NOAHMP401_struc(n)%sldpth(2)+&
+             soilm3(t)*NOAHMP401_struc(n)%sldpth(3)+&
              soilm4(t)*NOAHMP401_struc(n)%sldpth(4))*&
              LIS_CONST_RHOFW
 
 
         TWS1 =(Noahmp401_struc(n)%noahmp401(t)%smc(1)*&
-             NOAHMP401_struc(n)%sldpth(1)*&
+             NOAHMP401_struc(n)%sldpth(1)+&
              noahmp401_struc(n)%noahmp401(t)%smc(2)*&
-             NOAHMP401_struc(n)%sldpth(2)*&
+             NOAHMP401_struc(n)%sldpth(2)+&
              noahmp401_struc(n)%noahmp401(t)%smc(3)*&
-             NOAHMP401_struc(n)%sldpth(3)*&
+             NOAHMP401_struc(n)%sldpth(3)+&
              noahmp401_struc(n)%noahmp401(t)%smc(4)*&
              NOAHMP401_struc(n)%sldpth(4))*&
              LIS_CONST_RHOFW

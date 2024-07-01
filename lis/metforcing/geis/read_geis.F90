@@ -253,7 +253,8 @@ subroutine read_geis(n, kk, findex, order, month, name,ferror)
         end do
      enddo
       
-     
+  call LIS_verify(nf90_close(ftn))
+    
   else
      write(LIS_logunit,*) &
           '[ERR] Could not find file: ',trim(name)

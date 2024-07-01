@@ -8,22 +8,26 @@
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
-! !ROUTINE: NoahMP401_getsoilm
-! \label{NoahMP401_getsoilm}
+! !ROUTINE: noahmp401_getsnwdvars
+! \label{noahmp401_getsnwdvars}
 !
 ! !REVISION HISTORY:
 ! 27Feb2005: Sujay Kumar; Initial Specification
 ! 25Jun2006: Sujay Kumar: Updated for the ESMF design
-! 15 Dec 2018: Mahdi Navari; Modified for NoahMP401 
-
+! 02 Mar 2010: Sujay Kumar; Modified for Noah 3.1
+! 03OC2018: Yeosang Yoon; Modified for NoahMP 3.6
+! 14 Dec 2018: Yeosang Yoon; Modified for NoahMP 4.0.1 and SNODEP
+! 15 May 2019: Yeosang Yoon; Modified for NoahMP 4.0.1 and LDTSI
+! 13 Dec 2019: Eric Kemp; Replaced LDTSI with SNWD
+!
 ! !INTERFACE:
-subroutine NoahMP401_getsoilm(n, LSM_State)
-
+!
+subroutine noahmp401_getsnwdvars(n, LSM_State)
 ! !USES:
   use ESMF
   use LIS_coreMod, only : LIS_rc
-  use LIS_logMod,  only  : LIS_verify
-  use NoahMP401_lsmMod
+  use LIS_logMod,  only : LIS_verify
+  use noahmp401_lsmMod
 
   implicit none
 ! !ARGUMENTS: 
@@ -32,7 +36,7 @@ subroutine NoahMP401_getsoilm(n, LSM_State)
 !
 ! !DESCRIPTION:
 !
-!  Returns the soilmoisture related state prognostic variables for
+!  Returns the snwd related state prognostic variables for
 !  data assimilation
 ! 
 !  The arguments are: 
@@ -40,22 +44,23 @@ subroutine NoahMP401_getsoilm(n, LSM_State)
 !  \item[n] index of the nest \newline
 !  \item[LSM\_State] ESMF State container for LSM state variables \newline
 !  \end{description}
+!
 !EOP
-  type(ESMF_Field)       :: sm1Field
+  type(ESMF_Field)       :: snodField
+
   integer                :: t
   integer                :: status
-  real, pointer          :: soilm1(:)
-  character*100          :: lsm_state_objs(4)
+  real, pointer          :: snod(:)
+ 
 
-  call ESMF_StateGet(LSM_State,"Soil Moisture Layer 1",sm1Field,rc=status)
-  call LIS_verify(status,'ESMF_StateGet failed for sm1 in NoahMP401_getsoilm')
-  call ESMF_FieldGet(sm1Field,localDE=0,farrayPtr=soilm1,rc=status)
-  call LIS_verify(status,'ESMF_FieldGet failed for sm1 in NoahMP401_getsoilm')
+  call ESMF_StateGet(LSM_State,"Snowdepth",snodField,rc=status)
+  call LIS_verify(status)
 
+  call ESMF_FieldGet(snodField,localDE=0,farrayPtr=snod,rc=status)
+  call LIS_verify(status)
 
   do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
-     soilm1(t) = noahmp401_struc(n)%noahmp401(t)%smc(1)
+     snod(t) = noahmp401_struc(n)%noahmp401(t)%snowh
   enddo
-
-end subroutine NoahMP401_getsoilm
+end subroutine noahmp401_getsnwdvars
 

@@ -202,7 +202,7 @@ subroutine timeinterp_geis(n,findex)
         kk = LIS_get_iteration_index(n, k, index1, mfactor)
         if(geis_struc(n)%metdata2(kk,7,index1).ne.LIS_rc%udef) then 
           pcp(t)=geis_struc(n)%metdata2(kk,7,index1)
-          pcp(t)  = pcp(t)/(60.0*60.0)
+      !    pcp(t)  = pcp(t)/(60.0*60.0)
         endif
      end do
   enddo
