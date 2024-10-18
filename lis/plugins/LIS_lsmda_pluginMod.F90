@@ -200,6 +200,7 @@ subroutine LIS_lsmda_plugin
 #if ( defined SM_NOAHMP_4_0_1 )
    use NoahMP401_dasoilm_Mod
    use NoahMP401_dasnow_Mod
+   use NoahMP401_daswe_Mod
    use NoahMP401_dasnwd_Mod
    use noahmp401_dasnodep_Mod
    use noahmp401_dausafsi_Mod
@@ -501,6 +502,14 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_scale_snwd
    external NoahMP401_descale_snwd
    external NoahMP401_updatesnwdvars   
+
+   external NoahMP401_getswevars
+   external NoahMP401_setswevars
+   external NoahMP401_qcswe
+   external NoahMP401_qc_sweobs
+   external NoahMP401_scale_swe
+   external NoahMP401_descale_swe
+   external NoahMP401_updateswevars
 
    external noahmp401_getvegvars
    external noahmp401_setvegvars
@@ -3108,6 +3117,26 @@ subroutine LIS_lsmda_plugin
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_snowobs)
 
+!   call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_daswe_init)
+!   call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_getswevars)
+!   call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_setswevars)
+!   call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_getswepred)
+!   call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qcswe)
+!   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_sweobs)
+!   call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_scale_swe)
+!   call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_descale_swe)
+!   call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_updateswevars)
+!   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_sweobs)
 #endif
 
 #if ( defined DA_OBS_SNOWGLOBESWE)
