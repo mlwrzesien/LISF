@@ -51,7 +51,16 @@ subroutine noahmp401_setSnowModelimport(n, SubLSM2LSM_State)
   do t=1,LIS_rc%npatch(n,LIS_rc%lsm_index)
      ! SnowModel has its SWE in meters -- conversion here to mm:
      dsneqv = (swe(t)*1000.) - noahmp401_struc(n)%noahmp401(t)%sneqv   !in mm
-     dsnowh = snwd(t) - noahmp401_struc(n)%noahmp401(t)%snowh  !in m
+!     dsnowh = snwd(t) - noahmp401_struc(n)%noahmp401(t)%snowh  !in m
+
+     if(noahmp401_struc(n)%noahmp401(t)%snowh.ne.0) then
+        snoden = noahmp401_struc(n)%noahmp401(t)%sneqv/&
+             noahmp401_struc(n)%noahmp401(t)%snowh
+        dsnowh = dsneqv/snoden
+     else
+        dsnowh = 0
+        dsneqv = 0
+     endif
 
 !     if( dsneqv > 0. .or. dsnowh > 0. ) then
 !        write(501,*) t, swe(t), noahmp401_struc(n)%noahmp401(t)%sneqv, &
