@@ -200,6 +200,8 @@ subroutine LIS_lsmda_plugin
 #if ( defined SM_NOAHMP_4_0_1 )
    use NoahMP401_dasoilm_Mod
    use NoahMP401_dasnow_Mod
+   use NoahMP401_daswe_Mod
+   use NoahMP401_dasnwd_Mod
    use noahmp401_dasnodep_Mod
    use noahmp401_dausafsi_Mod
    use noahmp401_tws_DAlogMod, only : noahmp401_tws_DAlog
@@ -488,6 +490,23 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_scale_snow
    external NoahMP401_descale_snow
    external NoahMP401_updatesnowvars
+  
+   external NoahMP401_getsnwdvars         
+   external NoahMP401_setsnwdvars              
+   external NoahMP401_getsnwdpred
+   external NoahMP401_qcsnwd
+   external NoahMP401_qc_snwdobs
+   external NoahMP401_scale_snwd
+   external NoahMP401_descale_snwd
+   external NoahMP401_updatesnwdvars   
+
+   external NoahMP401_getswevars
+   external NoahMP401_setswevars
+   external NoahMP401_qcswe
+   external NoahMP401_qc_sweobs
+   external NoahMP401_scale_swe
+   external NoahMP401_descale_swe
+   external NoahMP401_updateswevars
 
    external noahmp401_getvegvars
    external noahmp401_setvegvars
@@ -3046,27 +3065,50 @@ subroutine LIS_lsmda_plugin
 #endif
 
 #if ( defined DA_OBS_ASO_SWE)
+
+   !SVK EDIT Oct 18
+!   call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_dasnow_init)
+!   call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_getsnowvars)
+!   call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_setsnowvars)
+!   call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_getswepred)
+!   call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qcsnow)
+!   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_snowobs)
+!   call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_scale_snow)
+!   call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_descale_snow)
+!   call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_updatesnowvars)
+!   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+!        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_snowobs)
+
+
    call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_dasnow_init)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_daswe_init)
    call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_getsnowvars)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_getswevars)
    call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_setsnowvars)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_setswevars)
    call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_ASOsweobsId)//char(0),noahmp401_getswepred)
    call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_qcsnow)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_qcswe)
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_snowobs)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_sweobs)
    call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_scale_snow)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_scale_swe)
    call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_descale_snow)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_descale_swe)
    call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_updatesnowvars)
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_updateswevars)
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_snowobs)
-
+        trim(LIS_ASOsweobsId)//char(0),noahmp401_qc_sweobs)
 #endif
 
 ! Melissa Wrzesien (MLW)

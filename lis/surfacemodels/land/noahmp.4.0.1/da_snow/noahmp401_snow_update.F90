@@ -1,9 +1,9 @@
 !-----------------------BEGIN NOTICE -- DO NOT EDIT-----------------------
 ! NASA Goddard Space Flight Center
 ! Land Information System Framework (LISF)
-! Version 7.4
+! Version 7.5
 !
-! Copyright (c) 2022 United States Government as represented by the
+! Copyright (c) 2024 United States Government as represented by the
 ! Administrator of the National Aeronautics and Space Administration.
 ! All Rights Reserved.
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
@@ -43,6 +43,10 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   real                 :: dsnowh !m
 !EOP
 
+!  REAL, PARAMETER :: HSUB   = 2.8440E06 !latent heat of sublimation (j/kg)
+!  REAL, PARAMETER :: HVAP   = 2.5104E06 !latent heat of vaporization (j/kg)
+!  REAL, PARAMETER :: TFRZ   = 273.16    !freezing/melting point (k)
+
   real, allocatable, dimension(:) :: zsoil
   real, allocatable, dimension(:) :: ficeold
   real, allocatable, dimension(:) :: snice
@@ -56,6 +60,7 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
 
   integer, allocatable, dimension(:) :: imelt  !phase change index
   real,    allocatable, dimension(:) :: sice
+  real,    allocatable, dimension(:) :: sh2o
 
   integer :: snl_idx,i,j,iz
   integer :: iloc, jloc        ! needed, but not use
@@ -64,10 +69,14 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   real    :: sneqv1,snowh1
   real    :: ponding1,ponding2
   integer :: newnode
-  integer :: isnow, nsoil, nsnow, soiltype(4), isoil
+  integer :: isnow, nsoil, nsnow, soiltype(4), isoil,vegtype
+  real    :: qrain,qsnfro ,qsnsub,qsnbot
 
 ! local
   real    :: SNOFLOW, BDSNOW
+  real    :: latheag,qvap,qdew, qintr, qdripr,qthror
+  real    :: rain,qprecc, qprecl,fp
+  real    :: esai, elai,fb,db,fpice,maxliq,canliq
   type (noahmp_parameters)  :: parameters
 
   isnow = noahmp401_struc(n)%noahmp401(t)%isnow
@@ -85,6 +94,7 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   allocate(dzsnso(-nsnow+1:nsoil))
   allocate(zsnso(-nsnow+1:nsoil))
   allocate(sice(nsoil))
+  allocate(sh2o(nsoil))
 
   imelt = 0
 
@@ -103,8 +113,18 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
     parameters%BEXP(isoil)   = BEXP_TABLE   (SOILTYPE(isoil))
     parameters%PSISAT(isoil) = PSISAT_TABLE (SOILTYPE(isoil))
     parameters%SMCMAX(isoil) = SMCMAX_TABLE (SOILTYPE(isoil))
-  end do
+ end do
 
+ vegtype = noahmp401_struc(n)%noahmp401(t)%vegetype
+ parameters%ch2op = CH2OP_TABLE(vegtype)
+ parameters%hvb = HVB_TABLE(vegtype)
+ parameters%hvt = HVT_TABLE(vegtype)
+
+  parameters%t_ulimit = 2.5
+  parameters%t_mlimit = 2.0
+  parameters%t_llimit = 0.5
+
+    
   sneqv = noahmp401_struc(n)%noahmp401(t)%sneqv
   snowh = noahmp401_struc(n)%noahmp401(t)%snowh
 
@@ -169,11 +189,12 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
      if(snowh.ge.0.025) then
         isnow    = -1
         newnode  =  1
-     endif
+!     endif
      dzsnso(0)= snowh
      stc(0)   = min(273.16, noahmp401_struc(n)%noahmp401(t)%sfctmp) 
      snice(0) = sneqv
      snliq(0) = 0.
+     endif !sujay's test fix
   end if
   
   ! snow with layers
@@ -244,6 +265,19 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
      endif
   endif
 
+! check and correct layer number in instances when dzsnso of the top layer is zero
+  if(dzsnso(isnow+1).eq.0.) then
+    isnow = isnow + 1
+  endif
+
+! set top layer of snow to zero if it is too thin (test 0.5 mm)
+  if(dzsnso(isnow+1).lt.0.0005) then
+    print *,'in new if statement'
+    print *,'isnow, dzsnow(isnow+1) =',isnow,dzsnso(isnow+1)
+    dzsnso(isnow+1) = 0
+    isnow = isnow + 1
+  endif
+
   ! ice fraction at the last timestep, add check for both snice and snliq are 0.0
   do snl_idx=isnow+1,0
     if(snice(snl_idx)+snliq(snl_idx)>0.0) then
@@ -254,7 +288,8 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   enddo
 
   sice(:) = max(0.0, noahmp401_struc(n)%noahmp401(t)%smc(:)&
-       - noahmp401_struc(n)%noahmp401(t)%sh2o(:))   
+       - noahmp401_struc(n)%noahmp401(t)%sh2o(:))
+  sh2o(:) = noahmp401_struc(n)%noahmp401(t)%sh2o(:)
 
   !imelt
   do j = -nsnow+1, nsoil
@@ -312,13 +347,86 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
                      isnow, dzsnso ,zsnso)                                   !inout
   if(isnow < 0) &
        call  combine (parameters, nsnow, nsoil ,iloc, jloc,          & !in
-                      isnow, noahmp401_struc(n)%noahmp401(t)%sh2o,   & !inout
+                      isnow, sh2o,   & !inout
                       stc, snice, snliq, dzsnso, sice, snowh, sneqv, & !inout
                       ponding1, ponding2)                              !out
   if(isnow < 0) &        
        call divide (parameters, nsnow, nsoil,      & !in
                    isnow, stc, snice, snliq, dzsnso) !inout
 
+  IF (NOAHMP401_struc(n)%noahmp401(t)%TG .GT. TFRZ) THEN
+     LATHEAG = HVAP
+  ELSE
+     LATHEAG = HSUB
+  END IF
+  
+  QVAP = MAX( NOAHMP401_struc(n)%noahmp401(t)%lh/LATHEAG, 0.)       ! positive part of fgev; Barlage change to ground v3.6
+  QDEW = ABS( MIN(NOAHMP401_struc(n)%noahmp401(t)%lh/LATHEAG, 0.))  ! negative part of fgev
+   
+  qsnfro = 0
+  IF (SNEQV > 0.) THEN
+     QSNFRO = QDEW
+  ENDIF
+  
+  qsnsub = 0
+  IF (SNEQV > 0.) THEN
+     QSNSUB = MIN(QVAP, SNEQV/LIS_rc%ts)
+  ENDIF
+  qrain = 0
+
+  DB = MIN( MAX(SNOWH - parameters%HVB,0.), parameters%HVT-parameters%HVB )
+  FB = DB / MAX(1.E-06,parameters%HVT-parameters%HVB)
+  
+  ELAI =  NOAHMP401_struc(n)%noahmp401(t)%LAI*(1.-FB)
+  ESAI =  NOAHMP401_struc(n)%noahmp401(t)%SAI*(1.-FB)
+
+  MAXLIQ =  parameters%CH2OP * (ELAI+ ESAI)
+  CANLIQ = NOAHMP401_struc(n)%noahmp401(t)%canliq
+
+  IF(NOAHMP401_struc(n)%noahmp401(t)%SFCTMP > TFRZ+parameters%t_ulimit) then 
+     FPICE = 0.
+  ELSE
+     IF(NOAHMP401_struc(n)%noahmp401(t)%SFCTMP <=TFRZ+parameters%t_llimit) then 
+        FPICE = 1.0
+     ELSE IF (NOAHMP401_struc(n)%noahmp401(t)%SFCTMP <=TFRZ+parameters%t_mlimit) then 
+        FPICE = 1.-(-54.632 + 0.2*NOAHMP401_struc(n)%noahmp401(t)%SFCTMP)
+     ELSE
+        FPICE = 0.6
+     ENDIF
+  ENDIF
+  RAIN   = NOAHMP401_struc(n)%noahmp401(t)%PRCP * (1.-FPICE)
+
+  qprecc = 0.1*NOAHMP401_struc(n)%noahmp401(t)%prcp
+  qprecl = 0.9*NOAHMP401_struc(n)%noahmp401(t)%prcp
+  
+  FP = 0.0
+  IF(QPRECC + QPRECL > 0.) & 
+       FP = (QPRECC + QPRECL) / (10.*QPRECC + QPRECL)
+  
+  IF((ELAI+ ESAI).GT.0.) THEN
+     QINTR  = NOAHMP401_struc(n)%noahmp401(t)%FVEG * RAIN * FP  ! interception capability
+     QINTR  = MIN(QINTR, (MAXLIQ - CANLIQ)/LIS_rc%ts * &
+          (1.-EXP(-RAIN*LIS_rc%ts/MAXLIQ)) )
+     QINTR  = MAX(QINTR, 0.)
+     QDRIPR = NOAHMP401_struc(n)%noahmp401(t)%FVEG * RAIN - QINTR
+     QTHROR = (1.-NOAHMP401_struc(n)%noahmp401(t)%FVEG) * RAIN
+  ELSE
+     QINTR  = 0.
+     QDRIPR = 0.
+     QTHROR = RAIN
+     IF(CANLIQ > 0.) THEN             ! FOR CASE OF CANOPY GETTING BURIED
+        QDRIPR = QDRIPR + CANLIQ/LIS_rc%ts
+     END IF
+  END IF
+  
+  QRAIN   = QDRIPR + QTHROR
+  
+  call  snowh2o (parameters,nsnow  ,nsoil  ,LIS_rc%ts    ,qsnfro ,qsnsub , & !in 
+       qrain  ,iloc   ,jloc   ,                 & !in
+       isnow  ,dzsnso ,snowh  ,sneqv  ,snice  , & !inout
+       snliq  ,sh2o   ,sice   ,stc    ,         & !inout
+       qsnbot ,ponding1       ,ponding2)           !out
+  
   !set empty snow layers to zero
   do iz = -nsnow+1, isnow
      snice(iz) = 0.
@@ -388,6 +496,9 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   noahmp401_struc(n)%noahmp401(t)%tsno(1:nsnow) = stc(-nsnow+1:0)
   noahmp401_struc(n)%noahmp401(t)%tslb(1:nsoil) = stc(1:nsoil)
 
+  !svk added
+  NOAHMP401_struc(n)%noahmp401(t)%sh2o(:) = sh2o(:)
+  
   deallocate(ficeold)
   deallocate(snice)
   deallocate(snliq)
@@ -399,5 +510,5 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
   deallocate(dzsnso)
   deallocate(zsnso)
   deallocate(sice)
-
+  deallocate(sh2o)
 end subroutine noahmp401_snow_update
