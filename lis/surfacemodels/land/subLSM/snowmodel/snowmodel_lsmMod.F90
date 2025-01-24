@@ -79,6 +79,7 @@ module snowmodel_lsmMod
      ! LIS-SnowModel related parameters:
      character(len=LIS_CONST_PATH_LEN)           :: parfile
      character(len=LIS_CONST_PATH_LEN)           :: vfile
+     character(len=LIS_CONST_PATH_LEN)           :: smode
      real                                        :: ht_windobs
      real                                        :: ht_rhobs
      integer                                     :: call_sm_preproc

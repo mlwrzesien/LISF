@@ -42,7 +42,7 @@ subroutine SnowModel_coldstart(mtype)
     integer :: t, l, n
 
     do n=1, LIS_rc%nnest
-       if( trim(LIS_rc%startcode) .eq. "coldstart" ) then
+       if(snowmodel_struc(n)%smode .eq. "coldstart") then
 
           write(LIS_logunit,*) "[INFO] SnowModel_coldstart -- initializing SnowModel states"
 

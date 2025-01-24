@@ -81,10 +81,10 @@ subroutine snowmodel_readrst()
       wformat = trim(snowmodel_struc(n)%rformat)
 
       ! Coldstart
-      if(LIS_rc%startcode .eq. "coldstart") then
+      if(snowmodel_struc(n)%smode .eq. "coldstart") then
          call SnowModel_coldstart(LIS_rc%lsm_index)
       ! Restart
-      elseif(LIS_rc%startcode .eq. "restart") then
+      elseif(snowmodel_struc(n)%smode .eq. "restart") then
 
          ! Check if MicroMet option is set to "SnwoModel";
          !  If so, alert user that this option currently

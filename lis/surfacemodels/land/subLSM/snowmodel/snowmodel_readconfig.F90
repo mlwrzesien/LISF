@@ -37,7 +37,8 @@ subroutine snowmodel_readconfig()
   integer :: rc
   integer :: n,i
   character*10 :: time
-
+  logical      :: startCheck
+  
 ! LIS-related SnowModel input entries:
 
   call ESMF_ConfigFindLabel(LIS_config,"SnowModel model timestep:",rc=rc)
@@ -48,7 +49,17 @@ subroutine snowmodel_readconfig()
      call LIS_parseTimeString(time,snowmodel_struc(n)%ts)
   enddo
 
-  if (LIS_rc%startcode== "restart" ) then
+  startCheck = .false.
+  call ESMF_ConfigFindLabel(LIS_config,"SnowModel model startmode:",rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%smode,rc=rc)
+     call LIS_verify(rc,'SnowModel model startmode: not defined')
+     if(snowmodel_struc(n)%smode.eq."restart") then
+        startCheck = .true.
+     endif
+  enddo 
+
+  if (startCheck) then 
      call ESMF_ConfigFindLabel(LIS_config,"SnowModel restart file:",rc=rc)
      do n=1,LIS_rc%nnest
         call ESMF_ConfigGetAttribute(LIS_config,snowmodel_struc(n)%rfile,rc=rc)
@@ -68,7 +79,7 @@ subroutine snowmodel_readconfig()
      snowmodel_struc(n)%rformat = "netcdf"
   enddo
   ! restart run, read restart file
-  if( trim(LIS_rc%startcode) == "restart" ) then
+  if( startCheck) then 
      Call ESMF_ConfigFindLabel(LIS_config, "SnowModel restart file:", rc=rc)
         do n=1,LIS_rc%nnest
             call ESMF_ConfigGetAttribute(LIS_config, snowmodel_struc(n)%rfile, rc=rc)
