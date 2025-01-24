@@ -14,6 +14,9 @@
 !
 ! !REVISION HISTORY:
 ! 18 Mar 2015: James Geiger, initial code (based on merra-land)
+! 13 Sep 2024: Sujay Kumar, Initial code for using dynamic lapse rate
+! 31 Oct 2024: David Mocko, Final code for using dynamic lapse rate
+! 18 Dec 2024: Kristen Whitney, code for using double-sided dynamic lapse rate cutoff
 !
 ! !INTERFACE:    
 subroutine readcrd_merra2()
@@ -32,6 +35,7 @@ subroutine readcrd_merra2()
   implicit none
 
   integer :: n,t,rc
+  logical :: usedynlapserate
 
   call ESMF_ConfigFindLabel(LIS_config,"MERRA2 forcing directory:",rc=rc)
   do n=1,LIS_rc%nnest
@@ -58,6 +62,68 @@ subroutine readcrd_merra2()
      call LIS_verify(rc,&
           'MERRA2 use corrected total precipitation: not defined')
   enddo
+
+  call ESMF_ConfigFindLabel(LIS_config,"MERRA2 apply dynamic lapse rates:",rc=rc)
+  do n=1,LIS_rc%nnest
+     call ESMF_ConfigGetAttribute(LIS_config,merra2_struc(n)%usedynlapserate,&
+          default=0, rc=rc)
+     call LIS_verify(rc,&
+          'MERRA2 apply dynamic lapse rates: not defined')
+  enddo
+
+  usedynlapserate = .true.
+  
+  do n=1,LIS_rc%nnest
+     if(merra2_struc(n)%usedynlapserate.eq.0) then
+        usedynlapserate = .false. 
+     endif
+  enddo
+
+  if(usedynlapserate) then
+     call ESMF_ConfigFindLabel(LIS_config,"MERRA2 dynamic lapse rate data directory:",rc=rc)
+     do n=1,LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config,merra2_struc(n)%dynlapseratedir,&
+             rc=rc)
+        call LIS_verify(rc,&
+             'MERRA2 dynamic lapse rate data directory: not defined')
+     enddo
+
+     call ESMF_ConfigFindLabel(LIS_config,"MERRA2 apply double-sided dynamic lapse rate cutoff:",rc=rc)
+     do n=1,LIS_rc%nnest
+        call ESMF_ConfigGetAttribute(LIS_config,merra2_struc(n)%applydynlapseratecutoff,&
+                default=0, rc=rc)
+        call LIS_verify(rc,&
+                'MERRA2 apply double-sided dynamic lapse rate cutoff: no defined')
+     enddo
+
+     do n=1,LIS_rc%nnest 
+        if(merra2_struc(n)%applydynlapseratecutoff.eq.1) then
+           call ESMF_ConfigFindLabel(LIS_config,"MERRA2 minimum lapse rate cutoff (K/m):",rc=rc)
+           call ESMF_ConfigGetAttribute(LIS_config,merra2_struc(n)%dynlapseratemincutoff,&
+                   default=-0.01, rc=rc)
+           call LIS_verify(rc,&
+                   'MERRA2 minimum lapse rate cutoff (K/m): not defined')
+           call ESMF_ConfigFindLabel(LIS_config,"MERRA2 maximum lapse rate cutoff (K/m):",rc=rc)
+           call ESMF_ConfigGetAttribute(LIS_config,merra2_struc(n)%dynlapseratemaxcutoff,&
+                   default=0.01, rc=rc)
+           call LIS_verify(rc,&
+                   'MERRA2 maximum lapse rate cutoff (K/m): not defined')
+
+           ! Sanity check
+           if(merra2_struc(n)%dynlapseratemincutoff.gt.merra2_struc(n)%dynlapseratemaxcutoff) then
+              write(LIS_logunit,*) '[ERR] MERRA2 minimum lapse rate cutoff value should be'
+              write(LIS_logunit,*) '[ERR] less than the MERRA2 maximum lapse rate cutoff value.'
+              write(LIS_logunit,*) '[ERR] Note the default value is -0.01 K/m for the minimum cutoff,'
+              write(LIS_logunit,*) '[ERR] and 0.01 K/m for the maximum cutoff.'
+              write(LIS_logunit,*) '[ERR] Please ensure if specifying just the minimum (maximum)'
+              write(LIS_logunit,*) '[ERR] cutoff value, that it is less (greater) than the'
+              write(LIS_logunit,*) '[ERR] maximum (minimum) default value.'
+              write(LIS_logunit,*) '[ERR] STOPPING ....'
+              call LIS_endrun()
+           endif
+        endif   
+     enddo
+  endif
 
   do n=1,LIS_rc%nnest
      merra2_struc(n)%usescalef = 0 
