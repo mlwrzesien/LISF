@@ -130,7 +130,8 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_gswp2Id           = "GSWP2"
    character*50, public,  parameter :: LIS_agrmetId          = "AGRMET"
    character*50, public,  parameter :: LIS_princetonId       = "PRINCETON"
-   character*50, public,  parameter :: LIS_nldas2Id          = "NLDAS2"
+   character*50, public,  parameter :: LIS_nldas2Id          = "NLDAS2 grib"
+   character*50, public,  parameter :: LIS_nldas20Id         = "NLDAS2 netcdf"   
    character*50, public,  parameter :: LIS_geisId            = "Global EIS"
 
    character*50, public,  parameter :: LIS_gldasId           = "GLDAS"
@@ -227,6 +228,7 @@ module LIS_pluginIndices
    character*50, public,  parameter :: LIS_noobsId             = "none"
    character*50, public,  parameter :: LIS_synsmId             = "Synthetic SM"
    character*50, public,  parameter :: LIS_synsweId            = "Synthetic SWE"
+   character*50, public,  parameter :: LIS_SnowGlobeSWEId      = "SnowGlobe SWE"
    character*50, public,  parameter :: LIS_synlstId            = "Synthetic LST"
    character*50, public,  parameter :: LIS_synsndId            = "Synthetic SND"
    character*50, public,  parameter :: LIS_synSnowTbID         = "Synthetic Snow TB"              
