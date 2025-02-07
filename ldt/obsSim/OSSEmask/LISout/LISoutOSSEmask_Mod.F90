@@ -125,7 +125,7 @@ contains
     if(rc.ne.0) then 
        write(LDT_logunit,*)'[ERR] LIS output-based OSSE mask type: not defined'
        write(LDT_logunit,*)'[ERR] supported options are...'
-       write(LDT_logunit,*)"[ERR] 'PMW soil moisture'"
+       write(LDT_logunit,*)"[ERR] 'SnowGlobe', 'PMW soil moisture'"
        call LDT_endrun()
     endif
 

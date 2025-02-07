@@ -52,12 +52,14 @@ contains
     use TSMMOSSEmask_Mod,           only : TSMMOSSEmask_init
     use MODISOSSEmask_Mod,          only : MODISOSSEmask_init
     use Sentinel1AOSSEmask_Mod,     only : Sentinel1AOSSEmask_init
+    use SnowGlobeOSSEmask_Mod,           only : SnowGlobeOSSEmask_init
 
     external readLISoutOSSEmask
     external readAMSR2OSSEmask
     external readTSMMOSSEmask
     external readMODISOSSEmask
     external readSentinel1AOSSEmask
+    external readSnowGlobeOSSEmask
 
     call registerossemasksourcesetup(trim(LDT_LISoutOSSEmaskDataId)//char(0), &
          LISoutOSSEmask_init)
@@ -83,6 +85,11 @@ contains
          Sentinel1AOSSEmask_init)
     call registerreadOssemaskSource(trim(LDT_Sentinel1AOSSEmaskDataId)//char(0), &
          readSentinel1AOSSEmask)
+
+    call registerossemasksourcesetup(trim(LDT_SnowGlobeOSSEmaskDataId)//char(0), &
+         SnowGlobeOSSEmask_init)
+    call registerreadOssemaskSource(trim(LDT_SnowGlobeOSSEmaskDataId)//char(0), &
+         readSnowGlobeOSSEmask)
     
   end subroutine LDT_OSSEmaskData_plugin
 

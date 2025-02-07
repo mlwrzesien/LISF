@@ -424,6 +424,7 @@ module LDT_pluginIndices
    character*50, public,  parameter :: LDT_MODISOSSEmaskDataId = "MODIS"
    character*50, public,  parameter :: LDT_Sentinel1AOSSEmaskDataId = "Sentinel1A"
    character*50, public,  parameter :: LDT_TSMMOSSEmaskDataId = "TSMM"
+   character*50, public,  parameter :: LDT_SnowGlobeOSSEmaskDataId = "SnowGlobe"
    
 
 !EOC
