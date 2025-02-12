@@ -28,6 +28,7 @@ subroutine read_simSnowGlobeobs(n, k, OBS_State, OBS_Pert_State)
   use LIS_pluginIndices
   use LIS_DAobservationsMod
   use LIS_constantsMod, only : LIS_CONST_PATH_LEN
+  use simSnowGlobeobs_module, only : SnowGlobe_struc
   
 #if(defined USE_NETCDF3 || defined USE_NETCDF4)
   use netcdf
@@ -66,7 +67,10 @@ subroutine read_simSnowGlobeobs(n, k, OBS_State, OBS_Pert_State)
   logical                :: data_upd_flag(LIS_npes)
   logical                :: data_upd_flag_local
   logical                :: data_upd
+  logical*1, allocatable :: swe_data_b(:)
+  logical*1              :: sweobs_b_ip(LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k))
   logical             :: file_exists
+  real, allocatable      :: swe1d(:)
 
   logical             :: readflag
   integer             :: sweid, status
@@ -84,11 +88,14 @@ subroutine read_simSnowGlobeobs(n, k, OBS_State, OBS_Pert_State)
 
   call simSnowGlobeSWE_filename(name,sweobsdir,&
        LIS_rc%yr,LIS_rc%mo,LIS_rc%da,LIS_rc%hr,LIS_rc%mn)
+  print *,'sweobsdir=',sweobsdir
+  print *,'name=',name
 
   inquire(file=name,exist=file_exists)
 
   if(file_exists) then 
-     readflag = .true. 
+     readflag = .true.
+     print *,'reading SimObs file' 
   else 
      readflag = .false.
   endif
@@ -103,6 +110,39 @@ subroutine read_simSnowGlobeobs(n, k, OBS_State, OBS_Pert_State)
      call ESMF_FieldGet(sweField,localDE=0, farrayPtr=obsl,rc=status)
      call LIS_verify(status)
      
+
+
+
+
+!--------------------------------------------------------------------------
+! Interpolate to the observation grid
+!-------------------------------------------------------------------------- 
+        swe1d = LIS_rc%udef
+        swe_data_b = .false.
+
+     do r=1, SnowGlobe_struc(n)%nr
+        do c=1, SnowGlobe_struc(n)%nc
+!           lai_in(c+(r-1)*MCD15A3Hlai_struc(n)%nc) = lai_flagged(c,r)
+           if(sweobs(c,r).ne.LIS_rc%udef) then
+              swe_data_b(c+(r-1)*SnowGlobe_struc(n)%nc) = .true.
+           else
+              swe_data_b(c+(r-1)*SnowGlobe_struc(n)%nc) = .false.
+           endif
+        enddo
+     enddo
+
+        call upscaleByAveraging(&
+             SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr,&
+             LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+             LIS_rc%udef,&
+             SnowGlobe_struc(n)%n11,&
+             swe_data_b,swe1d,&
+             sweobs_b_ip,sweobs)
+
+
+        deallocate(swe1d)
+        deallocate(swe_data_b)
+
 
 !     open(90, file=trim(name),form='unformatted')
 !     do t=1,1

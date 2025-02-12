@@ -33,6 +33,24 @@ module simSnowGlobeobs_module
 !-----------------------------------------------------------------------------
 ! !PUBLIC TYPES:
 !-----------------------------------------------------------------------------
+  public :: SnowGlobe_struc
+!EOP
+  type, public:: SnowGlobe_dec
+
+     logical                :: startMode
+     integer                :: nc
+     integer                :: nr
+
+     real                   :: datares
+     real                   :: ssdev_inp
+!     type(proj_info)        :: proj
+     integer, allocatable       :: n11(:)
+!     real  :: gridDesci(50)
+  end type SnowGlobe_dec
+
+  type(SnowGlobe_dec),allocatable :: SnowGlobe_struc(:)
+
+
 contains
 !BOP
 ! 
@@ -79,6 +97,7 @@ contains
     real,         allocatable  ::  varmax(:)
     type(pert_dec_type)    ::  obs_pert
     real, pointer          ::  obs_temp(:,:)
+    real                   :: gridDesci(20)
 
     call ESMF_ArraySpecSet(intarrspec,rank=1,typekind=ESMF_TYPEKIND_I4,&
          rc=status)
@@ -235,6 +254,72 @@ contains
     enddo
 
     write(LIS_logunit,*) 'Created the States to hold the observations data'
+
+
+    do n=1,LIS_rc%nnest
+       SnowGlobe_struc(n)%nc = 4200
+       SnowGlobe_struc(n)%nr = 3500
+
+!       call map_set(PROJ_LATLON, 24.94958,-124.73375,&
+!            0.0, 0.00833,0.00833, 0.0,&
+!            SnowGlobe_struc(n)%nc,&
+!            SnowGlobe_struc(n)%nr,&
+!            SnowGlobe_struc(n)%proj)
+
+!       gridDesci = 0
+!       SnowGlobe_struc(n)%gridDesci(1) = 3
+!       SnowGlobe_struc(n)%gridDesci(2) = SnowGlobe_struc(n)%nc
+!       SnowGlobe_struc(n)%gridDesci(3) = SnowGlobe_struc(n)%nr
+!       SnowGlobe_struc(n)%gridDesci(4) = 35.100
+!       SnowGlobe_struc(n)%gridDesci(5) = -112.497
+!       SnowGlobe_struc(n)%gridDesci(6) = 8
+!       SnowGlobe_struc(n)%gridDesci(7) = 46.0
+!       SnowGlobe_struc(n)%gridDesci(8) = 0.50
+!       SnowGlobe_struc(n)%gridDesci(9) = 0.50
+!       SnowGlobe_struc(n)%gridDesci(10) = 39.0
+!       SnowGlobe_struc(n)%gridDesci(11) = -100.0
+!       SnowGlobe_struc(n)%gridDesci(20) = 0
+
+       gridDesci = 0
+       gridDesci(1) = 3
+       gridDesci(2) = SnowGlobe_struc(n)%nc
+       gridDesci(3) = SnowGlobe_struc(n)%nr
+       gridDesci(4) = 35.09992
+       gridDesci(5) = -112.4973
+       gridDesci(6) = 8
+       gridDesci(7) = 46.0
+       gridDesci(8) = 0.50
+       gridDesci(9) = 0.50
+       gridDesci(10) = 39.0
+       gridDesci(11) = -100.0
+       gridDesci(20) = 0
+
+!       SnowGlobe_struc(n)%datares = 0.00833
+
+       allocate(SnowGlobe_struc(n)%n11(&
+            SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr))
+
+       call upscaleByAveraging_input(&
+            gridDesci(:),&
+            LIS_rc%obs_gridDesc(k,:),&
+            SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr,&
+            LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+            SnowGlobe_struc(n)%n11)
+
+
+!       call LIS_registerAlarm("SnowGlobe read alarm",&
+!            86400.0, 86400.0)
+
+       SnowGlobe_struc(n)%startMode = .true.
+
+       call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
+       call LIS_verify(status)
+
+       call ESMF_StateAdd(OBS_Pert_State(n),(/pertField(n)/),rc=status)
+       call LIS_verify(status)
+
+    enddo
+
     
   end subroutine simSnowGlobeobs_setup
   
