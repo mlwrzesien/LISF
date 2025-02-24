@@ -40,11 +40,19 @@ module simSnowGlobeobs_module
      logical                :: startMode
      integer                :: nc
      integer                :: nr
-
+     integer                :: mi
      real                   :: datares
      real                   :: ssdev_inp
 !     type(proj_info)        :: proj
-     integer, allocatable       :: n11(:)
+     integer, allocatable   :: n11(:)
+     integer, allocatable   :: n12(:)
+     integer, allocatable   :: n21(:)
+     integer, allocatable   :: n22(:)
+     real,  allocatable     :: w11(:)
+     real,  allocatable     :: w12(:)
+     real,  allocatable     :: w21(:)
+     real,  allocatable     :: w22(:)
+     real, allocatable      :: swe(:)
 !     real  :: gridDesci(50)
   end type SnowGlobe_dec
 
@@ -98,6 +106,10 @@ contains
     type(pert_dec_type)    ::  obs_pert
     real, pointer          ::  obs_temp(:,:)
     real                   :: gridDesci(20)
+
+
+    allocate(SnowGlobe_struc(LIS_rc%nnest))
+
 
     call ESMF_ArraySpecSet(intarrspec,rank=1,typekind=ESMF_TYPEKIND_I4,&
          rc=status)
@@ -180,8 +192,8 @@ contains
        enddo
        call LIS_releaseUnitNumber(ftn)  
        
-       call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
-       call LIS_verify(status)
+ !      call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
+ !      call LIS_verify(status)
 
        allocate(ssdev(LIS_rc%obs_ngrid(k)))
 
@@ -299,6 +311,30 @@ contains
        allocate(SnowGlobe_struc(n)%n11(&
             SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr))
 
+       SnowGlobe_struc(n)%mi = SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr
+!       allocate(SnowGlobe_struc(n)%n11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%n12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%n21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%n22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+
+       allocate(SnowGlobe_struc(n)%w11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%w12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%w21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobe_struc(n)%w22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+
+       allocate(SnowGlobe_struc(n)%swe(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+
+       SnowGlobe_struc(n)%swe = LIS_rc%udef
+
+!       call bilinear_interp_input(n, gridDesci(:),& 
+!            SnowGlobe_struc(n)%n11,SnowGlobe_struc(n)%n12,&
+!            SnowGlobe_struc(n)%n21,SnowGlobe_struc(n)%n22,&
+!            SnowGlobe_struc(n)%w11,SnowGlobe_struc(n)%w12,&
+!            SnowGlobe_struc(n)%w21,SnowGlobe_struc(n)%w22)
+
+
+       print *,'before upscale in simModule'
+
        call upscaleByAveraging_input(&
             gridDesci(:),&
             LIS_rc%obs_gridDesc(k,:),&
@@ -306,6 +342,7 @@ contains
             LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
             SnowGlobe_struc(n)%n11)
 
+       print *,'after upscaline in simModule'
 
 !       call LIS_registerAlarm("SnowGlobe read alarm",&
 !            86400.0, 86400.0)
@@ -315,9 +352,10 @@ contains
        call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
        call LIS_verify(status)
 
-       call ESMF_StateAdd(OBS_Pert_State(n),(/pertField(n)/),rc=status)
-       call LIS_verify(status)
-
+!       call ESMF_StateAdd(OBS_Pert_State(n),(/pertField(n)/),rc=status)
+!       call LIS_verify(status)
+      
+       print *,'test end of simModule'
     enddo
 
     
