@@ -487,7 +487,8 @@ subroutine LIS_lsmda_plugin
    external NoahMP401_getswepred
    external NoahMP401_qcsnow
    external NoahMP401_qc_snowobs
-   external NoahMP401_qc_snowobs1   
+   external NoahMP401_qc_snowobs1  
+   external NoahMP401_qc_sweobsPMW 
    external NoahMP401_scale_snow
    external NoahMP401_descale_snow
    external NoahMP401_updatesnowvars
@@ -3116,25 +3117,50 @@ subroutine LIS_lsmda_plugin
 #if ( defined DA_OBS_SNOWGLOBESWE)
 
    call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_dasnow_init)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_daswe_init)
    call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_getsnowvars)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_getswevars)
    call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_setsnowvars)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_setswevars)
    call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
         trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_getswepred)
    call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qcsnow)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qcswe)
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qc_snowobs1)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qc_sweobs)
    call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_scale_snow)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_scale_swe)
    call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_descale_snow)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_descale_swe)
    call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_updatesnowvars)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_updateswevars)
    call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
-        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qc_snowobs)
+        trim(LIS_SnowGlobeSWEId)//char(0),noahmp401_qc_sweobs)
+
+#endif
+
+#if ( defined DA_OBS_SNOWGLOBEPMWSWE)
+
+   call registerlsmdainit(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_daswe_init)
+   call registerlsmdagetstatevar(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_getswevars)
+   call registerlsmdasetstatevar(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_setswevars)
+   call registerlsmdagetobspred(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_getswepred)
+   call registerlsmdaqcstate(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_qcswe)
+   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_qc_sweobsPMW)
+   call registerlsmdascalestatevar(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_scale_swe)
+   call registerlsmdadescalestatevar(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_descale_swe)
+   call registerlsmdaupdatestate(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_updateswevars)
+   call registerlsmdaqcobsstate(trim(LIS_noahmp401Id)//"+"//&
+        trim(LIS_SnowGlobePMWSWEId)//char(0),noahmp401_qc_sweobsPMW)
 
 #endif
 

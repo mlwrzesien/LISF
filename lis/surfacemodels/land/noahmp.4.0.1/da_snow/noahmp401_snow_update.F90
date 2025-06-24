@@ -272,8 +272,8 @@ subroutine noahmp401_snow_update(n, t, dsneqv, dsnowh)
 
 ! set top layer of snow to zero if it is too thin (test 0.5 mm)
   if(dzsnso(isnow+1).lt.0.0005) then
-    print *,'in new if statement'
-    print *,'isnow, dzsnow(isnow+1) =',isnow,dzsnso(isnow+1)
+!    print *,'in new if statement'
+!    print *,'isnow, dzsnow(isnow+1) =',isnow,dzsnso(isnow+1)
     dzsnso(isnow+1) = 0
     isnow = isnow + 1
   endif

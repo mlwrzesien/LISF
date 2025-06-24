@@ -9,7 +9,7 @@
 !-------------------------END NOTICE -- DO NOT EDIT-----------------------
 !BOP
 !
-! !MODULE: simSnowGlobeobs_module
+! !MODULE: simSnowGlobePMWobs_module
 ! 
 ! !DESCRIPTION: 
 !   This module contains interfaces and subroutines to
@@ -19,7 +19,7 @@
 !  27Feb05    Sujay Kumar;   Initial Specification
 ! 
 ! 
-module simSnowGlobeobs_module
+module simSnowGlobePMWobs_module
 ! !USES: 
   use ESMF
   use LIS_constantsMod, only : LIS_CONST_PATH_LEN
@@ -29,13 +29,13 @@ module simSnowGlobeobs_module
 !-----------------------------------------------------------------------------
 ! !PUBLIC MEMBER FUNCTIONS:
 !-----------------------------------------------------------------------------
-  PUBLIC :: simSnowGlobeobs_setup
+  PUBLIC :: simSnowGlobePMWobs_setup
 !-----------------------------------------------------------------------------
 ! !PUBLIC TYPES:
 !-----------------------------------------------------------------------------
-  public :: SnowGlobe_struc
+  public :: SnowGlobePMW_struc
 !EOP
-  type, public:: SnowGlobe_dec
+  type, public:: SnowGlobePMW_dec
 
      logical                :: startMode
      integer                :: nc
@@ -44,6 +44,8 @@ module simSnowGlobeobs_module
      real                   :: datares
      real                   :: ssdev_inp
 !     type(proj_info)        :: proj
+     real,    allocatable :: rlat(:)
+     real,    allocatable :: rlon(:)
      integer, allocatable   :: n11(:)
      integer, allocatable   :: n12(:)
      integer, allocatable   :: n21(:)
@@ -53,20 +55,21 @@ module simSnowGlobeobs_module
      real,  allocatable     :: w21(:)
      real,  allocatable     :: w22(:)
      real, allocatable      :: swe(:)
+     integer                :: conditionalScreen
 !     real  :: gridDesci(50)
-  end type SnowGlobe_dec
+  end type SnowGlobePMW_dec
 
-  type(SnowGlobe_dec),allocatable :: SnowGlobe_struc(:)
+  type(SnowGlobePMW_dec),allocatable :: SnowGlobePMW_struc(:)
 
 
 contains
 !BOP
 ! 
-! !ROUTINE: simSnowGlobeobs_setup
-! \label{simSnowGlobeobs_setup}
+! !ROUTINE: simSnowGlobePMWobs_setup
+! \label{simSnowGlobePMWobs_setup}
 ! 
 ! !INTERFACE: 
-  subroutine simSnowGlobeobs_setup(k, OBS_State, OBS_Pert_State)
+  subroutine simSnowGlobePMWobs_setup(k, OBS_State, OBS_Pert_State)
 ! !USES: 
     use LIS_coreMod
     use LIS_logMod
@@ -108,7 +111,7 @@ contains
     real                   :: gridDesci(20)
 
 
-    allocate(SnowGlobe_struc(LIS_rc%nnest))
+    allocate(SnowGlobePMW_struc(LIS_rc%nnest))
 
 
     call ESMF_ArraySpecSet(intarrspec,rank=1,typekind=ESMF_TYPEKIND_I4,&
@@ -123,7 +126,7 @@ contains
          rc=status)
     call LIS_verify(status)
 
-    call ESMF_ConfigFindLabel(LIS_config,"simulated SnowGlobe SWE data directory:",&
+    call ESMF_ConfigFindLabel(LIS_config,"simulated SnowGlobePMW SWE data directory:",&
          rc=status)
     do n=1,LIS_rc%nnest
        call ESMF_ConfigGetAttribute(LIS_config,synsweobsdir,&
@@ -153,7 +156,15 @@ contains
 
     enddo
 
-    write(LIS_logunit,*)'read simulated SnowGlobe SWE data specifications'
+    call ESMF_ConfigFindLabel(LIS_config,"simulated SnowGlobePMW SWE employ conditional screening:",&
+         rc=status)
+    do n=1,LIS_rc%nnest
+       call ESMF_ConfigGetAttribute(LIS_config,SnowGlobePMW_struc(n)%conditionalScreen,&
+            rc=status)
+       call LIS_verify(status,'simulated SnowGlobePMW SWE employ conditional screening: not defined')
+    enddo
+    
+    write(LIS_logunit,*)'read simulated SnowGlobePMW SWE data specifications'
 
 !----------------------------------------------------------------------------
 !   Create the array containers that will contain the observations and
@@ -269,85 +280,93 @@ contains
 
 
     do n=1,LIS_rc%nnest
-       SnowGlobe_struc(n)%nc = 4200
-       SnowGlobe_struc(n)%nr = 3500
+       SnowGlobePMW_struc(n)%nc = 84
+       SnowGlobePMW_struc(n)%nr = 70
 
 !       call map_set(PROJ_LATLON, 24.94958,-124.73375,&
 !            0.0, 0.00833,0.00833, 0.0,&
-!            SnowGlobe_struc(n)%nc,&
-!            SnowGlobe_struc(n)%nr,&
-!            SnowGlobe_struc(n)%proj)
+!            SnowGlobePMW_struc(n)%nc,&
+!            SnowGlobePMW_struc(n)%nr,&
+!            SnowGlobePMW_struc(n)%proj)
 
 !       gridDesci = 0
-!       SnowGlobe_struc(n)%gridDesci(1) = 3
-!       SnowGlobe_struc(n)%gridDesci(2) = SnowGlobe_struc(n)%nc
-!       SnowGlobe_struc(n)%gridDesci(3) = SnowGlobe_struc(n)%nr
-!       SnowGlobe_struc(n)%gridDesci(4) = 35.100
-!       SnowGlobe_struc(n)%gridDesci(5) = -112.497
-!       SnowGlobe_struc(n)%gridDesci(6) = 8
-!       SnowGlobe_struc(n)%gridDesci(7) = 46.0
-!       SnowGlobe_struc(n)%gridDesci(8) = 0.50
-!       SnowGlobe_struc(n)%gridDesci(9) = 0.50
-!       SnowGlobe_struc(n)%gridDesci(10) = 39.0
-!       SnowGlobe_struc(n)%gridDesci(11) = -100.0
-!       SnowGlobe_struc(n)%gridDesci(20) = 0
+!       SnowGlobePMW_struc(n)%gridDesci(1) = 3
+!       SnowGlobePMW_struc(n)%gridDesci(2) = SnowGlobePMW_struc(n)%nc
+!       SnowGlobePMW_struc(n)%gridDesci(3) = SnowGlobePMW_struc(n)%nr
+!       SnowGlobePMW_struc(n)%gridDesci(4) = 35.100
+!       SnowGlobePMW_struc(n)%gridDesci(5) = -112.497
+!       SnowGlobePMW_struc(n)%gridDesci(6) = 8
+!       SnowGlobePMW_struc(n)%gridDesci(7) = 46.0
+!       SnowGlobePMW_struc(n)%gridDesci(8) = 0.50
+!       SnowGlobePMW_struc(n)%gridDesci(9) = 0.50
+!       SnowGlobePMW_struc(n)%gridDesci(10) = 39.0
+!       SnowGlobePMW_struc(n)%gridDesci(11) = -100.0
+!       SnowGlobePMW_struc(n)%gridDesci(20) = 0
 
        gridDesci = 0
        gridDesci(1) = 3
-       gridDesci(2) = SnowGlobe_struc(n)%nc
-       gridDesci(3) = SnowGlobe_struc(n)%nr
-       gridDesci(4) = 35.09992
-       gridDesci(5) = -112.4973
+       gridDesci(2) = SnowGlobePMW_struc(n)%nc
+       gridDesci(3) = SnowGlobePMW_struc(n)%nr
+       gridDesci(4) = 35.22424
+       gridDesci(5) = -112.3844
        gridDesci(6) = 8
        gridDesci(7) = 46.0
-       gridDesci(8) = 0.50
-       gridDesci(9) = 0.50
+       gridDesci(8) = 25.0
+       gridDesci(9) = 25.0
        gridDesci(10) = 39.0
        gridDesci(11) = -100.0
        gridDesci(20) = 0
 
-!       SnowGlobe_struc(n)%datares = 0.00833
+!       SnowGlobePMW_struc(n)%datares = 0.00833
 
-       allocate(SnowGlobe_struc(n)%n11(&
-            SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr))
+!       allocate(SnowGlobePMW_struc(n)%n11(&
+!            SnowGlobePMW_struc(n)%nc*SnowGlobePMW_struc(n)%nr))
 
-       SnowGlobe_struc(n)%mi = SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr
-!       allocate(SnowGlobe_struc(n)%n11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%n12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%n21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%n22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       SnowGlobePMW_struc(n)%mi = SnowGlobePMW_struc(n)%nc*SnowGlobePMW_struc(n)%nr
+       allocate(SnowGlobePMW_struc(n)%n11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%n12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%n21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%n22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
 
-       allocate(SnowGlobe_struc(n)%w11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%w12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%w21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
-       allocate(SnowGlobe_struc(n)%w22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%w11(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%w12(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%w21(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%w22(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
 
-       allocate(SnowGlobe_struc(n)%swe(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%rlat(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
+       allocate(SnowGlobePMW_struc(n)%rlon(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
 
-       SnowGlobe_struc(n)%swe = LIS_rc%udef
+       allocate(SnowGlobePMW_struc(n)%swe(LIS_rc%lnc(n)*LIS_rc%lnr(n)))
 
-!       call bilinear_interp_input(n, gridDesci(:),& 
-!            SnowGlobe_struc(n)%n11,SnowGlobe_struc(n)%n12,&
-!            SnowGlobe_struc(n)%n21,SnowGlobe_struc(n)%n22,&
-!            SnowGlobe_struc(n)%w11,SnowGlobe_struc(n)%w12,&
-!            SnowGlobe_struc(n)%w21,SnowGlobe_struc(n)%w22)
+       SnowGlobePMW_struc(n)%swe = LIS_rc%udef
+      
+!       print *,'before bilinear interp in simModule'
+
+       call bilinear_interp_input_withgrid(gridDesci(:),&
+            LIS_rc%obs_gridDesc(k,:),&
+            LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+            SnowGlobePMW_struc(n)%rlat,SnowGlobePMW_struc(n)%rlon,&
+            SnowGlobePMW_struc(n)%n11,SnowGlobePMW_struc(n)%n12,&
+            SnowGlobePMW_struc(n)%n21,SnowGlobePMW_struc(n)%n22,&
+            SnowGlobePMW_struc(n)%w11,SnowGlobePMW_struc(n)%w12,&
+            SnowGlobePMW_struc(n)%w21,SnowGlobePMW_struc(n)%w22)
 
 
 !       print *,'before upscale in simModule'
 
-       call upscaleByAveraging_input(&
-            gridDesci(:),&
-            LIS_rc%obs_gridDesc(k,:),&
-            SnowGlobe_struc(n)%nc*SnowGlobe_struc(n)%nr,&
-            LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
-            SnowGlobe_struc(n)%n11)
+!       call upscaleByAveraging_input(&
+!            gridDesci(:),&
+!            LIS_rc%obs_gridDesc(k,:),&
+!            SnowGlobePMW_struc(n)%nc*SnowGlobePMW_struc(n)%nr,&
+!            LIS_rc%obs_lnc(k)*LIS_rc%obs_lnr(k),&
+!            SnowGlobePMW_struc(n)%n11)
 
-!       print *,'after upscaline in simModule'
+!       print *,'after bilinear interp in simModule'
 
-!       call LIS_registerAlarm("SnowGlobe read alarm",&
+!       call LIS_registerAlarm("SnowGlobePMW read alarm",&
 !            86400.0, 86400.0)
 
-       SnowGlobe_struc(n)%startMode = .true.
+       SnowGlobePMW_struc(n)%startMode = .true.
 
        call ESMF_StateAdd(OBS_State(n),(/obsField(n)/),rc=status)
        call LIS_verify(status)
@@ -359,6 +378,6 @@ contains
     enddo
 
     
-  end subroutine simSnowGlobeobs_setup
+  end subroutine simSnowGlobePMWobs_setup
   
-end module simSnowGlobeobs_module
+end module simSnowGlobePMWobs_module

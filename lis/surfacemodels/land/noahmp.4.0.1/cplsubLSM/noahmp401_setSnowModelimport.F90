@@ -34,7 +34,7 @@ subroutine noahmp401_setSnowModelimport(n, SubLSM2LSM_State)
 !EOP
   type(ESMF_Field)   :: snwdField, sweField
   real, pointer      :: swe(:), snwd(:)
-  real               :: dsneqv,dsnowh
+  real               :: dsneqv,dsnowh,snoden
   integer            :: t
   integer            :: status
 

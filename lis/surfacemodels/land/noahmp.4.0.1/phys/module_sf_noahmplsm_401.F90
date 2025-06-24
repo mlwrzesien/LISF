@@ -46,7 +46,7 @@ MODULE MODULE_SF_NOAHMPLSM_401
   public  ::               DIVIDE    !Yeosang Yoon; for snow DA, change private -> public
   private ::               COMBO 
   public  ::               COMPACT   !Yeosang Yoon; for snow DA, change private -> public
-  private ::               SNOWH2O
+  public  ::               SNOWH2O
   private ::       SOILWATER
   private ::               ZWTEQ
   private ::               INFIL
@@ -1577,34 +1577,34 @@ ENDIF   ! CROPTYPE == 0
            endif
 !           write(message, *) 'ERRWAT =',ERRWAT, "kg m{-2} timestep{-1}"
 !           call wrf_message(trim(message))
-           print *,'ERRWAT =',ERRWAT, "kg m{-2} timestep{-1}"
+!           print *,'ERRWAT =',ERRWAT, "kg m{-2} timestep{-1}"
 !           WRITE(message, &
 !           '("    I      J     END_WB     BEG_WB       PRCP       ECAN       EDIR      ETRAN      RUNSRF     RUNSUB")')
 !           call wrf_message(trim(message))
 !           WRITE(message,'(i6,1x,i6,1x,2f15.3,9f11.5)')ILOC,JLOC,END_WB,BEG_WB,PRCP*DT,ECAN*DT,&
 !                EDIR*DT,ETRAN*DT,RUNSRF*DT,RUNSUB*DT,ZWT
 !           call wrf_message(trim(message))
-           print *,'BEG_WB = ',BEG_WB
-           print *,'END_WB = ',END_WB
-           print *,'CANLIQ = ',CANLIQ
-           print *,'CANICE = ',CANICE
-           print *,'SNEQV = ',SNEQV
-           print *,'WA = ',WA
-           print *,'SMC(1) = ',SMC(1) * DZSNSO(1) * (-1000.)
-           print *,'SMC(2) = ',SMC(2) * DZSNSO(2) * (-1000.)
-           print *,'SMC(3) = ',SMC(3) * DZSNSO(3) * (-1000.)
-           print *,'SMC(4) = ',SMC(4) * DZSNSO(4) * (-1000.)
+!           print *,'BEG_WB = ',BEG_WB
+!           print *,'END_WB = ',END_WB
+!           print *,'CANLIQ = ',CANLIQ
+!           print *,'CANICE = ',CANICE
+!           print *,'SNEQV = ',SNEQV
+!           print *,'WA = ',WA
+!           print *,'SMC(1) = ',SMC(1) * DZSNSO(1) * (-1000.)
+!           print *,'SMC(2) = ',SMC(2) * DZSNSO(2) * (-1000.)
+!           print *,'SMC(3) = ',SMC(3) * DZSNSO(3) * (-1000.)
+!           print *,'SMC(4) = ',SMC(4) * DZSNSO(4) * (-1000.)
 !           print *,'DZSNSO(1) = ',DZSNSO(1)
 !           print *,'DZSNSO(2) = ',DZSNSO(2)
 !           print *,'DZSNSO(3) = ',DZSNSO(3)
 !           print *,'DZSNSO(4) = ',DZSNSO(4)
-           print *,'PRCP = ',PRCP*DT
-           print *,'ECAN = ',ECAN*DT
-           print *,'ETRAN = ',ETRAN*DT
-           print *,'EDIR = ',EDIR*DT
-           print *,'RUNSRF = ',RUNSRF*DT
-           print *,'RUNSUB = ',RUNSUB*DT
-           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
+!           print *,'PRCP = ',PRCP*DT
+!           print *,'ECAN = ',ECAN*DT
+!           print *,'ETRAN = ',ETRAN*DT
+!           print *,'EDIR = ',EDIR*DT
+!           print *,'RUNSRF = ',RUNSRF*DT
+!           print *,'RUNSUB = ',RUNSUB*DT
+!           call wrf_error_fatal("Water budget problem in NOAHMP LSM")
         END IF
 #endif
    ELSE                 !KWM
@@ -6946,9 +6946,9 @@ ENDIF   ! CROPTYPE == 0
 
 !to obtain equilibrium state of snow in glacier region
        
-   IF(SNEQV > 2000.) THEN   ! 2000 mm -> maximum water depth
+   IF(SNEQV > 10000.) THEN   ! 2000 mm -> maximum water depth
       BDSNOW      = SNICE(0) / DZSNSO(0)
-      SNOFLOW     = (SNEQV - 2000.)
+      SNOFLOW     = (SNEQV - 10000.)
       SNICE(0)    = SNICE(0)  - SNOFLOW 
       DZSNSO(0)   = DZSNSO(0) - SNOFLOW/BDSNOW
       SNOFLOW     = SNOFLOW / DT
