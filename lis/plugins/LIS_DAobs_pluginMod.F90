@@ -144,8 +144,20 @@ subroutine LIS_DAobs_plugin
    use simSnowGlobeobs_module,  only : simSnowGlobeobs_setup
 #endif
 
+#if ( defined DA_OBS_SNOWGLOBETUOSWE )   
+   use simSnowGlobeTuoobs_module,  only : simSnowGlobeTuoobs_setup
+#endif
+
 #if ( defined DA_OBS_SNOWGLOBEPMWSWE )   
    use simSnowGlobePMWobs_module,  only : simSnowGlobePMWobs_setup
+#endif
+
+#if ( defined DA_OBS_SNOWGLOBEIS2SNWD )   
+   use simSnowGlobeIS2obs_module,  only : simSnowGlobeIS2obs_setup
+#endif
+
+#if ( defined DA_OBS_IS2EXTRAPSNWD )   
+   use simIS2extrapobs_module,  only : simIS2extrapobs_setup
 #endif
 
 #if ( defined DA_OBS_SYNTHETICSNOWTB )
@@ -353,8 +365,20 @@ subroutine LIS_DAobs_plugin
     external read_simSnowGlobeobs,write_simSnowGlobeobs
 #endif
 
+#if ( defined DA_OBS_SNOWGLOBETUOSWE )
+    external read_simSnowGlobeTuoobs,write_simSnowGlobeTuoobs
+#endif
+
 #if ( defined DA_OBS_SNOWGLOBEPMWSWE )
     external read_simSnowGlobePMWobs,write_simSnowGlobePMWobs
+#endif
+
+#if ( defined DA_OBS_SNOWGLOBEIS2SNWD )
+    external read_simSnowGlobeIS2obs,write_simSnowGlobeIS2obs
+#endif
+
+#if ( defined DA_OBS_IS2EXTRAPSNWD )
+    external read_simIS2extrapobs,write_simIS2extrapobs
 #endif
 
 #if ( defined DA_OBS_SYNTHETICSNOWTB )
@@ -577,11 +601,32 @@ subroutine LIS_DAobs_plugin
    call registerwritedaobs(trim(LIS_SnowGlobeSWEid)//char(0),write_simSnowGlobeobs)
 #endif
 
+#if ( defined DA_OBS_SNOWGLOBETUOSWE )
+   call registerdaobsclass(trim(LIS_SnowGlobeTuoSWEid),"LSM")
+   call registerdaobssetup(trim(LIS_SnowGlobeTuoSWEid)//char(0),simSnowGlobeTuoobs_setup)
+   call registerreaddaobs(trim(LIS_SnowGlobeTuoSWEid)//char(0),read_simSnowGlobeTuoobs)
+   call registerwritedaobs(trim(LIS_SnowGlobeTuoSWEid)//char(0),write_simSnowGlobeTuoobs)
+#endif
+
 #if ( defined DA_OBS_SNOWGLOBEPMWSWE )
    call registerdaobsclass(trim(LIS_SnowGlobePMWSWEid),"LSM")
    call registerdaobssetup(trim(LIS_SnowGlobePMWSWEid)//char(0),simSnowGlobePMWobs_setup)
    call registerreaddaobs(trim(LIS_SnowGlobePMWSWEid)//char(0),read_simSnowGlobePMWobs)
    call registerwritedaobs(trim(LIS_SnowGlobePMWSWEid)//char(0),write_simSnowGlobePMWobs)
+#endif
+
+#if ( defined DA_OBS_SNOWGLOBEIS2SNWD )
+   call registerdaobsclass(trim(LIS_SnowGlobeIS2SNWDid),"LSM")
+   call registerdaobssetup(trim(LIS_SnowGlobeIS2SNWDid)//char(0),simSnowGlobeIS2obs_setup)
+   call registerreaddaobs(trim(LIS_SnowGlobeIS2SNWDid)//char(0),read_simSnowGlobeIS2obs)
+   call registerwritedaobs(trim(LIS_SnowGlobeIS2SNWDid)//char(0),write_simSnowGlobeIS2obs)
+#endif
+
+#if ( defined DA_OBS_IS2EXTRAPSNWD )
+   call registerdaobsclass(trim(LIS_IS2extrapSNWDid),"LSM")
+   call registerdaobssetup(trim(LIS_IS2extrapSNWDid)//char(0),simIS2extrapobs_setup)
+   call registerreaddaobs(trim(LIS_IS2extrapSNWDid)//char(0),read_simIS2extrapobs)
+   call registerwritedaobs(trim(LIS_IS2extrapSNWDid)//char(0),write_simIS2extrapobs)
 #endif
 
 #if ( defined DA_OBS_SYNTHETICSNOWTB )
