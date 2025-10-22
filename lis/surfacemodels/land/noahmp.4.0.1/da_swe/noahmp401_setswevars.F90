@@ -63,6 +63,12 @@ subroutine noahmp401_setswevars(n, LSM_State)
 
         dsneqv = swe(t) - noahmp401_struc(n)%noahmp401(t)%sneqv  !in m
 
+        if(noahmp401_struc(n)%noahmp401(t)%tslb(1).ge.278.15.and.& !MLWdebugging
+             dsneqv.gt.0) then
+           dsneqv = 0
+           dsnowh = 0
+        endif
+
         if(noahmp401_struc(n)%noahmp401(t)%snowh.ne.0) then 
            snoden = noahmp401_struc(n)%noahmp401(t)%sneqv/&
                 noahmp401_struc(n)%noahmp401(t)%snowh           
