@@ -1273,6 +1273,7 @@ contains
     external read_princeton_elev
     external read_ecmwf_elev
     external read_merra2_elev
+    external read_nldas30_elev
     external read_era5_elev
     external read_wrfoutv2_elev
     external read_wrfak_elev
@@ -1304,6 +1305,10 @@ contains
 !- MERRA2 forcing:
     call registerreadforcelev(trim(LDT_merra2Id)//char(0),&
          read_merra2_elev)
+
+!- NLDAS-3 forcing:
+    call registerreadforcelev(trim(LDT_nldas30Id)//char(0),&
+         read_nldas30_elev)
 
 !- ERA5 forcing:
     call registerreadforcelev(trim(LDT_era5Id)//char(0),&

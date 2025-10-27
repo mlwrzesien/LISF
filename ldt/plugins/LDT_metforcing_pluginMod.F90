@@ -100,6 +100,7 @@ contains
     use gldas_forcingMod
     use gfs_forcingMod
     use merra2_forcingMod
+    use nldas30_forcingMod
     use era5_forcingMod
     use gswp1_forcingMod
     use gswp2_forcingMod
@@ -191,6 +192,11 @@ contains
     external timeinterp_merra2
     external finalize_merra2
     external reset_merra2
+
+    external get_nldas30
+    external timeinterp_nldas30
+    external finalize_nldas30
+    external reset_nldas30
 
     external get_era5
     external timeinterp_era5
@@ -390,6 +396,13 @@ contains
     call registertimeinterpmetforc(trim(LDT_merra2Id)//char(0),timeinterp_merra2)
     call registerresetmetforc(trim(LDT_merra2Id)//char(0),reset_merra2)
     call registerfinalmetforc(trim(LDT_merra2Id)//char(0),finalize_merra2)
+
+! - NLDAS-3 Reanalysis Forcing:
+    call registerinitmetforc(trim(LDT_nldas30Id)//char(0),init_nldas30)
+    call registerretrievemetforc(trim(LDT_nldas30Id)//char(0),get_nldas30)
+    call registertimeinterpmetforc(trim(LDT_nldas30Id)//char(0),timeinterp_nldas30)
+    call registerresetmetforc(trim(LDT_nldas30Id)//char(0),reset_nldas30)
+    call registerfinalmetforc(trim(LDT_nldas30Id)//char(0),finalize_nldas30)
 
 ! - ERA5 Reanalysis Forcing:
     call registerinitmetforc(trim(LDT_ERA5Id)//char(0),init_ERA5)
